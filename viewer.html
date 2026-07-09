@@ -1,34 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Pencil Viewer</title>
-
-<style>
-html,body{
-margin:0;
-overflow:hidden;
-background:transparent;
-}
-
-canvas{
-display:block;
-}
-</style>
-
-<script type="importmap">
-{
-  "imports": {
-    "three":"https://unpkg.com/three@0.168.0/build/three.module.js",
-    "three/addons/":"https://unpkg.com/three@0.168.0/examples/jsm/"
-  }
-}
-</script>
-
-</head>
-
-<body>
-
 <script type="module">
 
 import * as THREE from 'three';
@@ -37,127 +6,112 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(
-35,
-window.innerWidth/window.innerHeight,
-0.1,
-100
+  35,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100
 );
 
-camera.position.set(0,0,5);
+camera.position.set(0, 0, 6);
 
 const renderer = new THREE.WebGLRenderer({
-alpha:true,
-antialias:true
+  alpha: true,
+  antialias: true
 });
 
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 document.body.appendChild(renderer.domElement);
 
-const hemi = new THREE.HemisphereLight(
-0xffffff,
-0x888888,
-2
-);
+// Lighting
+scene.add(new THREE.HemisphereLight(0xffffff, 0x777777, 2));
 
-scene.add(hemi);
-
-const key = new THREE.DirectionalLight(
-0xffffff,
-3
-);
-
-key.position.set(3,5,4);
+const key = new THREE.DirectionalLight(0xffffff, 3);
+key.position.set(3, 5, 4);
 scene.add(key);
 
-const fill = new THREE.DirectionalLight(
-0xffffff,
-1.5
-);
-
-fill.position.set(-3,-2,2);
+const fill = new THREE.DirectionalLight(0xffffff, 1.5);
+fill.position.set(-3, -2, 2);
 scene.add(fill);
 
+// Model
 const loader = new GLTFLoader();
 
 let pencil;
+let targetX = 0;
+let targetZ = 0;
 
 loader.load(
+  './pencil%20for%20web.glb',
 
-'./pencil%20for%20web.glb',
+  (gltf) => {
 
-(gltf)=>{
+    pencil = gltf.scene;
+    scene.add(pencil);
 
-pencil = gltf.scene;
+    // Centre model
+    const box = new THREE.Box3().setFromObject(pencil);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
 
-scene.add(pencil);
+    pencil.position.set(
+      -center.x,
+      -center.y - 0.35, // <-- lowers the pencil
+      -center.z
+    );
 
-const box = new THREE.Box3().setFromObject(pencil);
-const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const scale = 2.4 / maxDim;
+    pencil.scale.setScalar(scale);
 
-pencil.position.sub(center);
-
-const size = box.getSize(new THREE.Vector3()).length();
-
-const scale = 3/size;
-
-pencil.scale.setScalar(scale);
-
-}
-
+  }
 );
 
-const mouse={
-x:0,
-y:0
-};
+// Mouse
+window.addEventListener('mousemove', (e) => {
 
-window.addEventListener("mousemove",(e)=>{
-
-mouse.x=(e.clientX/window.innerWidth-.5)*0.15;
-mouse.y=(e.clientY/window.innerHeight-.5)*0.15;
+  targetX = (e.clientY / window.innerHeight - 0.5) * 0.08;
+  targetZ = (e.clientX / window.innerWidth - 0.5) * 0.08;
 
 });
 
 const clock = new THREE.Clock();
 
-function animate(){
+function animate() {
 
-requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 
-if(pencil){
+  if (pencil) {
 
-const t = clock.getElapsedTime();
+    const t = clock.getElapsedTime();
 
-pencil.rotation.y=t*0.4;
+    // Slow spin
+    pencil.rotation.y = t * 0.35;
 
-pencil.rotation.x=mouse.y;
+    // Smooth mouse tilt
+    pencil.rotation.x += (targetX - pencil.rotation.x) * 0.05;
+    pencil.rotation.z += (targetZ - pencil.rotation.z) * 0.05;
 
-pencil.rotation.z=mouse.x;
+    // Gentle bob
+    pencil.position.y += ((Math.sin(t * 1.4) * 0.05) - pencil.position.y) * 0.05;
 
-pencil.position.y=Math.sin(t*1.5)*0.05;
+  }
 
-}
-
-renderer.render(scene,camera);
+  renderer.render(scene, camera);
 
 }
 
 animate();
 
-window.addEventListener("resize",()=>{
+window.addEventListener('resize', () => {
 
-camera.aspect=window.innerWidth/window.innerHeight;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
 
-camera.updateProjectionMatrix();
-
-renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setSize(window.innerWidth, window.innerHeight);
 
 });
 
 </script>
-
-</body>
-</html>
