@@ -2,23 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>3D Viewer</title>
+<title>Pencil Viewer</title>
 
 <style>
-html, body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: transparent;
+html,body{
+margin:0;
+overflow:hidden;
+background:transparent;
 }
 
-canvas {
-    display: block;
+canvas{
+display:block;
 }
 </style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three":"https://unpkg.com/three@0.168.0/build/three.module.js",
+    "three/addons/":"https://unpkg.com/three@0.168.0/examples/jsm/"
+  }
+}
+</script>
 
 </head>
 
@@ -26,156 +31,129 @@ canvas {
 
 <script type="module">
 
-import * as THREE from "https://unpkg.com/three@0.168.0/build/three.module.js";
-import { GLTFLoader } from "https://unpkg.com/three@0.168.0/examples/jsm/loaders/GLTFLoader.js";
-
-////////////////////////////////////////////////////////
-// Scene
-////////////////////////////////////////////////////////
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(
-    35,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    100
+35,
+window.innerWidth/window.innerHeight,
+0.1,
+100
 );
 
-camera.position.set(0, 0, 5);
-
-////////////////////////////////////////////////////////
-// Renderer
-////////////////////////////////////////////////////////
+camera.position.set(0,0,5);
 
 const renderer = new THREE.WebGLRenderer({
-    alpha: true,
-    antialias: true
+alpha:true,
+antialias:true
 });
 
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 document.body.appendChild(renderer.domElement);
 
-////////////////////////////////////////////////////////
-// Lighting
-////////////////////////////////////////////////////////
+const hemi = new THREE.HemisphereLight(
+0xffffff,
+0x888888,
+2
+);
 
-scene.add(new THREE.AmbientLight(0xffffff, 2));
+scene.add(hemi);
 
-const keyLight = new THREE.DirectionalLight(0xffffff, 3);
-keyLight.position.set(5, 5, 5);
-scene.add(keyLight);
+const key = new THREE.DirectionalLight(
+0xffffff,
+3
+);
 
-const fillLight = new THREE.DirectionalLight(0xffffff, 1.5);
-fillLight.position.set(-4, 2, -2);
-scene.add(fillLight);
+key.position.set(3,5,4);
+scene.add(key);
 
-////////////////////////////////////////////////////////
-// Mouse
-////////////////////////////////////////////////////////
+const fill = new THREE.DirectionalLight(
+0xffffff,
+1.5
+);
 
-const mouse = {
-    x: 0,
-    y: 0,
-    targetX: 0,
-    targetY: 0
-};
-
-window.addEventListener("mousemove", (e) => {
-
-    mouse.targetX = (e.clientX / window.innerWidth - 0.5) * 0.2;
-    mouse.targetY = (e.clientY / window.innerHeight - 0.5) * 0.15;
-
-});
-
-////////////////////////////////////////////////////////
-// Load Model
-////////////////////////////////////////////////////////
-
-let pencil;
+fill.position.set(-3,-2,2);
+scene.add(fill);
 
 const loader = new GLTFLoader();
 
+let pencil;
+
 loader.load(
 
-    "./pencil%20for%20web.glb",
+'./pencil%20for%20web.glb',
 
-    (gltf) => {
+(gltf)=>{
 
-        console.log("Model Loaded");
+pencil = gltf.scene;
 
-        pencil = gltf.scene;
-        scene.add(pencil);
+scene.add(pencil);
 
-        const box = new THREE.Box3().setFromObject(pencil);
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
+const box = new THREE.Box3().setFromObject(pencil);
+const center = box.getCenter(new THREE.Vector3());
 
-        pencil.position.sub(center);
+pencil.position.sub(center);
 
-        const maxDimension = Math.max(size.x, size.y, size.z);
-        const scale = 2.2 / maxDimension;
+const size = box.getSize(new THREE.Vector3()).length();
 
-        pencil.scale.setScalar(scale);
+const scale = 3/size;
 
-    },
+pencil.scale.setScalar(scale);
 
-    undefined,
-
-    (error) => {
-
-        console.error(error);
-
-    }
+}
 
 );
 
-////////////////////////////////////////////////////////
-// Animation
-////////////////////////////////////////////////////////
+const mouse={
+x:0,
+y:0
+};
+
+window.addEventListener("mousemove",(e)=>{
+
+mouse.x=(e.clientX/window.innerWidth-.5)*0.15;
+mouse.y=(e.clientY/window.innerHeight-.5)*0.15;
+
+});
 
 const clock = new THREE.Clock();
 
-function animate() {
+function animate(){
 
-    requestAnimationFrame(animate);
+requestAnimationFrame(animate);
 
-    if (pencil) {
+if(pencil){
 
-        const t = clock.getElapsedTime();
+const t = clock.getElapsedTime();
 
-        mouse.x += (mouse.targetX - mouse.x) * 0.05;
-        mouse.y += (mouse.targetY - mouse.y) * 0.05;
+pencil.rotation.y=t*0.4;
 
-        // Rotation
-        pencil.rotation.y = t * 0.35;
-        pencil.rotation.x = mouse.y;
-        pencil.rotation.z = mouse.x;
+pencil.rotation.x=mouse.y;
 
-        // Floating
-        pencil.position.y += ((Math.sin(t * 1.4) * 0.05) - pencil.position.y) * 0.05;
+pencil.rotation.z=mouse.x;
 
-    }
+pencil.position.y=Math.sin(t*1.5)*0.05;
 
-    renderer.render(scene, camera);
+}
+
+renderer.render(scene,camera);
 
 }
 
 animate();
 
-////////////////////////////////////////////////////////
-// Resize
-////////////////////////////////////////////////////////
+window.addEventListener("resize",()=>{
 
-window.addEventListener("resize", () => {
+camera.aspect=window.innerWidth/window.innerHeight;
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+camera.updateProjectionMatrix();
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(window.innerWidth,window.innerHeight);
 
 });
 
