@@ -99,6 +99,7 @@ const box = new THREE.Box3().setFromObject(pencil);
 const center = box.getCenter(new THREE.Vector3());
 
 pencil.position.sub(center);
+pencil.position.y -= 0.5;
 
 const size = box.getSize(new THREE.Vector3()).length();
 
