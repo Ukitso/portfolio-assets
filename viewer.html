@@ -65,11 +65,10 @@ scene.add(fill);
 
 // Pivot for animation
 const pivot = new THREE.Group();
-pivot.position.y = pivot.position.y - 0.25;
 scene.add(pivot);
 
 let model;
-let baseY = 0;
+let baseY = -0.5;
 
 const loader = new GLTFLoader();
 
