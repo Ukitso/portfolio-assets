@@ -58,7 +58,13 @@
       width: 100%;
       height: 100%;
 
-      transform-origin: center center;
+      /*
+        Anchor him towards
+        the bottom so stretching
+        feels less like floating.
+      */
+
+      transform-origin: center bottom;
 
       will-change: transform;
     }
@@ -108,7 +114,6 @@
     id="scene"
   >
 
-
     <div
       class="character"
       id="character"
@@ -140,9 +145,7 @@
         alt=""
       >
 
-
     </div>
-
 
   </div>
 
@@ -175,7 +178,8 @@
 
 
     /*
-      MAXIMUM EYE MOVEMENT
+      MAXIMUM CURSOR
+      EYE MOVEMENT
     */
 
     const maxMove = 18;
@@ -192,10 +196,6 @@
 
     /*
       AWARENESS RADIUS
-
-      Increased far distance
-      for a larger, softer
-      following range.
     */
 
     const closeDistance = 180;
@@ -294,10 +294,6 @@
           centerY;
 
 
-        /*
-          TRUE RADIAL DISTANCE
-        */
-
         const distance =
           Math.sqrt(
             deltaX * deltaX +
@@ -326,10 +322,6 @@
             (distance - closeDistance) /
             (farDistance - closeDistance);
 
-
-          /*
-            SOFT EASING
-          */
 
           const smoothProgress =
             progress *
@@ -400,11 +392,10 @@
 
 
     /*
-      BODY HAS ITS OWN
-      SLOWER POSITION.
+      DELAYED BODY RESPONSE
 
-      This creates a delayed
-      reaction to the eye.
+      This follows the eye
+      more slowly.
     */
 
     let bodyFollowX = 0;
@@ -443,13 +434,13 @@
 
 
       /* --------------------- */
-      /* BODY FOLLOW           */
+      /* BODY RESPONSE         */
       /* --------------------- */
 
 
       /*
-        Body reacts more slowly
-        than the eye.
+        Slower than the eye,
+        giving the body weight.
       */
 
       bodyFollowX +=
@@ -457,7 +448,7 @@
           currentX -
           bodyFollowX
         ) *
-        0.025;
+        0.035;
 
 
       bodyFollowY +=
@@ -465,87 +456,79 @@
           currentY -
           bodyFollowY
         ) *
-        0.025;
+        0.035;
 
 
       /*
-        SMALL BODY SHIFT
+        LEFT / RIGHT LEAN
 
-        Body doesn't move as far
-        as the eye.
-      */
-
-      const shiftX =
-        bodyFollowX *
-        0.28;
-
-
-      const shiftY =
-        bodyFollowY *
-        0.16;
-
-
-      /*
-        BODY LEANS
-        TOWARDS EYE DIRECTION
+        No translation, only
+        rotation.
       */
 
       const rotate =
         bodyFollowX *
-        0.16;
+        0.18;
 
 
       /*
-        SQUASH + STRETCH
+        UP / DOWN STRETCH
 
-        Looking up:
-        slightly taller.
-
-        Looking down:
-        slightly squashed.
+        Normalise the eye
+        movement to roughly
+        -1 to +1.
       */
 
-      const stretch =
-        bodyFollowY *
-        -0.006;
+      const verticalLook =
+        bodyFollowY /
+        maxMove;
 
+
+      /*
+        Eye looking up:
+
+        verticalLook is negative
+        → scaleY increases.
+
+        Eye looking down:
+
+        verticalLook is positive
+        → scaleY decreases.
+      */
 
       const scaleY =
-        1 +
-        stretch;
-
-
-      const scaleX =
         1 -
         (
-          stretch *
-          0.5
+          verticalLook *
+          0.12
         );
 
 
       /*
-        APPLY BODY REACTION
+        Opposite horizontal
+        squash keeps him feeling
+        more organic.
+      */
 
-        No constant floating.
-        Everything is motivated
-        by the eye movement.
+      const scaleX =
+        1 +
+        (
+          verticalLook *
+          0.07
+        );
+
+
+      /*
+        APPLY BODY TRANSFORM
+
+        No translateY.
+        No floating.
       */
 
       bodyWrapper.style.transform =
         `
-          translate(
-            ${shiftX}px,
-            ${shiftY}px
-          )
-
-          rotate(
-            ${rotate}deg
-          )
-
-          scale(
-            ${scaleX},
-            ${scaleY}
-          )
+          rotate(${rotate}deg)
+          scale(${scaleX}, ${scaleY})
         `;
 
 
