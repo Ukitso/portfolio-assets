@@ -80,12 +80,10 @@
     id="scene"
   >
 
-
     <div
       class="character"
       id="character"
     >
-
 
       <!-- BODY -->
 
@@ -105,9 +103,7 @@
         alt=""
       >
 
-
     </div>
-
 
   </div>
 
@@ -133,12 +129,7 @@
     let currentY = 0;
 
 
-    /*
-      IDLE STATE
-
-      Starts true so he begins
-      looking around immediately.
-    */
+    /* IDLE STATE */
 
     let idle = true;
     let idleTimer;
@@ -146,12 +137,6 @@
 
     /*
       AWARENESS RADIUS
-
-      closeDistance =
-      fully interested
-
-      farDistance =
-      fully idle
     */
 
     const closeDistance = 180;
@@ -159,16 +144,16 @@
 
 
     /*
-      MAXIMUM EYE MOVEMENT
+      MAXIMUM CURSOR
+      EYE MOVEMENT
     */
 
     const maxMove = 18;
 
 
     /*
-      SMOOTHLY RETURN
-      TO IDLE AFTER
-      LOSING INTEREST
+      RETURN TO IDLE
+      AFTER 2.5 SECONDS
     */
 
     function resetIdle() {
@@ -190,11 +175,8 @@
 
 
     /*
-      PICK A RANDOM
+      PICK A MORE ACTIVE
       IDLE LOOKING POSITION
-
-      Based directly on the
-      smaller logo behaviour.
     */
 
     function chooseIdleTarget() {
@@ -202,13 +184,23 @@
       if (!idle) return;
 
 
+      /*
+        MORE AGGRESSIVE
+        IDLE MOVEMENT
+      */
+
       targetX =
-        (Math.random() * 12) - 6;
+        (Math.random() * 28) - 14;
 
 
       targetY =
-        (Math.random() * 8) - 4;
+        (Math.random() * 20) - 10;
 
+
+      /*
+        LOOK SOMEWHERE ELSE
+        MORE OFTEN
+      */
 
       setTimeout(() => {
 
@@ -220,7 +212,7 @@
 
       },
 
-      1000 + Math.random() * 1500
+      700 + Math.random() * 1300
 
       );
 
@@ -229,18 +221,12 @@
 
     /*
       TRACK CURSOR
-      ACROSS FULL LANDING AREA
     */
 
     scene.addEventListener(
       "mousemove",
       (event) => {
 
-
-        /*
-          GET ACTUAL POSITION
-          OF THE EYE
-        */
 
         const rect =
           eye.getBoundingClientRect();
@@ -255,11 +241,6 @@
           rect.top +
           rect.height / 2;
 
-
-        /*
-          CURSOR DISTANCE
-          FROM EYE
-        */
 
         const deltaX =
           event.clientX -
@@ -277,11 +258,6 @@
             deltaY * deltaY
           );
 
-
-        /*
-          NORMALISE DISTANCE
-          INTO ATTENTION
-        */
 
         let attention = 0;
 
@@ -305,13 +281,6 @@
             (farDistance - closeDistance);
 
 
-          /*
-            SMOOTHSTEP
-
-            Makes the radius
-            feel softer.
-          */
-
           const smoothProgress =
             progress *
             progress *
@@ -326,9 +295,9 @@
 
 
         /*
-          ONLY INTERRUPT IDLE
-          WHEN HE ACTUALLY
-          NOTICES YOU
+          INTERRUPT IDLE
+          WHEN CURSOR IS
+          WITHIN AWARENESS
         */
 
         if (
@@ -338,23 +307,12 @@
           resetIdle();
 
 
-          /*
-            DIRECTION
-            TOWARDS CURSOR
-          */
-
           const angle =
             Math.atan2(
               deltaY,
               deltaX
             );
 
-
-          /*
-            CURSOR MOVEMENT
-            SCALES WITH
-            ATTENTION
-          */
 
           targetX =
             Math.cos(angle) *
@@ -374,8 +332,7 @@
 
 
     /*
-      WHEN CURSOR LEAVES
-      THE LANDING AREA
+      CURSOR LEAVES PAGE
     */
 
     scene.addEventListener(
@@ -389,10 +346,7 @@
 
 
     /*
-      MAIN ANIMATION
-
-      Same smooth easing
-      as your smaller logo.
+      SMOOTH EYE MOVEMENT
     */
 
     function animate() {
