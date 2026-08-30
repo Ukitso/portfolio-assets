@@ -2,11 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
 
@@ -19,11 +15,31 @@
       background: transparent;
     }
 
-    .character {
+    /* FULL INTERACTION AREA */
+
+    .scene {
       position: relative;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
     }
+
+
+    /* CHARACTER */
+
+    .character {
+      position: absolute;
+
+      /* CHANGE THESE TO MOVE HIM */
+
+      width: 350px;
+      height: 350px;
+
+      left: 50%;
+      top: 50%;
+
+      transform: translate(-50%, -50%);
+    }
+
 
     /* BODY + EYEBALL */
 
@@ -35,6 +51,154 @@
       width: 100%;
       height: 100%;
 
+      object-fit: contain;
+
+      pointer-events: none;
+    }
+
+
+    .eye {
+      will-change: transform;
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+
+<div class="scene" id="scene">
+
+  <div class="character" id="character">
+
+    <img
+      src="body.png"
+      class="body"
+      alt=""
+    >
+
+    <img
+      src="eyeball.png"
+      class="eye"
+      id="eye"
+      alt=""
+    >
+
+  </div>
+
+</div>
+
+
+<script>
+
+const scene = document.getElementById("scene");
+const character = document.getElementById("character");
+const eye = document.getElementById("eye");
+
+
+let targetX = 0;
+let targetY = 0;
+
+let currentX = 0;
+let currentY = 0;
+
+
+/* HOW FAR THE EYE CAN MOVE */
+
+const maxMove = 18;
+
+
+/* HOW CLOSE THE CURSOR NEEDS TO BE */
+
+const noticeDistance = 500;
+
+
+/* TRACK CURSOR */
+
+scene.addEventListener("mousemove", (event) => {
+
+  const rect = character.getBoundingClientRect();
+
+  const centerX =
+    rect.left + rect.width / 2;
+
+  const centerY =
+    rect.top + rect.height / 2;
+
+
+  const deltaX =
+    event.clientX - centerX;
+
+  const deltaY =
+    event.clientY - centerY;
+
+
+  /* DISTANCE BETWEEN CURSOR + CHARACTER */
+
+  const distance =
+    Math.sqrt(
+      deltaX * deltaX +
+      deltaY * deltaY
+    );
+
+
+  /* ONLY FOLLOW WHEN CURSOR IS CLOSE */
+
+  if (distance < noticeDistance) {
+
+    const angle =
+      Math.atan2(deltaY, deltaX);
+
+
+    targetX =
+      Math.cos(angle) * maxMove;
+
+    targetY =
+      Math.sin(angle) * maxMove;
+
+  }
+
+});
+
+
+/* IDLE RESET */
+
+scene.addEventListener("mouseleave", () => {
+
+  targetX = 0;
+  targetY = 0;
+
+});
+
+
+/* SMOOTH EYE MOVEMENT */
+
+function animateEye() {
+
+  currentX +=
+    (targetX - currentX) * 0.08;
+
+  currentY +=
+    (targetY - currentY) * 0.08;
+
+
+  eye.style.transform =
+    `translate(${currentX}px, ${currentY}px)`;
+
+
+  requestAnimationFrame(animateEye);
+
+}
+
+
+animateEye();
+
+</script>
+
+
+</body>
+</html>
       object-fit: contain;
     }
 
