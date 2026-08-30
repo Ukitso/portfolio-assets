@@ -10,8 +10,6 @@
 
   <style>
 
-    /* PAGE */
-
     html,
     body {
       margin: 0;
@@ -22,19 +20,271 @@
     }
 
 
-    /* FULL INTERACTION AREA */
+    /* FULL-SIZE INTERACTION AREA */
 
     .scene {
       position: relative;
-
-      width: 100vw;
-      height: 100vh;
-
+      width: 100%;
+      height: 100%;
       overflow: hidden;
       background: transparent;
     }
 
 
+    /* THE LITTLE GUY */
+
+    .character {
+      position: absolute;
+
+      /* FIXED SIZE */
+
+      width: 250px;
+      height: 250px;
+
+
+      /* POSITION */
+
+      left: 50%;
+      top: 50%;
+
+      transform: translate(-50%, -50%);
+    }
+
+
+    /* BODY + EYEBALL */
+
+    .body,
+    .eye {
+      position: absolute;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
+      object-fit: contain;
+
+      pointer-events: none;
+    }
+
+
+    /* EYEBALL */
+
+    .eye {
+      will-change: transform;
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+
+  <div
+    class="scene"
+    id="scene"
+  >
+
+
+    <div
+      class="character"
+      id="character"
+    >
+
+
+      <!-- BODY -->
+
+      <img
+        src="body.png"
+        class="body"
+        alt=""
+      >
+
+
+      <!-- EYEBALL -->
+
+      <img
+        src="eyeball.png"
+        class="eye"
+        id="eye"
+        alt=""
+      >
+
+
+    </div>
+
+
+  </div>
+
+
+  <script>
+
+
+    const scene =
+      document.getElementById("scene");
+
+    const character =
+      document.getElementById("character");
+
+    const eye =
+      document.getElementById("eye");
+
+
+    /* CURRENT + TARGET EYE POSITION */
+
+    let targetX = 0;
+    let targetY = 0;
+
+    let currentX = 0;
+    let currentY = 0;
+
+
+    /* HOW FAR THE EYE CAN MOVE */
+
+    const maxMove = 18;
+
+
+    /*
+      HOW CLOSE THE CURSOR NEEDS TO BE
+      BEFORE HE NOTICES IT
+    */
+
+    const noticeDistance = 500;
+
+
+    /* TRACK CURSOR */
+
+    scene.addEventListener(
+      "mousemove",
+      (event) => {
+
+
+        const rect =
+          character.getBoundingClientRect();
+
+
+        const centerX =
+          rect.left +
+          rect.width / 2;
+
+
+        const centerY =
+          rect.top +
+          rect.height / 2;
+
+
+        const deltaX =
+          event.clientX -
+          centerX;
+
+
+        const deltaY =
+          event.clientY -
+          centerY;
+
+
+        const distance =
+          Math.sqrt(
+            deltaX * deltaX +
+            deltaY * deltaY
+          );
+
+
+        /*
+          ONLY LOOK AT CURSOR
+          WHEN IT IS NEARBY
+        */
+
+        if (
+          distance < noticeDistance
+        ) {
+
+
+          const angle =
+            Math.atan2(
+              deltaY,
+              deltaX
+            );
+
+
+          targetX =
+            Math.cos(angle) *
+            maxMove;
+
+
+          targetY =
+            Math.sin(angle) *
+            maxMove;
+
+        }
+
+
+        /*
+          IF CURSOR IS FAR AWAY,
+          RETURN TO CENTRE
+        */
+
+        else {
+
+          targetX = 0;
+          targetY = 0;
+
+        }
+
+      }
+    );
+
+
+    /*
+      CURSOR LEAVES
+      THE INTERACTION AREA
+    */
+
+    scene.addEventListener(
+      "mouseleave",
+      () => {
+
+        targetX = 0;
+        targetY = 0;
+
+      }
+    );
+
+
+    /* SMOOTH EYE MOVEMENT */
+
+    function animateEye() {
+
+
+      currentX +=
+        (targetX - currentX) *
+        0.08;
+
+
+      currentY +=
+        (targetY - currentY) *
+        0.08;
+
+
+      eye.style.transform =
+        `translate(${currentX}px, ${currentY}px)`;
+
+
+      requestAnimationFrame(
+        animateEye
+      );
+
+    }
+
+
+    animateEye();
+
+
+  </script>
+
+
+</body>
+</html>
     /* CHARACTER */
 
     .character {
