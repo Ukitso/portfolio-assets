@@ -1,7 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
+
   <meta charset="UTF-8">
 
   <meta
@@ -43,14 +45,38 @@
       left: 50%;
       top: 50%;
 
+      /*
+        Keep the character
+        centred in the widget.
+      */
+
       transform: translate(-50%, -50%);
     }
 
 
-    /* BODY + EYEBALL */
+    /*
+      BODY WRAPPER
 
-    .body,
-    .eye {
+      This is animated separately
+      from the eyeball.
+    */
+
+    .body-wrapper {
+      position: absolute;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
+      transform-origin: center center;
+
+      will-change: transform;
+    }
+
+
+    /* BODY */
+
+    .body {
       position: absolute;
       inset: 0;
 
@@ -63,7 +89,19 @@
     }
 
 
+    /* EYEBALL */
+
     .eye {
+      position: absolute;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
+      object-fit: contain;
+
+      pointer-events: none;
+
       will-change: transform;
     }
 
@@ -75,23 +113,41 @@
 <body>
 
 
+  <!-- FULL PAGE INTERACTION AREA -->
+
   <div
     class="scene"
     id="scene"
   >
+
+
+    <!-- CHARACTER -->
 
     <div
       class="character"
       id="character"
     >
 
-      <!-- BODY -->
 
-      <img
-        src="body.png"
-        class="body"
-        alt=""
+      <!--
+        BODY WRAPPER
+
+        Lets the body move
+        independently.
+      -->
+
+      <div
+        class="body-wrapper"
+        id="bodyWrapper"
       >
+
+        <img
+          src="body.png"
+          class="body"
+          alt=""
+        >
+
+      </div>
 
 
       <!-- EYEBALL -->
@@ -103,7 +159,9 @@
         alt=""
       >
 
+
     </div>
+
 
   </div>
 
@@ -119,8 +177,14 @@
     const eye =
       document.getElementById("eye");
 
+    const bodyWrapper =
+      document.getElementById("bodyWrapper");
 
-    /* EYE POSITION */
+
+    /* ------------------------- */
+    /* EYE POSITION              */
+    /* ------------------------- */
+
 
     let targetX = 0;
     let targetY = 0;
@@ -129,7 +193,18 @@
     let currentY = 0;
 
 
-    /* IDLE STATE */
+    /*
+      MAXIMUM CURSOR
+      EYE MOVEMENT
+    */
+
+    const maxMove = 18;
+
+
+    /* ------------------------- */
+    /* IDLE STATE                */
+    /* ------------------------- */
+
 
     let idle = true;
     let idleTimer;
@@ -141,14 +216,6 @@
 
     const closeDistance = 180;
     const farDistance = 800;
-
-
-    /*
-      MAXIMUM CURSOR
-      EYE MOVEMENT
-    */
-
-    const maxMove = 18;
 
 
     /*
@@ -184,11 +251,6 @@
       if (!idle) return;
 
 
-      /*
-        MORE AGGRESSIVE
-        IDLE MOVEMENT
-      */
-
       targetX =
         (Math.random() * 28) - 14;
 
@@ -196,11 +258,6 @@
       targetY =
         (Math.random() * 20) - 10;
 
-
-      /*
-        LOOK SOMEWHERE ELSE
-        MORE OFTEN
-      */
 
       setTimeout(() => {
 
@@ -219,9 +276,10 @@
     }
 
 
-    /*
-      TRACK CURSOR
-    */
+    /* ------------------------- */
+    /* CURSOR TRACKING           */
+    /* ------------------------- */
+
 
     scene.addEventListener(
       "mousemove",
@@ -252,6 +310,10 @@
           centerY;
 
 
+        /*
+          TRUE RADIAL DISTANCE
+        */
+
         const distance =
           Math.sqrt(
             deltaX * deltaX +
@@ -262,6 +324,10 @@
         let attention = 0;
 
 
+        /*
+          FULL ATTENTION
+        */
+
         if (
           distance <= closeDistance
         ) {
@@ -270,6 +336,11 @@
 
         }
 
+
+        /*
+          SOFT ATTENTION
+          FALLOFF
+        */
 
         else if (
           distance < farDistance
@@ -295,9 +366,8 @@
 
 
         /*
-          INTERRUPT IDLE
-          WHEN CURSOR IS
-          WITHIN AWARENESS
+          ONLY INTERRUPT IDLE
+          WHEN HE NOTICES YOU
         */
 
         if (
@@ -345,11 +415,39 @@
     );
 
 
+    /* ------------------------- */
+    /* BODY ANIMATION            */
+    /* ------------------------- */
+
+
     /*
-      SMOOTH EYE MOVEMENT
+      BODY LEAN
+
+      The body follows the
+      eye slightly behind.
     */
 
+    let bodyLeanX = 0;
+    let bodyLeanY = 0;
+
+
+    /*
+      FLOATING TIMER
+
+      Used for continuous
+      gentle movement.
+    */
+
+    let startTime =
+      performance.now();
+
+
     function animate() {
+
+
+      /* --------------------- */
+      /* EYE MOVEMENT          */
+      /* --------------------- */
 
 
       currentX +=
@@ -363,7 +461,117 @@
 
 
       eye.style.transform =
-        `translate(${currentX}px, ${currentY}px)`;
+        `translate(
+          ${currentX}px,
+          ${currentY}px
+        )`;
+
+
+      /* --------------------- */
+      /* BODY LEAN             */
+      /* --------------------- */
+
+
+      /*
+        Body follows eye
+        with slower easing.
+      */
+
+      bodyLeanX +=
+        (
+          currentX -
+          bodyLeanX
+        ) *
+        0.025;
+
+
+      bodyLeanY +=
+        (
+          currentY -
+          bodyLeanY
+        ) *
+        0.025;
+
+
+      /*
+        BODY POSITION
+
+        Eye movement is scaled
+        down so the body only
+        reacts subtly.
+      */
+
+      const leanX =
+        bodyLeanX *
+        0.18;
+
+
+      const leanY =
+        bodyLeanY *
+        0.10;
+
+
+      /*
+        TIME FOR BREATHING
+        / FLOATING MOTION
+      */
+
+      const time =
+        (
+          performance.now() -
+          startTime
+        ) /
+        1000;
+
+
+      /*
+        SUBTLE FLOAT
+      */
+
+      const floatY =
+        Math.sin(
+          time *
+          1.4
+        ) *
+        3;
+
+
+      /*
+        TINY NATURAL ROTATION
+
+        The eye direction also
+        influences the lean.
+      */
+
+      const rotate =
+        (
+          bodyLeanX *
+          0.12
+        ) +
+
+        (
+          Math.sin(
+            time *
+            0.9
+          ) *
+          0.5
+        );
+
+
+      /*
+        APPLY BODY MOVEMENT
+      */
+
+      bodyWrapper.style.transform =
+        `
+          translate(
+            ${leanX}px,
+            ${leanY + floatY}px
+          )
+          rotate(
+            ${rotate}deg
+          )
+        `;
 
 
       requestAnimationFrame(
