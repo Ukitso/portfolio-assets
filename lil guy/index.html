@@ -11,8 +11,6 @@
 
   <style>
 
-    /* PAGE */
-
     html,
     body {
       margin: 0;
@@ -23,7 +21,7 @@
     }
 
 
-    /* FULL INTERACTION AREA */
+    /* FULL PAGE INTERACTION AREA */
 
     .scene {
       position: relative;
@@ -65,8 +63,6 @@
     }
 
 
-    /* EYEBALL */
-
     .eye {
       will-change: transform;
     }
@@ -79,15 +75,11 @@
 <body>
 
 
-  <!-- FULL PAGE INTERACTION AREA -->
-
   <div
     class="scene"
     id="scene"
   >
 
-
-    <!-- CHARACTER -->
 
     <div
       class="character"
@@ -141,332 +133,114 @@
     let currentY = 0;
 
 
-    /* HOW FAR THE EYE CAN MOVE */
+    /*
+      IDLE STATE
 
-    const maxMove = 18;
+      Starts true so he begins
+      looking around immediately.
+    */
+
+    let idle = true;
+    let idleTimer;
 
 
     /*
       AWARENESS RADIUS
 
-      Inside closeDistance:
-      fully focused.
+      closeDistance =
+      fully interested
 
-      Between closeDistance
-      and farDistance:
-      gradually becomes aware.
-
-      Outside farDistance:
-      idle.
+      farDistance =
+      fully idle
     */
 
     const closeDistance = 180;
     const farDistance = 800;
 
 
-    /* IDLE POSITION */
+    /*
+      MAXIMUM EYE MOVEMENT
+    */
 
-    let idleX = 0;
-    let idleY = 0;
-
-    let idleTargetX = 0;
-    let idleTargetY = 0;
-
-
-    /* CURSOR POSITION */
-
-    let cursorX = null;
-    let cursorY = null;
-
-
-    /* ATTENTION */
-
-    let attention = 0;
-    let targetAttention = 0;
+    const maxMove = 18;
 
 
     /*
-      PICK A NEW IDLE
-      LOOKING DIRECTION
+      SMOOTHLY RETURN
+      TO IDLE AFTER
+      LOSING INTEREST
     */
 
-    function chooseIdleDirection() {
+    function resetIdle() {
 
-      const angle =
-        Math.random() *
-        Math.PI *
-        2;
+      clearTimeout(idleTimer);
 
-
-      /*
-        Random distance means
-        he doesn't always look
-        all the way to the edge.
-      */
-
-      const distance =
-        Math.random() *
-        maxMove *
-        0.8;
+      idle = false;
 
 
-      idleTargetX =
-        Math.cos(angle) *
-        distance;
+      idleTimer = setTimeout(() => {
 
+        idle = true;
 
-      idleTargetY =
-        Math.sin(angle) *
-        distance;
+        chooseIdleTarget();
+
+      }, 2500);
 
     }
 
 
     /*
-      WAIT, THEN LOOK
-      SOMEWHERE ELSE
+      PICK A RANDOM
+      IDLE LOOKING POSITION
+
+      Based directly on the
+      smaller logo behaviour.
     */
 
-    function scheduleIdleLook() {
+    function chooseIdleTarget() {
 
-      const delay =
-        2000 +
-        Math.random() *
-        3000;
+      if (!idle) return;
+
+
+      targetX =
+        (Math.random() * 12) - 6;
+
+
+      targetY =
+        (Math.random() * 8) - 4;
 
 
       setTimeout(() => {
 
-        chooseIdleDirection();
+        if (idle) {
 
-        scheduleIdleLook();
+          chooseIdleTarget();
 
-      }, delay);
+        }
+
+      },
+
+      1000 + Math.random() * 1500
+
+      );
 
     }
 
 
-    /* START IDLE */
-
-    chooseIdleDirection();
-    scheduleIdleLook();
-
-
     /*
       TRACK CURSOR
+      ACROSS FULL LANDING AREA
     */
 
     scene.addEventListener(
       "mousemove",
       (event) => {
 
-        cursorX =
-          event.clientX;
-
-        cursorY =
-          event.clientY;
-
-      }
-    );
-
-
-    /*
-      CURSOR LEAVES
-      INTERACTION AREA
-    */
-
-    scene.addEventListener(
-      "mouseleave",
-      () => {
-
-        cursorX = null;
-        cursorY = null;
-
-        targetAttention = 0;
-
-      }
-    );
-
-
-    /*
-      CALCULATE
-      HOW AWARE HE IS
-    */
-
-    function updateAttention() {
-
-
-      if (
-        cursorX === null ||
-        cursorY === null
-      ) {
-
-        targetAttention = 0;
-        return;
-
-      }
-
-
-      /*
-        USE ACTUAL EYE
-        AS THE CENTRE
-      */
-
-      const rect =
-        eye.getBoundingClientRect();
-
-
-      const centerX =
-        rect.left +
-        rect.width / 2;
-
-
-      const centerY =
-        rect.top +
-        rect.height / 2;
-
-
-      const deltaX =
-        cursorX -
-        centerX;
-
-
-      const deltaY =
-        cursorY -
-        centerY;
-
-
-      /*
-        TRUE STRAIGHT-LINE
-        DISTANCE
-      */
-
-      const distance =
-        Math.sqrt(
-          deltaX * deltaX +
-          deltaY * deltaY
-        );
-
-
-      /*
-        ATTENTION VALUE
-
-        1 = fully watching
-        0 = fully idle
-      */
-
-      if (
-        distance <= closeDistance
-      ) {
-
-        targetAttention = 1;
-
-      }
-
-
-      else if (
-        distance >= farDistance
-      ) {
-
-        targetAttention = 0;
-
-      }
-
-
-      else {
-
 
         /*
-          NORMALISE DISTANCE
-
-          0 = close
-          1 = far
+          GET ACTUAL POSITION
+          OF THE EYE
         */
-
-        const progress =
-          (distance - closeDistance) /
-          (farDistance - closeDistance);
-
-
-        /*
-          SMOOTHSTEP EASING
-        */
-
-        const smoothProgress =
-          progress *
-          progress *
-          (3 - 2 * progress);
-
-
-        targetAttention =
-          1 -
-          smoothProgress;
-
-      }
-
-    }
-
-
-    /*
-      MAIN ANIMATION
-    */
-
-    function animateEye() {
-
-
-      /* UPDATE AWARENESS */
-
-      updateAttention();
-
-
-      /*
-        SMOOTHLY FADE
-        BETWEEN IDLE
-        AND CURSOR TRACKING
-      */
-
-      attention +=
-        (
-          targetAttention -
-          attention
-        ) *
-        0.03;
-
-
-      /*
-        SMOOTHLY MOVE
-        TOWARDS IDLE TARGET
-      */
-
-      idleX +=
-        (
-          idleTargetX -
-          idleX
-        ) *
-        0.01;
-
-
-      idleY +=
-        (
-          idleTargetY -
-          idleY
-        ) *
-        0.01;
-
-
-      /*
-        CURSOR LOOKING TARGET
-      */
-
-      let cursorTargetX = 0;
-      let cursorTargetY = 0;
-
-
-      if (
-        cursorX !== null &&
-        cursorY !== null
-      ) {
-
 
         const rect =
           eye.getBoundingClientRect();
@@ -482,80 +256,156 @@
           rect.height / 2;
 
 
+        /*
+          CURSOR DISTANCE
+          FROM EYE
+        */
+
         const deltaX =
-          cursorX -
+          event.clientX -
           centerX;
 
 
         const deltaY =
-          cursorY -
+          event.clientY -
           centerY;
 
 
-        const angle =
-          Math.atan2(
-            deltaY,
-            deltaX
+        const distance =
+          Math.sqrt(
+            deltaX * deltaX +
+            deltaY * deltaY
           );
 
 
-        cursorTargetX =
-          Math.cos(angle) *
-          maxMove;
+        /*
+          NORMALISE DISTANCE
+          INTO ATTENTION
+        */
+
+        let attention = 0;
 
 
-        cursorTargetY =
-          Math.sin(angle) *
-          maxMove;
+        if (
+          distance <= closeDistance
+        ) {
+
+          attention = 1;
+
+        }
+
+
+        else if (
+          distance < farDistance
+        ) {
+
+
+          const progress =
+            (distance - closeDistance) /
+            (farDistance - closeDistance);
+
+
+          /*
+            SMOOTHSTEP
+
+            Makes the radius
+            feel softer.
+          */
+
+          const smoothProgress =
+            progress *
+            progress *
+            (3 - 2 * progress);
+
+
+          attention =
+            1 -
+            smoothProgress;
+
+        }
+
+
+        /*
+          ONLY INTERRUPT IDLE
+          WHEN HE ACTUALLY
+          NOTICES YOU
+        */
+
+        if (
+          attention > 0.05
+        ) {
+
+          resetIdle();
+
+
+          /*
+            DIRECTION
+            TOWARDS CURSOR
+          */
+
+          const angle =
+            Math.atan2(
+              deltaY,
+              deltaX
+            );
+
+
+          /*
+            CURSOR MOVEMENT
+            SCALES WITH
+            ATTENTION
+          */
+
+          targetX =
+            Math.cos(angle) *
+            maxMove *
+            attention;
+
+
+          targetY =
+            Math.sin(angle) *
+            maxMove *
+            attention;
+
+        }
 
       }
+    );
 
 
-      /*
-        BLEND IDLE + CURSOR
+    /*
+      WHEN CURSOR LEAVES
+      THE LANDING AREA
+    */
 
-        attention = 0
-        → fully idle
+    scene.addEventListener(
+      "mouseleave",
+      () => {
 
-        attention = 1
-        → fully watching
-      */
+        resetIdle();
 
-      targetX =
-        idleX *
-        (1 - attention) +
-
-        cursorTargetX *
-        attention;
+      }
+    );
 
 
-      targetY =
-        idleY *
-        (1 - attention) +
+    /*
+      MAIN ANIMATION
 
-        cursorTargetY *
-        attention;
+      Same smooth easing
+      as your smaller logo.
+    */
 
+    function animate() {
 
-      /*
-        FINAL SMOOTH
-        EYE MOVEMENT
-      */
 
       currentX +=
-        (
-          targetX -
-          currentX
-        ) *
-        0.05;
+        (targetX - currentX) *
+        0.08;
 
 
       currentY +=
-        (
-          targetY -
-          currentY
-        ) *
-        0.05;
+        (targetY - currentY) *
+        0.08;
 
 
       eye.style.transform =
@@ -563,7 +413,7 @@
 
 
       requestAnimationFrame(
-        animateEye
+        animate
       );
 
     }
@@ -571,7 +421,8 @@
 
     /* START */
 
-    animateEye();
+    animate();
+    chooseIdleTarget();
 
 
   </script>
