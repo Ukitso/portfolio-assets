@@ -20,6 +20,7 @@
       background: transparent;
     }
 
+
     /* FULL INTERACTION AREA */
 
     .scene {
@@ -30,7 +31,8 @@
       background: transparent;
     }
 
-    /* CHARACTER */
+
+    /* THE LITTLE GUY */
 
     .character {
       position: absolute;
@@ -44,7 +46,8 @@
       transform: translate(-50%, -50%);
     }
 
-    /* BODY + EYE */
+
+    /* BODY + EYEBALL */
 
     .body,
     .eye {
@@ -59,6 +62,9 @@
       pointer-events: none;
     }
 
+
+    /* EYEBALL */
+
     .eye {
       will-change: transform;
     }
@@ -70,15 +76,33 @@
 
 <body>
 
-  <div class="scene" id="scene">
 
-    <div class="character" id="character">
+  <!-- FULL PAGE INTERACTION AREA -->
+
+  <div
+    class="scene"
+    id="scene"
+  >
+
+
+    <!-- CHARACTER -->
+
+    <div
+      class="character"
+      id="character"
+    >
+
+
+      <!-- BODY -->
 
       <img
         src="body.png"
         class="body"
         alt=""
       >
+
+
+      <!-- EYEBALL -->
 
       <img
         src="eyeball.png"
@@ -87,17 +111,26 @@
         alt=""
       >
 
+
     </div>
+
 
   </div>
 
 
   <script>
 
-    const scene = document.getElementById("scene");
-    const character = document.getElementById("character");
-    const eye = document.getElementById("eye");
 
+    /* ELEMENTS */
+
+    const scene =
+      document.getElementById("scene");
+
+    const eye =
+      document.getElementById("eye");
+
+
+    /* EYE POSITION */
 
     let targetX = 0;
     let targetY = 0;
@@ -106,112 +139,219 @@
     let currentY = 0;
 
 
-    /* MAXIMUM EYE MOVEMENT */
+    /* HOW FAR THE EYE CAN MOVE */
 
     const maxMove = 18;
 
 
-    /* ATTENTION RANGE */
+    /*
+      AWARENESS RADIUS
 
-    const closeDistance = 250;
-    const farDistance = 600;
+      Inside closeDistance:
+      fully focused.
 
+      Between closeDistance
+      and farDistance:
+      gradually loses interest.
 
-    scene.addEventListener("mousemove", (event) => {
+      Outside farDistance:
+      completely idle.
+    */
 
-      const rect = character.getBoundingClientRect();
-
-      const centerX =
-        rect.left + rect.width / 2;
-
-      const centerY =
-        rect.top + rect.height / 2;
-
-
-      const deltaX =
-        event.clientX - centerX;
-
-      const deltaY =
-        event.clientY - centerY;
+    const closeDistance = 180;
+    const farDistance = 800;
 
 
-      const distance =
-        Math.sqrt(
-          deltaX * deltaX +
-          deltaY * deltaY
-        );
+    /* TRACK CURSOR */
+
+    scene.addEventListener(
+      "mousemove",
+      (event) => {
 
 
-      let attention;
+        /*
+          USE THE ACTUAL EYE
+          AS THE CENTRE POINT
+        */
+
+        const rect =
+          eye.getBoundingClientRect();
 
 
-      if (distance <= closeDistance) {
+        const centerX =
+          rect.left +
+          rect.width / 2;
 
-        attention = 1;
 
-      } else if (distance >= farDistance) {
+        const centerY =
+          rect.top +
+          rect.height / 2;
 
-        attention = 0;
 
-      } else {
+        /* DISTANCE FROM EYE */
 
-        attention =
-          1 -
-          (
-            (distance - closeDistance) /
-            (farDistance - closeDistance)
+        const deltaX =
+          event.clientX -
+          centerX;
+
+
+        const deltaY =
+          event.clientY -
+          centerY;
+
+
+        const distance =
+          Math.sqrt(
+            deltaX * deltaX +
+            deltaY * deltaY
           );
 
+
+        /*
+          ATTENTION LEVEL
+
+          1 = fully focused
+          0 = not interested
+        */
+
+        let attention;
+
+
+        if (
+          distance <= closeDistance
+        ) {
+
+          attention = 1;
+
+        }
+
+
+        else if (
+          distance >= farDistance
+        ) {
+
+          attention = 0;
+
+        }
+
+
+        else {
+
+
+          /*
+            NORMALISE DISTANCE
+
+            0 = close radius
+            1 = far radius
+          */
+
+          const progress =
+            (distance - closeDistance) /
+            (farDistance - closeDistance);
+
+
+          /*
+            SMOOTHSTEP EASING
+
+            Creates a soft,
+            gradual transition.
+          */
+
+          const smoothProgress =
+            progress *
+            progress *
+            (3 - 2 * progress);
+
+
+          attention =
+            1 -
+            smoothProgress;
+
+        }
+
+
+        /* DIRECTION TO CURSOR */
+
+        const angle =
+          Math.atan2(
+            deltaY,
+            deltaX
+          );
+
+
+        /*
+          EYE MOVEMENT
+
+          Movement strength
+          depends on attention.
+        */
+
+        targetX =
+          Math.cos(angle) *
+          maxMove *
+          attention;
+
+
+        targetY =
+          Math.sin(angle) *
+          maxMove *
+          attention;
+
       }
+    );
 
 
-      const angle =
-        Math.atan2(deltaY, deltaX);
+    /*
+      CURSOR LEAVES
+      THE FULL INTERACTION AREA
+    */
+
+    scene.addEventListener(
+      "mouseleave",
+      () => {
+
+        targetX = 0;
+        targetY = 0;
+
+      }
+    );
 
 
-      targetX =
-        Math.cos(angle) *
-        maxMove *
-        attention;
-
-
-      targetY =
-        Math.sin(angle) *
-        maxMove *
-        attention;
-
-    });
-
-
-    scene.addEventListener("mouseleave", () => {
-
-      targetX = 0;
-      targetY = 0;
-
-    });
-
+    /*
+      SMOOTH EYE MOVEMENT
+    */
 
     function animateEye() {
 
+
       currentX +=
-        (targetX - currentX) * 0.06;
+        (targetX - currentX) *
+        0.05;
+
 
       currentY +=
-        (targetY - currentY) * 0.06;
+        (targetY - currentY) *
+        0.05;
 
 
       eye.style.transform =
         `translate(${currentX}px, ${currentY}px)`;
 
 
-      requestAnimationFrame(animateEye);
+      requestAnimationFrame(
+        animateEye
+      );
 
     }
 
 
+    /* START */
+
     animateEye();
 
+
   </script>
+
 
 </body>
 
