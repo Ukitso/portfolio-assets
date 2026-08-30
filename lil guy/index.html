@@ -1,40 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-<style>
+  <style>
 
-html,
-body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: transparent;
-}
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+    }
 
-.character {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
+    .character {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
 
-.layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
+    /* BODY + EYEBALL */
 
-/* EYE */
+    .body,
+    .eye {
+      position: absolute;
+      inset: 0;
 
-.eye-mask {
+      width: 100%;
+      height: 100%;
+
+      object-fit: contain;
+    }
+
+    .body {
+      pointer-events: none;
+    }
+
+    .eye {
+      pointer-events: none;
+      will-change: transform;
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+  <div class="character" id="character">
+
+    <!-- BODY -->
+    <img
+      src="body.png"
+      class="body"
+      alt=""
+    >
+
+    <!-- EYEBALL -->
+    <img
+      src="eyeball.png"
+      class="eye"
+      id="eye"
+      alt=""
+    >
+
+  </div>
+
+
+  <script>
+
+    const character = document.getElementById("character");
+    const eye = document.getElementById("eye");
+
+    let targetX = 0;
+    let targetY = 0;
+
+    let currentX = 0;
+    let currentY = 0;
+
+
+    /*
+      How far the eyeball can move.
+
+      We can adjust this later.
+    */
+
+    const maxMove = 18;
+
+
+    /*
+      TRACK CURSOR
+    */
+
+    window.addEventListener("mousemove", (event) => {
+
+      const rect = character.getBoundingClientRect();
+
+      const centerX =
+        rect.left + rect.width / 2;
+
+      const centerY =
+        rect.top + rect.height / 2;
+
+
+      const deltaX =
+        event.clientX - centerX;
+
+      const deltaY =
+        event.clientY - centerY;
+
+
+      const angle =
+        Math.atan2(deltaY, deltaX);
+
+
+      targetX =
+        Math.cos(angle) * maxMove;
+
+      targetY =
+        Math.sin(angle) * maxMove;
+
+    });
+
+
+    /*
+      SMOOTH EYE MOVEMENT
+    */
+
+    function animateEye() {
+
+      currentX +=
+        (targetX - currentX) * 0.1;
+
+      currentY +=
+        (targetY - currentY) * 0.1;
+
+
+      eye.style.transform =
+        `translate(${currentX}px, ${currentY}px)`;
+
+
+      requestAnimationFrame(animateEye);
+
+    }
+
+
+    animateEye();
+
+  </script>
+
+</body>
+</html>.eye-mask {
   position: absolute;
   inset: 0;
 
