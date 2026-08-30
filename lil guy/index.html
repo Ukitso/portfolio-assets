@@ -1,554 +1,62 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
 
-  <style>
+/* FULL-SIZE INTERACTION AREA */
 
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: transparent;
-    }
+.scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
 
 
-    /* FULL-SIZE INTERACTION AREA */
+/* THE LITTLE GUY */
 
-    .scene {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: transparent;
-    }
+.character {
+  position: absolute;
 
+  /* SIZE */
 
-    /* THE LITTLE GUY */
+  width: 350px;
+  height: 350px;
 
-    .character {
-      position: absolute;
 
-      /* FIXED SIZE */
+  /* POSITION */
 
-      width: 250px;
-      height: 250px;
+  left: 50%;
+  top: 50%;
 
+  transform: translate(-50%, -50%);
+}
 
-      /* POSITION */
 
-      left: 50%;
-      top: 50%;
+/* BODY + EYEBALL */
 
-      transform: translate(-50%, -50%);
-    }
+.body,
+.eye {
+  position: absolute;
+  inset: 0;
 
+  width: 100%;
+  height: 100%;
 
-    /* BODY + EYEBALL */
+  object-fit: contain;
 
-    .body,
-    .eye {
-      position: absolute;
-      inset: 0;
+  pointer-events: none;
+}
 
-      width: 100%;
-      height: 100%;
 
-      object-fit: contain;
+/* EYEBALL */
 
-      pointer-events: none;
-    }
-
-
-    /* EYEBALL */
-
-    .eye {
-      will-change: transform;
-    }
-
-  </style>
-</head>
-
-
-<body>
-
-
-  <div
-    class="scene"
-    id="scene"
-  >
-
-
-    <div
-      class="character"
-      id="character"
-    >
-
-
-      <!-- BODY -->
-
-      <img
-        src="body.png"
-        class="body"
-        alt=""
-      >
-
-
-      <!-- EYEBALL -->
-
-      <img
-        src="eyeball.png"
-        class="eye"
-        id="eye"
-        alt=""
-      >
-
-
-    </div>
-
-
-  </div>
-
-
-  <script>
-
-
-    const scene =
-      document.getElementById("scene");
-
-    const character =
-      document.getElementById("character");
-
-    const eye =
-      document.getElementById("eye");
-
-
-    /* CURRENT + TARGET EYE POSITION */
-
-    let targetX = 0;
-    let targetY = 0;
-
-    let currentX = 0;
-    let currentY = 0;
-
-
-    /* HOW FAR THE EYE CAN MOVE */
-
-    const maxMove = 18;
-
-
-    /*
-      HOW CLOSE THE CURSOR NEEDS TO BE
-      BEFORE HE NOTICES IT
-    */
-
-    const noticeDistance = 500;
-
-
-    /* TRACK CURSOR */
-
-    scene.addEventListener(
-      "mousemove",
-      (event) => {
-
-
-        const rect =
-          character.getBoundingClientRect();
-
-
-        const centerX =
-          rect.left +
-          rect.width / 2;
-
-
-        const centerY =
-          rect.top +
-          rect.height / 2;
-
-
-        const deltaX =
-          event.clientX -
-          centerX;
-
-
-        const deltaY =
-          event.clientY -
-          centerY;
-
-
-        const distance =
-          Math.sqrt(
-            deltaX * deltaX +
-            deltaY * deltaY
-          );
-
-
-        /*
-          ONLY LOOK AT CURSOR
-          WHEN IT IS NEARBY
-        */
-
-        if (
-          distance < noticeDistance
-        ) {
-
-
-          const angle =
-            Math.atan2(
-              deltaY,
-              deltaX
-            );
-
-
-          targetX =
-            Math.cos(angle) *
-            maxMove;
-
-
-          targetY =
-            Math.sin(angle) *
-            maxMove;
-
-        }
-
-
-        /*
-          IF CURSOR IS FAR AWAY,
-          RETURN TO CENTRE
-        */
-
-        else {
-
-          targetX = 0;
-          targetY = 0;
-
-        }
-
-      }
-    );
-
-
-    /*
-      CURSOR LEAVES
-      THE INTERACTION AREA
-    */
-
-    scene.addEventListener(
-      "mouseleave",
-      () => {
-
-        targetX = 0;
-        targetY = 0;
-
-      }
-    );
-
-
-    /* SMOOTH EYE MOVEMENT */
-
-    function animateEye() {
-
-
-      currentX +=
-        (targetX - currentX) *
-        0.08;
-
-
-      currentY +=
-        (targetY - currentY) *
-        0.08;
-
-
-      eye.style.transform =
-        `translate(${currentX}px, ${currentY}px)`;
-
-
-      requestAnimationFrame(
-        animateEye
-      );
-
-    }
-
-
-    animateEye();
-
-
-  </script>
-
-
-</body>
-</html>
-    /* CHARACTER */
-
-    .character {
-      position: absolute;
-
-      /*
-        Character size.
-
-        Maximum: 350px
-        On smaller screens: shrinks responsively
-      */
-
-      width: min(350px, 40vw);
-
-      aspect-ratio: 1 / 1;
-
-
-      /* CHARACTER POSITION */
-
-      left: 50%;
-      top: 50%;
-
-      transform: translate(-50%, -50%);
-    }
-
-
-    /* BODY + EYEBALL */
-
-    .body,
-    .eye {
-      position: absolute;
-
-      inset: 0;
-
-      width: 100%;
-      height: 100%;
-
-      object-fit: contain;
-
-      pointer-events: none;
-    }
-
-
-    /* EYEBALL */
-
-    .eye {
-      will-change: transform;
-    }
-
-  </style>
-</head>
-
-
-<body>
-
-
-  <!-- FULL PAGE INTERACTION AREA -->
-
-  <div class="scene" id="scene">
-
-
-    <!-- CHARACTER -->
-
-    <div
-      class="character"
-      id="character"
-    >
-
-
-      <!-- BODY -->
-
-      <img
-        src="body.png"
-        class="body"
-        alt=""
-      >
-
-
-      <!-- EYEBALL -->
-
-      <img
-        src="eyeball.png"
-        class="eye"
-        id="eye"
-        alt=""
-      >
-
-
-    </div>
-
-
-  </div>
-
-
-  <script>
-
-
-    /* ELEMENTS */
-
-    const scene =
-      document.getElementById("scene");
-
-    const character =
-      document.getElementById("character");
-
-    const eye =
-      document.getElementById("eye");
-
-
-    /* EYE POSITION */
-
-    let targetX = 0;
-    let targetY = 0;
-
-    let currentX = 0;
-    let currentY = 0;
-
-
-    /*
-      HOW FAR THE EYE CAN MOVE
-
-      Change this later if needed.
-    */
-
-    const maxMove = 18;
-
-
-    /*
-      HOW CLOSE THE CURSOR NEEDS TO BE
-      BEFORE HE "NOTICES" IT
-    */
-
-    const noticeDistance = 500;
-
-
-    /* TRACK CURSOR */
-
-    scene.addEventListener(
-      "mousemove",
-      (event) => {
-
-
-        /* CHARACTER POSITION */
-
-        const rect =
-          character.getBoundingClientRect();
-
-
-        const centerX =
-          rect.left +
-          rect.width / 2;
-
-        const centerY =
-          rect.top +
-          rect.height / 2;
-
-
-        /* CURSOR DISTANCE FROM CHARACTER */
-
-        const deltaX =
-          event.clientX -
-          centerX;
-
-        const deltaY =
-          event.clientY -
-          centerY;
-
-
-        /*
-          DISTANCE BETWEEN
-          CURSOR + CHARACTER
-        */
-
-        const distance =
-          Math.sqrt(
-            deltaX * deltaX +
-            deltaY * deltaY
-          );
-
-
-        /*
-          ONLY FOLLOW CURSOR
-          WHEN IT'S CLOSE ENOUGH
-        */
-
-        if (
-          distance < noticeDistance
-        ) {
-
-
-          const angle =
-            Math.atan2(
-              deltaY,
-              deltaX
-            );
-
-
-          targetX =
-            Math.cos(angle) *
-            maxMove;
-
-
-          targetY =
-            Math.sin(angle) *
-            maxMove;
-
-        }
-
-      }
-    );
-
-
-    /*
-      CURSOR LEAVES PAGE
-
-      RETURN EYE TO CENTRE
-    */
-
-    scene.addEventListener(
-      "mouseleave",
-      () => {
-
-        targetX = 0;
-        targetY = 0;
-
-      }
-    );
-
-
-    /*
-      SMOOTH EYE MOVEMENT
-    */
-
-    function animateEye() {
-
-
-      currentX +=
-        (targetX - currentX) *
-        0.08;
-
-
-      currentY +=
-        (targetY - currentY) *
-        0.08;
-
-
-      eye.style.transform =
-        `translate(${currentX}px, ${currentY}px)`;
-
-
-      requestAnimationFrame(
-        animateEye
-      );
-
-    }
-
-
-    /* START ANIMATION */
-
-    animateEye();
-
-
-  </script>
-
-
-</body>
-</html>
+.eye {
+  will-change: transform;
+}
