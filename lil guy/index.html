@@ -45,21 +45,11 @@
       left: 50%;
       top: 50%;
 
-      /*
-        Keep the character
-        centred in the widget.
-      */
-
       transform: translate(-50%, -50%);
     }
 
 
-    /*
-      BODY WRAPPER
-
-      This is animated separately
-      from the eyeball.
-    */
+    /* BODY WRAPPER */
 
     .body-wrapper {
       position: absolute;
@@ -113,15 +103,11 @@
 <body>
 
 
-  <!-- FULL PAGE INTERACTION AREA -->
-
   <div
     class="scene"
     id="scene"
   >
 
-
-    <!-- CHARACTER -->
 
     <div
       class="character"
@@ -129,12 +115,7 @@
     >
 
 
-      <!--
-        BODY WRAPPER
-
-        Lets the body move
-        independently.
-      -->
+      <!-- BODY -->
 
       <div
         class="body-wrapper"
@@ -194,8 +175,7 @@
 
 
     /*
-      MAXIMUM CURSOR
-      EYE MOVEMENT
+      MAXIMUM EYE MOVEMENT
     */
 
     const maxMove = 18;
@@ -212,15 +192,19 @@
 
     /*
       AWARENESS RADIUS
+
+      Increased far distance
+      for a larger, softer
+      following range.
     */
 
     const closeDistance = 180;
-    const farDistance = 800;
+    const farDistance = 1400;
 
 
     /*
       RETURN TO IDLE
-      AFTER 2.5 SECONDS
+      AFTER INTERACTION STOPS
     */
 
     function resetIdle() {
@@ -242,8 +226,8 @@
 
 
     /*
-      PICK A MORE ACTIVE
-      IDLE LOOKING POSITION
+      PICK ACTIVE
+      IDLE POSITION
     */
 
     function chooseIdleTarget() {
@@ -324,10 +308,6 @@
         let attention = 0;
 
 
-        /*
-          FULL ATTENTION
-        */
-
         if (
           distance <= closeDistance
         ) {
@@ -336,11 +316,6 @@
 
         }
 
-
-        /*
-          SOFT ATTENTION
-          FALLOFF
-        */
 
         else if (
           distance < farDistance
@@ -351,6 +326,10 @@
             (distance - closeDistance) /
             (farDistance - closeDistance);
 
+
+          /*
+            SOFT EASING
+          */
 
           const smoothProgress =
             progress *
@@ -366,12 +345,12 @@
 
 
         /*
-          ONLY INTERRUPT IDLE
+          INTERRUPT IDLE
           WHEN HE NOTICES YOU
         */
 
         if (
-          attention > 0.05
+          attention > 0.02
         ) {
 
           resetIdle();
@@ -416,30 +395,20 @@
 
 
     /* ------------------------- */
-    /* BODY ANIMATION            */
+    /* BODY REACTION             */
     /* ------------------------- */
 
 
     /*
-      BODY LEAN
+      BODY HAS ITS OWN
+      SLOWER POSITION.
 
-      The body follows the
-      eye slightly behind.
+      This creates a delayed
+      reaction to the eye.
     */
 
-    let bodyLeanX = 0;
-    let bodyLeanY = 0;
-
-
-    /*
-      FLOATING TIMER
-
-      Used for continuous
-      gentle movement.
-    */
-
-    let startTime =
-      performance.now();
+    let bodyFollowX = 0;
+    let bodyFollowY = 0;
 
 
     function animate() {
@@ -451,12 +420,18 @@
 
 
       currentX +=
-        (targetX - currentX) *
+        (
+          targetX -
+          currentX
+        ) *
         0.08;
 
 
       currentY +=
-        (targetY - currentY) *
+        (
+          targetY -
+          currentY
+        ) *
         0.08;
 
 
@@ -468,108 +443,108 @@
 
 
       /* --------------------- */
-      /* BODY LEAN             */
+      /* BODY FOLLOW           */
       /* --------------------- */
 
 
       /*
-        Body follows eye
-        with slower easing.
+        Body reacts more slowly
+        than the eye.
       */
 
-      bodyLeanX +=
+      bodyFollowX +=
         (
           currentX -
-          bodyLeanX
+          bodyFollowX
         ) *
         0.025;
 
 
-      bodyLeanY +=
+      bodyFollowY +=
         (
           currentY -
-          bodyLeanY
+          bodyFollowY
         ) *
         0.025;
 
 
       /*
-        BODY POSITION
+        SMALL BODY SHIFT
 
-        Eye movement is scaled
-        down so the body only
-        reacts subtly.
+        Body doesn't move as far
+        as the eye.
       */
 
-      const leanX =
-        bodyLeanX *
-        0.18;
+      const shiftX =
+        bodyFollowX *
+        0.28;
 
 
-      const leanY =
-        bodyLeanY *
-        0.10;
+      const shiftY =
+        bodyFollowY *
+        0.16;
 
 
       /*
-        TIME FOR BREATHING
-        / FLOATING MOTION
-      */
-
-      const time =
-        (
-          performance.now() -
-          startTime
-        ) /
-        1000;
-
-
-      /*
-        SUBTLE FLOAT
-      */
-
-      const floatY =
-        Math.sin(
-          time *
-          1.4
-        ) *
-        3;
-
-
-      /*
-        TINY NATURAL ROTATION
-
-        The eye direction also
-        influences the lean.
+        BODY LEANS
+        TOWARDS EYE DIRECTION
       */
 
       const rotate =
-        (
-          bodyLeanX *
-          0.12
-        ) +
+        bodyFollowX *
+        0.16;
 
+
+      /*
+        SQUASH + STRETCH
+
+        Looking up:
+        slightly taller.
+
+        Looking down:
+        slightly squashed.
+      */
+
+      const stretch =
+        bodyFollowY *
+        -0.006;
+
+
+      const scaleY =
+        1 +
+        stretch;
+
+
+      const scaleX =
+        1 -
         (
-          Math.sin(
-            time *
-            0.9
-          ) *
+          stretch *
           0.5
         );
 
 
       /*
-        APPLY BODY MOVEMENT
+        APPLY BODY REACTION
+
+        No constant floating.
+        Everything is motivated
+        by the eye movement.
       */
 
       bodyWrapper.style.transform =
         `
           translate(
-            ${leanX}px,
-            ${leanY + floatY}px
+            ${shiftX}px,
+            ${shiftY}px
           )
+
           rotate(
             ${rotate}deg
+          )
+
+          scale(
+            ${scaleX},
+            ${scaleY}
           )
         `;
 
