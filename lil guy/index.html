@@ -191,10 +191,10 @@
 
 
     /*
-      LOW AMBIENT FILL
+      LOW AMBIENT LIGHT
 
-      Keeps shadows visible instead
-      of flattening the entire model.
+      Keeps some detail visible,
+      but allows deep shadows.
     */
 
 
@@ -203,7 +203,7 @@
 
         0xffffff,
 
-        0.22
+        0.12
 
       );
 
@@ -215,37 +215,71 @@
     );
 
 
+    /* ------------------------- */
+    /* MAIN KEY LIGHT            */
+    /* ------------------------- */
+
+
     /*
-      MAIN KEY LIGHT
+      Strong light from the
+      UPPER RIGHT and FRONT.
 
-      Strong light from above,
-      left and towards the front.
-
-      This creates the main soft
-      highlight across the ears,
-      head and upper body.
+      Low penumbra creates a much
+      sharper transition between
+      the lit and shadow areas.
     */
 
 
     const keyLight =
-      new THREE.DirectionalLight(
+      new THREE.SpotLight(
 
-        0xffffff,
-
-        2.8
+        0xffffff
 
       );
 
 
+    keyLight.intensity =
+      10;
+
+
     keyLight.position.set(
 
-      -6,
+      6,
 
       7,
 
       8
 
     );
+
+
+    /*
+      Wide enough to cover
+      the character.
+    */
+
+
+    keyLight.angle =
+      0.65;
+
+
+    /*
+      VERY SHARP EDGE.
+
+      Lower = harder transition.
+    */
+
+
+    keyLight.penumbra =
+      0.02;
+
+
+    keyLight.decay =
+      0;
+
+
+    keyLight.distance =
+      0;
 
 
     keyLight.target.position.set(
@@ -273,12 +307,15 @@
     );
 
 
-    /*
-      VERY SUBTLE FILL
+    /* ------------------------- */
+    /* SUBTLE LEFT FILL          */
+    /* ------------------------- */
 
-      Keeps the right side from
-      becoming completely black,
-      without flattening the model.
+
+    /*
+      Barely lifts the darkest
+      areas without flattening
+      the main shadow.
     */
 
 
@@ -287,18 +324,18 @@
 
         0xffffff,
 
-        0.18
+        0.05
 
       );
 
 
     fillLight.position.set(
 
-      5,
+      -6,
 
       2,
 
-      3
+      4
 
     );
 
@@ -324,6 +361,162 @@
     scene.add(
 
       fillLight.target
+
+    );
+
+
+    /* ------------------------- */
+    /* UPPER SPOT HIGHLIGHT      */
+    /* ------------------------- */
+
+
+    /*
+      Concentrated highlight on
+      the upper-right/head area.
+    */
+
+
+    const upperSpot =
+      new THREE.SpotLight(
+
+        0xffffff
+
+      );
+
+
+    upperSpot.intensity =
+      5;
+
+
+    upperSpot.position.set(
+
+      7,
+
+      6,
+
+      6
+
+    );
+
+
+    upperSpot.angle =
+      0.32;
+
+
+    /*
+      Fairly sharp highlight.
+    */
+
+
+    upperSpot.penumbra =
+      0.06;
+
+
+    upperSpot.decay =
+      0;
+
+
+    upperSpot.distance =
+      0;
+
+
+    upperSpot.target.position.set(
+
+      0.8,
+
+      1.1,
+
+      0
+
+    );
+
+
+    scene.add(
+
+      upperSpot
+
+    );
+
+
+    scene.add(
+
+      upperSpot.target
+
+    );
+
+
+    /* ------------------------- */
+    /* BODY SPOT HIGHLIGHT       */
+    /* ------------------------- */
+
+
+    /*
+      Separate highlight lower
+      on the right side of
+      the character.
+    */
+
+
+    const bodySpot =
+      new THREE.SpotLight(
+
+        0xffffff
+
+      );
+
+
+    bodySpot.intensity =
+      4;
+
+
+    bodySpot.position.set(
+
+      7,
+
+      0.5,
+
+      6
+
+    );
+
+
+    bodySpot.angle =
+      0.28;
+
+
+    bodySpot.penumbra =
+      0.04;
+
+
+    bodySpot.decay =
+      0;
+
+
+    bodySpot.distance =
+      0;
+
+
+    bodySpot.target.position.set(
+
+      0.9,
+
+      -0.9,
+
+      0
+
+    );
+
+
+    scene.add(
+
+      bodySpot
+
+    );
+
+
+    scene.add(
+
+      bodySpot.target
 
     );
 
@@ -388,16 +581,6 @@
                 false;
 
 
-              /*
-                MATERIAL TUNING
-
-                Slightly reduced
-                roughness gives the
-                surface more visible
-                light roll-off.
-              */
-
-
               if (
 
                 object.material
@@ -405,8 +588,15 @@
               ) {
 
 
+                /*
+                  Lower roughness gives
+                  the spotlights more
+                  visible highlights.
+                */
+
+
                 object.material.roughness =
-                  0.58;
+                  0.48;
 
 
                 object.material.metalness =
