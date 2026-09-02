@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -10,8 +11,6 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-
-  <!-- THREE.JS IMPORT MAP -->
 
   <script type="importmap">
   {
@@ -158,11 +157,6 @@
     );
 
 
-    /*
-      TRANSPARENT BACKGROUND
-    */
-
-
     renderer.setClearColor(
 
       0x000000,
@@ -172,22 +166,8 @@
     );
 
 
-    /*
-      COLOUR MANAGEMENT
-    */
-
-
     renderer.outputColorSpace =
       THREE.SRGBColorSpace;
-
-
-    /*
-      KEEP LIGHTING GRAPHIC
-      AND CLEAN
-
-      Illustrator is not using
-      cinematic film tone mapping.
-    */
 
 
     renderer.toneMapping =
@@ -211,23 +191,10 @@
 
 
     /*
-      ILLUSTRATOR SETTINGS:
+      LOW AMBIENT FILL
 
-      Light intensity: 70%
-      Rotation: 145°
-      Height: 45°
-      Softness: 40%
-
-      Ambient light: ON
-      Ambient intensity: 50%
-    */
-
-
-    /*
-      AMBIENT LIGHT
-
-      Approximates Illustrator's
-      50% Ambient Light setting.
+      Keeps shadows visible instead
+      of flattening the entire model.
     */
 
 
@@ -236,7 +203,7 @@
 
         0xffffff,
 
-        0.5
+        0.22
 
       );
 
@@ -251,12 +218,12 @@
     /*
       MAIN KEY LIGHT
 
-      Neutral white light.
+      Strong light from above,
+      left and towards the front.
 
-      Position approximates:
-
-      Rotation: 145°
-      Height: 45°
+      This creates the main soft
+      highlight across the ears,
+      head and upper body.
     */
 
 
@@ -265,55 +232,20 @@
 
         0xffffff,
 
-        1.4
+        2.8
 
       );
-
-
-    /*
-      145° around the model.
-
-      We use a reasonably large
-      distance because a
-      DirectionalLight's position
-      determines direction rather
-      than distance falloff.
-    */
-
-
-    const rotation =
-      THREE.MathUtils.degToRad(
-        145
-      );
-
-
-    const radius =
-      10;
-
-
-    const height =
-      7;
 
 
     keyLight.position.set(
 
-      Math.cos(
-        rotation
-      ) * radius,
+      -6,
 
-      height,
+      7,
 
-      Math.sin(
-        rotation
-      ) * radius
+      8
 
     );
-
-
-    /*
-      AIM LIGHT AT OKO'S
-      CENTRE
-    */
 
 
     keyLight.target.position.set(
@@ -341,8 +273,63 @@
     );
 
 
+    /*
+      VERY SUBTLE FILL
+
+      Keeps the right side from
+      becoming completely black,
+      without flattening the model.
+    */
+
+
+    const fillLight =
+      new THREE.DirectionalLight(
+
+        0xffffff,
+
+        0.18
+
+      );
+
+
+    fillLight.position.set(
+
+      5,
+
+      2,
+
+      3
+
+    );
+
+
+    fillLight.target.position.set(
+
+      0,
+
+      0,
+
+      0
+
+    );
+
+
+    scene.add(
+
+      fillLight
+
+    );
+
+
+    scene.add(
+
+      fillLight.target
+
+    );
+
+
     /* ------------------------- */
-    /* LOAD OKO                  */
+    /* LOAD MODEL                */
     /* ------------------------- */
 
 
@@ -359,12 +346,16 @@
 
 
       function (
+
         gltf
+
       ) {
 
 
         console.log(
+
           "OKO LOADED"
+
         );
 
 
@@ -373,24 +364,60 @@
 
 
         /*
-          PREPARE MESHES
+          PREPARE MODEL
         */
 
 
         oko.traverse(
 
           function (
+
             object
+
           ) {
 
 
             if (
+
               object.isMesh
+
             ) {
 
 
               object.frustumCulled =
                 false;
+
+
+              /*
+                MATERIAL TUNING
+
+                Slightly reduced
+                roughness gives the
+                surface more visible
+                light roll-off.
+              */
+
+
+              if (
+
+                object.material
+
+              ) {
+
+
+                object.material.roughness =
+                  0.58;
+
+
+                object.material.metalness =
+                  0;
+
+
+                object.material.needsUpdate =
+                  true;
+
+
+              }
 
 
             }
@@ -401,16 +428,17 @@
         );
 
 
-        /*
-          CALCULATE MODEL
-          BOUNDS
-        */
+        /* --------------------- */
+        /* MODEL BOUNDS          */
+        /* --------------------- */
 
 
         const box =
           new THREE.Box3()
           .setFromObject(
+
             oko
+
           );
 
 
@@ -431,8 +459,7 @@
 
 
         /*
-          CENTRE OKO
-          AT WORLD ORIGIN
+          CENTRE MODEL
         */
 
 
@@ -450,9 +477,9 @@
         );
 
 
-        /*
-          FIT CAMERA
-        */
+        /* --------------------- */
+        /* CAMERA FRAMING        */
+        /* --------------------- */
 
 
         const maxSize =
@@ -476,11 +503,14 @@
 
 
         let distance =
+
           (
 
             maxSize / 2
 
-          ) /
+          )
+
+          /
 
           Math.tan(
 
@@ -554,18 +584,17 @@
       },
 
 
-      /*
-        LOADING PROGRESS
-      */
-
-
       function (
+
         progress
+
       ) {
 
 
         if (
+
           progress.total
+
         ) {
 
 
@@ -576,13 +605,22 @@
             Math.round(
 
               (
+
                 progress.loaded /
 
                 progress.total
 
-              ) * 100
+              )
 
-            ) + "%"
+              *
+
+              100
+
+            )
+
+            +
+
+            "%"
 
           );
 
@@ -593,13 +631,10 @@
       },
 
 
-      /*
-        ERROR
-      */
-
-
       function (
+
         error
+
       ) {
 
 
@@ -631,12 +666,6 @@
 
       const height =
         container.clientHeight;
-
-
-      /*
-        Avoid divide-by-zero
-        issues while embedding.
-      */
 
 
       if (
