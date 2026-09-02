@@ -195,7 +195,7 @@
 
         0xffffff,
 
-        0.12
+        0.22
 
       );
 
@@ -207,48 +207,33 @@
     );
 
 
-    /* ------------------------- */
-    /* MAIN KEY LIGHT            */
-    /* ------------------------- */
+    /*
+      MAIN LIGHT
+
+      Positioned to the RIGHT,
+      above and towards the front.
+    */
 
 
     const keyLight =
-      new THREE.SpotLight(
+      new THREE.DirectionalLight(
 
-        0xffffff
+        0xffffff,
+
+        3.2
 
       );
 
 
-    keyLight.intensity =
-      10;
-
-
     keyLight.position.set(
 
-      6,
-
       7,
+
+      6,
 
       8
 
     );
-
-
-    keyLight.angle =
-      0.65;
-
-
-    keyLight.penumbra =
-      0.02;
-
-
-    keyLight.decay =
-      0;
-
-
-    keyLight.distance =
-      0;
 
 
     keyLight.target.position.set(
@@ -276,9 +261,13 @@
     );
 
 
-    /* ------------------------- */
-    /* SUBTLE LEFT FILL          */
-    /* ------------------------- */
+    /*
+      DARKER OPPOSITE SIDE
+
+      This is intentionally very
+      subtle so the main light
+      direction stays strong.
+    */
 
 
     const fillLight =
@@ -286,16 +275,16 @@
 
         0xffffff,
 
-        0.05
+        0.08
 
       );
 
 
     fillLight.position.set(
 
-      -6,
+      -5,
 
-      2,
+      1,
 
       4
 
@@ -327,55 +316,48 @@
     );
 
 
-    /* ------------------------- */
-    /* UPPER SPOT HIGHLIGHT      */
-    /* ------------------------- */
+    /*
+      SMALL SPECULAR SPOTLIGHT
+
+      Creates a tighter,
+      more concentrated highlight.
+    */
 
 
-    const upperSpot =
+    const spotLight =
       new THREE.SpotLight(
 
-        0xffffff
+        0xffffff,
+
+        35,
+
+        20,
+
+        Math.PI / 7,
+
+        0.35,
+
+        2
 
       );
 
 
-    upperSpot.intensity =
-      5;
+    spotLight.position.set(
 
+      5,
 
-    upperSpot.position.set(
+      5,
 
-      7,
-
-      6,
-
-      6
+      7
 
     );
 
 
-    upperSpot.angle =
-      0.32;
+    spotLight.target.position.set(
 
+      0,
 
-    upperSpot.penumbra =
-      0.06;
-
-
-    upperSpot.decay =
-      0;
-
-
-    upperSpot.distance =
-      0;
-
-
-    upperSpot.target.position.set(
-
-      0.8,
-
-      1.1,
+      0,
 
       0
 
@@ -384,83 +366,130 @@
 
     scene.add(
 
-      upperSpot
+      spotLight
 
     );
 
 
     scene.add(
 
-      upperSpot.target
+      spotLight.target
 
     );
 
 
     /* ------------------------- */
-    /* BODY SPOT HIGHLIGHT       */
+    /* CURSOR                    */
     /* ------------------------- */
 
 
-    const bodySpot =
-      new THREE.SpotLight(
+    const mouse =
+      new THREE.Vector2(
 
-        0xffffff
+        0,
+
+        0
 
       );
 
 
-    bodySpot.intensity =
-      4;
+    /*
+      These values represent
+      where the eye wants to move.
+    */
 
 
-    bodySpot.position.set(
+    const eyeTarget =
+      new THREE.Vector2(
 
-      7,
+        0,
 
-      0.5,
+        0
 
-      6
-
-    );
-
-
-    bodySpot.angle =
-      0.28;
+      );
 
 
-    bodySpot.penumbra =
-      0.04;
+    window.addEventListener(
+
+      "pointermove",
+
+      function (
+
+        event
+
+      ) {
 
 
-    bodySpot.decay =
-      0;
+        const rect =
+          renderer.domElement
+          .getBoundingClientRect();
 
 
-    bodySpot.distance =
-      0;
+        mouse.x =
+
+          (
+
+            (
+
+              event.clientX -
+
+              rect.left
+
+            )
+
+            /
+
+            rect.width
+
+          )
+
+          *
+
+          2
+
+          -
+
+          1;
 
 
-    bodySpot.target.position.set(
+        mouse.y =
 
-      0.9,
+          -
 
-      -0.9,
+          (
 
-      0
+            (
 
-    );
+              event.clientY -
+
+              rect.top
+
+            )
+
+            /
+
+            rect.height
+
+          )
+
+          *
+
+          2
+
+          +
+
+          1;
 
 
-    scene.add(
-
-      bodySpot
-
-    );
+        eyeTarget.x =
+          mouse.x;
 
 
-    scene.add(
+        eyeTarget.y =
+          mouse.y;
 
-      bodySpot.target
+
+      }
 
     );
 
@@ -475,6 +504,59 @@
 
 
     let oko;
+
+
+    /*
+      EYEBALL MESH
+    */
+
+
+    let eyeball =
+      null;
+
+
+    /*
+      ORIGINAL EYEBALL POSITION
+
+      We save this so movement is
+      always relative to the rigged
+      position exported from Blender.
+    */
+
+
+    let eyeballBasePosition =
+      new THREE.Vector3();
+
+
+    /*
+      SMOOTH CURRENT POSITION
+    */
+
+
+    const eyeballCurrentOffset =
+      new THREE.Vector2(
+
+        0,
+
+        0
+
+      );
+
+
+    /*
+      HOW FAR THE EYE CAN MOVE
+
+      Increase these numbers if you
+      want stronger eye movement.
+    */
+
+
+    const eyeMovementX =
+      0.12;
+
+
+    const eyeMovementY =
+      0.10;
 
 
     loader.load(
@@ -501,41 +583,6 @@
 
 
         /* --------------------- */
-        /* PRINT ALL OBJECTS     */
-        /* --------------------- */
-
-
-        console.log(
-
-          "ALL OBJECTS:"
-
-        );
-
-
-        oko.traverse(
-
-          function (
-
-            object
-
-          ) {
-
-
-            console.log(
-
-              object.type,
-              ":",
-              object.name
-
-            );
-
-
-          }
-
-        );
-
-
-        /* --------------------- */
         /* PREPARE MODEL         */
         /* --------------------- */
 
@@ -558,6 +605,48 @@
 
               object.frustumCulled =
                 false;
+
+
+              /*
+                FIND EYEBALL
+              */
+
+
+              if (
+
+                object.name ===
+                "EYEBALL"
+
+              ) {
+
+
+                eyeball =
+                  object;
+
+
+                eyeballBasePosition
+                  .copy(
+
+                    eyeball.position
+
+                  );
+
+
+                console.log(
+
+                  "EYEBALL FOUND:",
+
+                  eyeball
+
+                );
+
+
+              }
+
+
+              /*
+                MATERIAL
+              */
 
 
               if (
@@ -865,6 +954,120 @@
 
 
     /* ------------------------- */
+    /* ANIMATE EYE               */
+    /* ------------------------- */
+
+
+    function animateEyeball() {
+
+
+      if (
+
+        !eyeball
+
+      ) {
+
+        return;
+
+      }
+
+
+      /*
+        SMOOTHLY FOLLOW CURSOR
+
+        The damping keeps the eye
+        from snapping instantly.
+      */
+
+
+      eyeballCurrentOffset.x +=
+
+        (
+
+          eyeTarget.x -
+
+          eyeballCurrentOffset.x
+
+        )
+
+        *
+
+        0.08;
+
+
+      eyeballCurrentOffset.y +=
+
+        (
+
+          eyeTarget.y -
+
+          eyeballCurrentOffset.y
+
+        )
+
+        *
+
+        0.08;
+
+
+      /*
+        MOVE EYEBALL INSIDE SOCKET
+
+        Negative Y makes screen
+        movement feel natural.
+      */
+
+
+      eyeball.position.x =
+
+        eyeballBasePosition.x
+
+        +
+
+        (
+
+          eyeballCurrentOffset.x
+
+          *
+
+          eyeMovementX
+
+        );
+
+
+      eyeball.position.y =
+
+        eyeballBasePosition.y
+
+        +
+
+        (
+
+          -
+
+          eyeballCurrentOffset.y
+
+          *
+
+          eyeMovementY
+
+        );
+
+
+      /*
+        Keep the original depth.
+      */
+
+
+      eyeball.position.z =
+
+        eyeballBasePosition.z;
+
+
+    }
+
+
+    /* ------------------------- */
     /* RENDER LOOP               */
     /* ------------------------- */
 
@@ -877,6 +1080,9 @@
         animate
 
       );
+
+
+      animateEyeball();
 
 
       renderer.render(
