@@ -262,11 +262,7 @@
 
 
     /*
-      DARKER OPPOSITE SIDE
-
-      This is intentionally very
-      subtle so the main light
-      direction stays strong.
+      VERY SUBTLE FILL
     */
 
 
@@ -317,10 +313,10 @@
 
 
     /*
-      SMALL SPECULAR SPOTLIGHT
+      SPOTLIGHT
 
-      Creates a tighter,
-      more concentrated highlight.
+      Adds the sharper,
+      concentrated highlights.
     */
 
 
@@ -379,114 +375,289 @@
 
 
     /* ------------------------- */
-    /* CURSOR                    */
+    /* EYEBALL MOVEMENT          */
     /* ------------------------- */
 
 
-    const mouse =
-      new THREE.Vector2(
-
-        0,
-
-        0
-
-      );
-
-
     /*
-      These values represent
-      where the eye wants to move.
+      This follows the same logic
+      as your existing website eye:
+
+      target position
+      ↓
+      smooth easing
+      ↓
+      idle wandering after 2.5s
     */
 
 
-    const eyeTarget =
-      new THREE.Vector2(
+    let targetX =
+      0;
 
-        0,
 
-        0
+    let targetY =
+      0;
+
+
+    let currentX =
+      0;
+
+
+    let currentY =
+      0;
+
+
+    let idle =
+      true;
+
+
+    let idleTimer;
+
+
+    /*
+      How far the eyeball can move.
+
+      Increase these values for
+      stronger eye movement.
+    */
+
+
+    const eyeMovementX =
+      0.12;
+
+
+    const eyeMovementY =
+      0.10;
+
+
+    function resetIdle() {
+
+
+      clearTimeout(
+
+        idleTimer
 
       );
 
 
-    window.addEventListener(
+      idle =
+        false;
 
-      "pointermove",
 
-      function (
+      idleTimer =
+        setTimeout(
 
-        event
+          () => {
+
+
+            idle =
+              true;
+
+
+            chooseIdleTarget();
+
+
+          },
+
+          2500
+
+        );
+
+
+    }
+
+
+    function chooseIdleTarget() {
+
+
+      if (
+
+        !idle
 
       ) {
 
+        return;
 
-        const rect =
-          renderer.domElement
-          .getBoundingClientRect();
+      }
 
 
-        mouse.x =
+      /*
+        Random idle look direction.
+      */
+
+
+      targetX =
+        THREE.MathUtils.randFloat(
+
+          -
+
+          eyeMovementX
+          *
+          0.8,
+
+          eyeMovementX
+          *
+          0.8
+
+        );
+
+
+      targetY =
+        THREE.MathUtils.randFloat(
+
+          -
+
+          eyeMovementY
+          *
+          0.8,
+
+          eyeMovementY
+          *
+          0.8
+
+        );
+
+
+      setTimeout(
+
+        () => {
+
+
+          if (
+
+            idle
+
+          ) {
+
+
+            chooseIdleTarget();
+
+
+          }
+
+
+        },
+
+
+        THREE.MathUtils.randInt(
+
+          1000,
+
+          2500
+
+        )
+
+      );
+
+
+    }
+
+
+    document.addEventListener(
+
+      "mousemove",
+
+      (
+
+        event
+
+      ) => {
+
+
+        resetIdle();
+
+
+        /*
+          Convert the mouse position
+          into a range centred on
+          the middle of the screen.
+        */
+
+
+        const normalisedX =
 
           (
 
-            (
+            event.clientX
 
-              event.clientX -
+            -
 
-              rect.left
+            window.innerWidth /
+            2
 
-            )
+          )
 
-            /
+          /
 
-            rect.width
+          (
+
+            window.innerWidth /
+            2
+
+          );
+
+
+        const normalisedY =
+
+          (
+
+            event.clientY
+
+            -
+
+            window.innerHeight /
+            2
+
+          )
+
+          /
+
+          (
+
+            window.innerHeight /
+            2
+
+          );
+
+
+        /*
+          Convert that range into
+          the maximum eyeball movement.
+        */
+
+
+        targetX =
+
+          THREE.MathUtils.clamp(
+
+            normalisedX,
+
+            -1,
+
+            1
 
           )
 
           *
 
-          2
-
-          -
-
-          1;
+          eyeMovementX;
 
 
-        mouse.y =
+        targetY =
 
-          -
+          THREE.MathUtils.clamp(
 
-          (
+            normalisedY,
 
-            (
+            -1,
 
-              event.clientY -
-
-              rect.top
-
-            )
-
-            /
-
-            rect.height
+            1
 
           )
 
           *
 
-          2
-
-          +
-
-          1;
-
-
-        eyeTarget.x =
-          mouse.x;
-
-
-        eyeTarget.y =
-          mouse.y;
+          eyeMovementY;
 
 
       }
@@ -506,57 +677,12 @@
     let oko;
 
 
-    /*
-      EYEBALL MESH
-    */
-
-
     let eyeball =
       null;
 
 
-    /*
-      ORIGINAL EYEBALL POSITION
-
-      We save this so movement is
-      always relative to the rigged
-      position exported from Blender.
-    */
-
-
     let eyeballBasePosition =
       new THREE.Vector3();
-
-
-    /*
-      SMOOTH CURRENT POSITION
-    */
-
-
-    const eyeballCurrentOffset =
-      new THREE.Vector2(
-
-        0,
-
-        0
-
-      );
-
-
-    /*
-      HOW FAR THE EYE CAN MOVE
-
-      Increase these numbers if you
-      want stronger eye movement.
-    */
-
-
-    const eyeMovementX =
-      0.12;
-
-
-    const eyeMovementY =
-      0.10;
 
 
     loader.load(
@@ -645,7 +771,7 @@
 
 
               /*
-                MATERIAL
+                MATERIAL TUNING
               */
 
 
@@ -757,7 +883,8 @@
 
           (
 
-            maxSize / 2
+            maxSize /
+            2
 
           )
 
@@ -765,7 +892,8 @@
 
           Math.tan(
 
-            fov / 2
+            fov /
+            2
 
           );
 
@@ -801,13 +929,15 @@
 
             0.01,
 
-            distance / 100
+            distance /
+            100
 
           );
 
 
         camera.far =
-          distance * 100;
+          distance *
+          100;
 
 
         camera.updateProjectionMatrix();
@@ -820,6 +950,15 @@
           size
 
         );
+
+
+        /*
+          Start idle movement
+          once the eyeball exists.
+        */
+
+
+        chooseIdleTarget();
 
 
       },
@@ -954,7 +1093,7 @@
 
 
     /* ------------------------- */
-    /* ANIMATE EYE               */
+    /* ANIMATE EYEBALL           */
     /* ------------------------- */
 
 
@@ -973,20 +1112,20 @@
 
 
       /*
-        SMOOTHLY FOLLOW CURSOR
-
-        The damping keeps the eye
-        from snapping instantly.
+        Same smooth easing
+        as your existing code.
       */
 
 
-      eyeballCurrentOffset.x +=
+      currentX +=
 
         (
 
-          eyeTarget.x -
+          targetX
 
-          eyeballCurrentOffset.x
+          -
+
+          currentX
 
         )
 
@@ -995,13 +1134,15 @@
         0.08;
 
 
-      eyeballCurrentOffset.y +=
+      currentY +=
 
         (
 
-          eyeTarget.y -
+          targetY
 
-          eyeballCurrentOffset.y
+          -
+
+          currentY
 
         )
 
@@ -1011,10 +1152,12 @@
 
 
       /*
-        MOVE EYEBALL INSIDE SOCKET
+        The local axes of the
+        eyeball are reversed
+        horizontally relative
+        to the screen.
 
-        Negative Y makes screen
-        movement feel natural.
+        So X is inverted here.
       */
 
 
@@ -1022,17 +1165,9 @@
 
         eyeballBasePosition.x
 
-        +
+        -
 
-        (
-
-          eyeballCurrentOffset.x
-
-          *
-
-          eyeMovementX
-
-        );
+        currentX;
 
 
       eyeball.position.y =
@@ -1041,21 +1176,11 @@
 
         +
 
-        (
-
-          -
-
-          eyeballCurrentOffset.y
-
-          *
-
-          eyeMovementY
-
-        );
+        currentY;
 
 
       /*
-        Keep the original depth.
+        Keep depth unchanged.
       */
 
 
