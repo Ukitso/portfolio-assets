@@ -11,6 +11,28 @@
   content="width=device-width, initial-scale=1.0"
 >
 
+
+<!-- ------------------------- -->
+<!-- THREE.JS IMPORT MAP       -->
+<!-- ------------------------- -->
+
+<script type="importmap">
+
+{
+  "imports": {
+
+    "three":
+    "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+
+    "three/addons/":
+    "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+
+  }
+}
+
+</script>
+
+
 <style>
 
 html,
@@ -26,12 +48,14 @@ body {
 
 }
 
+
 .scene {
 
   width: 100%;
   height: 100%;
 
 }
+
 
 canvas {
 
@@ -59,21 +83,31 @@ canvas {
 <script type="module">
 
 
+/* ------------------------- */
+/* IMPORT THREE.JS           */
+/* ------------------------- */
+
+
 import * as THREE from
-"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
+"three";
 
 
 import { GLTFLoader } from
-"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js";
+"three/addons/loaders/GLTFLoader.js";
 
 
 /* ------------------------- */
-/* SCENE                     */
+/* CONTAINER                 */
 /* ------------------------- */
 
 
 const container =
 document.getElementById("scene");
+
+
+/* ------------------------- */
+/* SCENE                     */
+/* ------------------------- */
 
 
 const scene =
@@ -135,8 +169,11 @@ renderer.setSize(
 
 
 renderer.setClearColor(
+
   0x000000,
+
   0
+
 );
 
 
@@ -162,6 +199,14 @@ container.appendChild(
 /* ------------------------- */
 
 
+/*
+  GENERAL LIGHT
+
+  Keeps the model visible
+  without making it flat.
+*/
+
+
 const ambientLight =
 new THREE.AmbientLight(
 
@@ -177,6 +222,14 @@ scene.add(
 );
 
 
+/*
+  MAIN LIGHT
+
+  Above and slightly
+  camera-left.
+*/
+
+
 const keyLight =
 new THREE.DirectionalLight(
 
@@ -188,15 +241,24 @@ new THREE.DirectionalLight(
 
 
 keyLight.position.set(
+
   -3,
+
   5,
+
   6
+
 );
 
 
 scene.add(
   keyLight
 );
+
+
+/*
+  SOFT FILL LIGHT
+*/
 
 
 const fillLight =
@@ -210,9 +272,13 @@ new THREE.DirectionalLight(
 
 
 fillLight.position.set(
+
   4,
+
   1,
+
   4
+
 );
 
 
@@ -222,7 +288,7 @@ scene.add(
 
 
 /* ------------------------- */
-/* MODEL                     */
+/* LOAD OKO                  */
 /* ------------------------- */
 
 
@@ -241,13 +307,17 @@ loader.load(
   function (gltf) {
 
 
+    console.log(
+      "OKO LOADED"
+    );
+
+
     oko =
     gltf.scene;
 
 
     /*
-      MAKE SURE MATERIALS
-      RENDER CORRECTLY
+      PREPARE MESHES
     */
 
 
@@ -282,7 +352,7 @@ loader.load(
 
 
     /*
-      CALCULATE MODEL SIZE
+      GET MODEL BOUNDS
     */
 
 
@@ -305,9 +375,14 @@ loader.load(
     );
 
 
+    console.log(
+      "MODEL SIZE:",
+      size
+    );
+
+
     /*
-      CENTER THE MODEL
-      AT WORLD ORIGIN
+      CENTER OKO
     */
 
 
@@ -316,14 +391,19 @@ loader.load(
     );
 
 
+    /*
+      ADD TO SCENE
+    */
+
+
     scene.add(
       oko
     );
 
 
     /*
-      FRAME THE MODEL
-      AUTOMATICALLY
+      AUTOMATIC CAMERA
+      POSITIONING
     */
 
 
@@ -342,22 +422,32 @@ loader.load(
     const fov =
     camera.fov *
     (
-      Math.PI / 180
+      Math.PI /
+      180
     );
 
 
     let cameraZ =
     Math.abs(
+
       maxDimension /
       2 /
+
       Math.tan(
         fov / 2
       )
+
     );
 
 
+    /*
+      GIVE OKO SOME
+      BREATHING ROOM
+    */
+
+
     cameraZ *=
-    1.5;
+    1.6;
 
 
     camera.position.set(
@@ -372,20 +462,30 @@ loader.load(
 
 
     camera.lookAt(
+
       0,
+
       0,
+
       0
+
     );
 
 
     /*
-      UPDATE CAMERA CLIPPING
+      UPDATE CAMERA
+      CLIPPING
     */
 
 
     camera.near =
-    cameraZ /
-    100;
+    Math.max(
+
+      cameraZ / 100,
+
+      0.001
+
+    );
 
 
     camera.far =
@@ -396,20 +496,9 @@ loader.load(
     camera.updateProjectionMatrix();
 
 
-    console.log(
-      "OKO LOADED"
-    );
-
-
-    console.log(
-      "MODEL SIZE:",
-      size
-    );
-
-
     /*
-      PRINT BONES
-      FOR NEXT STEP
+      PRINT BONE NAMES
+      FOR THE NEXT STEP
     */
 
 
@@ -424,8 +513,11 @@ loader.load(
 
 
           console.log(
+
             "BONE:",
+
             object.name
+
           );
 
 
@@ -443,15 +535,28 @@ loader.load(
   function (progress) {
 
 
-    console.log(
-
-      "LOADING OKO:",
-
-      progress.loaded,
-
+    if (
       progress.total
+    ) {
 
-    );
+
+      console.log(
+
+        "LOADING:",
+
+        Math.round(
+
+          (
+            progress.loaded /
+            progress.total
+          ) * 100
+
+        ) + "%"
+
+      );
+
+
+    }
 
 
   },
@@ -499,8 +604,11 @@ function resize() {
 
 
   renderer.setSize(
+
     width,
+
     height
+
   );
 
 
@@ -508,13 +616,16 @@ function resize() {
 
 
 window.addEventListener(
+
   "resize",
+
   resize
+
 );
 
 
 /* ------------------------- */
-/* RENDER LOOP               */
+/* ANIMATION LOOP            */
 /* ------------------------- */
 
 
@@ -527,8 +638,11 @@ function animate() {
 
 
   renderer.render(
+
     scene,
+
     camera
+
   );
 
 
