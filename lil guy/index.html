@@ -4,59 +4,45 @@
 
 <head>
 
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
-  <style>
+<style>
 
-    html,
-    body {
+html,
+body {
 
-      margin: 0;
-      width: 100%;
-      height: 100%;
+  margin: 0;
+  width: 100%;
+  height: 100%;
 
-      overflow: hidden;
+  overflow: hidden;
 
-      background: transparent;
+  background: transparent;
 
-    }
+}
 
+.scene {
 
-    /* FULL PAGE SCENE */
+  width: 100%;
+  height: 100%;
 
-    .scene {
+}
 
-      position: relative;
+canvas {
 
-      width: 100%;
-      height: 100%;
+  display: block;
 
-      overflow: hidden;
+  width: 100%;
+  height: 100%;
 
-      background: transparent;
+}
 
-    }
-
-
-    /* THREE.JS CANVAS */
-
-    canvas {
-
-      display: block;
-
-      width: 100%;
-      height: 100%;
-
-      background: transparent;
-
-    }
-
-  </style>
+</style>
 
 </head>
 
@@ -64,408 +50,495 @@
 <body>
 
 
-  <div
-    class="scene"
-    id="scene"
-  ></div>
+<div
+  class="scene"
+  id="scene"
+></div>
 
 
-  <script type="module">
+<script type="module">
 
 
-    /* ------------------------- */
-    /* IMPORT THREE.JS           */
-    /* ------------------------- */
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
 
 
-    import * as THREE from
-      "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
+import { GLTFLoader } from
+"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js";
 
 
-    import { GLTFLoader } from
-      "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js";
+/* ------------------------- */
+/* SCENE                     */
+/* ------------------------- */
 
 
-    /* ------------------------- */
-    /* SCENE                     */
-    /* ------------------------- */
+const container =
+document.getElementById("scene");
 
 
-    const scene =
-      document.getElementById("scene");
+const scene =
+new THREE.Scene();
 
 
-    const threeScene =
-      new THREE.Scene();
+/* ------------------------- */
+/* CAMERA                    */
+/* ------------------------- */
 
 
-    /* ------------------------- */
-    /* CAMERA                    */
-    /* ------------------------- */
+const camera =
+new THREE.PerspectiveCamera(
+
+  35,
+
+  container.clientWidth /
+  container.clientHeight,
+
+  0.01,
+
+  1000
+
+);
 
 
-    const camera =
-      new THREE.PerspectiveCamera(
-
-        35,
-
-        window.innerWidth /
-        window.innerHeight,
-
-        0.01,
-
-        100
-
-      );
+/* ------------------------- */
+/* RENDERER                  */
+/* ------------------------- */
 
 
-    camera.position.set(
-      0,
-      0,
-      6
-    );
+const renderer =
+new THREE.WebGLRenderer({
+
+  alpha: true,
+
+  antialias: true
+
+});
 
 
-    /* ------------------------- */
-    /* RENDERER                  */
-    /* ------------------------- */
+renderer.setPixelRatio(
+
+  Math.min(
+    window.devicePixelRatio,
+    2
+  )
+
+);
 
 
-    const renderer =
-      new THREE.WebGLRenderer({
+renderer.setSize(
 
-        alpha: true,
-        antialias: true
+  container.clientWidth,
 
-      });
+  container.clientHeight
 
-
-    renderer.setSize(
-      window.innerWidth,
-      window.innerHeight
-    );
+);
 
 
-    renderer.setPixelRatio(
-      Math.min(
-        window.devicePixelRatio,
-        2
-      )
-    );
+renderer.setClearColor(
+  0x000000,
+  0
+);
 
 
-    renderer.setClearColor(
-      0x000000,
-      0
-    );
+renderer.outputColorSpace =
+THREE.SRGBColorSpace;
 
 
-    renderer.outputColorSpace =
-      THREE.SRGBColorSpace;
+renderer.toneMapping =
+THREE.ACESFilmicToneMapping;
 
 
-    renderer.toneMapping =
-      THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure =
+1.2;
 
 
-    renderer.toneMappingExposure =
-      1.1;
+container.appendChild(
+  renderer.domElement
+);
 
 
-    scene.appendChild(
-      renderer.domElement
-    );
+/* ------------------------- */
+/* LIGHTING                  */
+/* ------------------------- */
 
 
-    /* ------------------------- */
-    /* LIGHTING                  */
-    /* ------------------------- */
+const ambientLight =
+new THREE.AmbientLight(
+
+  0xffffff,
+
+  0.6
+
+);
+
+
+scene.add(
+  ambientLight
+);
+
+
+const keyLight =
+new THREE.DirectionalLight(
+
+  0xffffff,
+
+  3
+
+);
+
+
+keyLight.position.set(
+  -3,
+  5,
+  6
+);
+
+
+scene.add(
+  keyLight
+);
+
+
+const fillLight =
+new THREE.DirectionalLight(
+
+  0xffffff,
+
+  1
+
+);
+
+
+fillLight.position.set(
+  4,
+  1,
+  4
+);
+
+
+scene.add(
+  fillLight
+);
+
+
+/* ------------------------- */
+/* MODEL                     */
+/* ------------------------- */
+
+
+const loader =
+new GLTFLoader();
+
+
+let oko;
+
+
+loader.load(
+
+  "./OKO.glb",
+
+
+  function (gltf) {
+
+
+    oko =
+    gltf.scene;
 
 
     /*
-      MAIN SOFT LIGHT
-
-      Large and frontal,
-      similar to the Blender
-      setup we were discussing.
+      MAKE SURE MATERIALS
+      RENDER CORRECTLY
     */
 
 
-    const keyLight =
-      new THREE.DirectionalLight(
-        0xffffff,
-        2.5
-      );
+    oko.traverse(
 
+      (object) => {
 
-    keyLight.position.set(
-      -3,
-      4,
-      5
-    );
 
+        if (
+          object.isMesh
+        ) {
 
-    threeScene.add(
-      keyLight
-    );
 
+          object.frustumCulled =
+          false;
 
-    /*
-      SECONDARY LIGHT
 
-      Softens the completely
-      black side of the model
-      without removing the
-      dark eye cavity.
-    */
+          object.castShadow =
+          true;
 
 
-    const fillLight =
-      new THREE.DirectionalLight(
-        0xffffff,
-        0.8
-      );
+          object.receiveShadow =
+          true;
 
 
-    fillLight.position.set(
-      3,
-      1,
-      3
-    );
+        }
 
-
-    threeScene.add(
-      fillLight
-    );
-
-
-    /*
-      SUBTLE TOP LIGHT
-    */
-
-
-    const topLight =
-      new THREE.DirectionalLight(
-        0xffffff,
-        0.7
-      );
-
-
-    topLight.position.set(
-      0,
-      5,
-      2
-    );
-
-
-    threeScene.add(
-      topLight
-    );
-
-
-    /* ------------------------- */
-    /* MODEL                     */
-    /* ------------------------- */
-
-
-    const loader =
-      new GLTFLoader();
-
-
-    let oko;
-
-
-    loader.load(
-
-      "OKO.glb",
-
-
-      function (gltf) {
-
-
-        oko =
-          gltf.scene;
-
-
-        /*
-          CENTER MODEL
-
-          We can adjust these
-          once we see how the
-          exported GLB is positioned.
-        */
-
-
-        oko.position.set(
-          0,
-          0,
-          0
-        );
-
-
-        /*
-          INITIAL SCALE
-
-          Change this if Oko
-          appears too large
-          or too small.
-        */
-
-
-        oko.scale.setScalar(
-          1
-        );
-
-
-        /*
-          ENABLE SHADOW SETTINGS
-          ON ALL MESHES
-        */
-
-
-        oko.traverse(
-          (object) => {
-
-            if (
-              object.isMesh
-            ) {
-
-              object.castShadow =
-                true;
-
-
-              object.receiveShadow =
-                true;
-
-            }
-
-          }
-        );
-
-
-        threeScene.add(
-          oko
-        );
-
-
-        /*
-          LOG THE ENTIRE MODEL
-          AND BONE STRUCTURE.
-
-          This will help us
-          identify the exact
-          exported bone names
-          for animation later.
-        */
-
-
-        console.log(
-          "OKO MODEL:",
-          oko
-        );
-
-
-        oko.traverse(
-          (object) => {
-
-            if (
-              object.isBone
-            ) {
-
-              console.log(
-                "BONE:",
-                object.name
-              );
-
-            }
-
-          }
-        );
-
-      },
-
-
-      undefined,
-
-
-      function (error) {
-
-        console.error(
-          "ERROR LOADING OKO:",
-          error
-        );
 
       }
 
     );
 
 
-    /* ------------------------- */
-    /* RESIZE                    */
-    /* ------------------------- */
+    /*
+      CALCULATE MODEL SIZE
+    */
 
 
-    function resize() {
-
-
-      const width =
-        scene.clientWidth;
-
-
-      const height =
-        scene.clientHeight;
-
-
-      camera.aspect =
-        width /
-        height;
-
-
-      camera.updateProjectionMatrix();
-
-
-      renderer.setSize(
-        width,
-        height
-      );
-
-    }
-
-
-    window.addEventListener(
-      "resize",
-      resize
+    const box =
+    new THREE.Box3()
+    .setFromObject(
+      oko
     );
 
 
-    resize();
+    const size =
+    box.getSize(
+      new THREE.Vector3()
+    );
 
 
-    /* ------------------------- */
-    /* ANIMATION LOOP            */
-    /* ------------------------- */
+    const center =
+    box.getCenter(
+      new THREE.Vector3()
+    );
 
 
-    function animate() {
+    /*
+      CENTER THE MODEL
+      AT WORLD ORIGIN
+    */
 
 
-      requestAnimationFrame(
-        animate
-      );
+    oko.position.sub(
+      center
+    );
 
 
-      renderer.render(
-        threeScene,
-        camera
-      );
-
-    }
+    scene.add(
+      oko
+    );
 
 
-    animate();
+    /*
+      FRAME THE MODEL
+      AUTOMATICALLY
+    */
 
 
-  </script>
+    const maxDimension =
+    Math.max(
+
+      size.x,
+
+      size.y,
+
+      size.z
+
+    );
+
+
+    const fov =
+    camera.fov *
+    (
+      Math.PI / 180
+    );
+
+
+    let cameraZ =
+    Math.abs(
+      maxDimension /
+      2 /
+      Math.tan(
+        fov / 2
+      )
+    );
+
+
+    cameraZ *=
+    1.5;
+
+
+    camera.position.set(
+
+      0,
+
+      0,
+
+      cameraZ
+
+    );
+
+
+    camera.lookAt(
+      0,
+      0,
+      0
+    );
+
+
+    /*
+      UPDATE CAMERA CLIPPING
+    */
+
+
+    camera.near =
+    cameraZ /
+    100;
+
+
+    camera.far =
+    cameraZ *
+    100;
+
+
+    camera.updateProjectionMatrix();
+
+
+    console.log(
+      "OKO LOADED"
+    );
+
+
+    console.log(
+      "MODEL SIZE:",
+      size
+    );
+
+
+    /*
+      PRINT BONES
+      FOR NEXT STEP
+    */
+
+
+    oko.traverse(
+
+      (object) => {
+
+
+        if (
+          object.isBone
+        ) {
+
+
+          console.log(
+            "BONE:",
+            object.name
+          );
+
+
+        }
+
+
+      }
+
+    );
+
+
+  },
+
+
+  function (progress) {
+
+
+    console.log(
+
+      "LOADING OKO:",
+
+      progress.loaded,
+
+      progress.total
+
+    );
+
+
+  },
+
+
+  function (error) {
+
+
+    console.error(
+
+      "ERROR LOADING OKO:",
+
+      error
+
+    );
+
+
+  }
+
+);
+
+
+/* ------------------------- */
+/* RESIZE                    */
+/* ------------------------- */
+
+
+function resize() {
+
+
+  const width =
+  container.clientWidth;
+
+
+  const height =
+  container.clientHeight;
+
+
+  camera.aspect =
+  width /
+  height;
+
+
+  camera.updateProjectionMatrix();
+
+
+  renderer.setSize(
+    width,
+    height
+  );
+
+
+}
+
+
+window.addEventListener(
+  "resize",
+  resize
+);
+
+
+/* ------------------------- */
+/* RENDER LOOP               */
+/* ------------------------- */
+
+
+function animate() {
+
+
+  requestAnimationFrame(
+    animate
+  );
+
+
+  renderer.render(
+    scene,
+    camera
+  );
+
+
+}
+
+
+animate();
+
+
+</script>
 
 
 </body>
