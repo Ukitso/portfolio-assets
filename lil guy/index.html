@@ -10,6 +10,7 @@
     content="width=device-width, initial-scale=1.0"
   >
 
+
   <!-- THREE.JS IMPORT MAP -->
 
   <script type="importmap">
@@ -70,11 +71,18 @@
   <script type="module">
 
 
+    /* ------------------------- */
+    /* IMPORTS                   */
+    /* ------------------------- */
+
+
     import * as THREE from "three";
 
 
     import {
+
       GLTFLoader
+
     } from "three/addons/loaders/GLTFLoader.js";
 
 
@@ -84,7 +92,9 @@
 
 
     const container =
-      document.getElementById("scene");
+      document.getElementById(
+        "scene"
+      );
 
 
     const scene =
@@ -101,10 +111,10 @@
 
         45,
 
-        window.innerWidth /
-        window.innerHeight,
+        container.clientWidth /
+        container.clientHeight,
 
-        0.1,
+        0.01,
 
         1000
 
@@ -126,15 +136,6 @@
       });
 
 
-    renderer.setSize(
-
-      window.innerWidth,
-
-      window.innerHeight
-
-    );
-
-
     renderer.setPixelRatio(
 
       Math.min(
@@ -144,6 +145,15 @@
         2
 
       )
+
+    );
+
+
+    renderer.setSize(
+
+      container.clientWidth,
+
+      container.clientHeight
 
     );
 
@@ -162,16 +172,21 @@
     );
 
 
+    /*
+      COLOUR MANAGEMENT
+    */
+
+
     renderer.outputColorSpace =
       THREE.SRGBColorSpace;
 
 
     /*
-      NO CINEMATIC TONEMAPPING
+      KEEP LIGHTING GRAPHIC
+      AND CLEAN
 
-      Keeps the colour response
-      cleaner and closer to the
-      Illustrator reference.
+      Illustrator is not using
+      cinematic film tone mapping.
     */
 
 
@@ -184,7 +199,9 @@
 
 
     container.appendChild(
+
       renderer.domElement
+
     );
 
 
@@ -194,139 +211,133 @@
 
 
     /*
-      BASE AMBIENT LIGHT
+      ILLUSTRATOR SETTINGS:
 
-      Keeps Oko visible while
-      still allowing the recessed
-      and underside areas to
-      become properly dark.
+      Light intensity: 70%
+      Rotation: 145°
+      Height: 45°
+      Softness: 40%
+
+      Ambient light: ON
+      Ambient intensity: 50%
+    */
+
+
+    /*
+      AMBIENT LIGHT
+
+      Approximates Illustrator's
+      50% Ambient Light setting.
     */
 
 
     const ambientLight =
       new THREE.AmbientLight(
 
-        0xffd8c5,
+        0xffffff,
 
-        0.22
+        0.5
 
       );
 
 
     scene.add(
+
       ambientLight
+
     );
 
 
     /*
-      MAIN SOFTBOX LIGHT
+      MAIN KEY LIGHT
 
-      Upper-right/front.
+      Neutral white light.
 
-      Pale and warm so the
-      highlights become more
-      peach / cream rather than
-      bright orange.
+      Position approximates:
+
+      Rotation: 145°
+      Height: 45°
     */
 
 
     const keyLight =
       new THREE.DirectionalLight(
 
-        0xffeadf,
+        0xffffff,
 
-        2.4
+        1.4
 
       );
+
+
+    /*
+      145° around the model.
+
+      We use a reasonably large
+      distance because a
+      DirectionalLight's position
+      determines direction rather
+      than distance falloff.
+    */
+
+
+    const rotation =
+      THREE.MathUtils.degToRad(
+        145
+      );
+
+
+    const radius =
+      10;
+
+
+    const height =
+      7;
 
 
     keyLight.position.set(
 
-      5,
+      Math.cos(
+        rotation
+      ) * radius,
 
-      7,
+      height,
 
-      8
+      Math.sin(
+        rotation
+      ) * radius
 
-    );
-
-
-    scene.add(
-      keyLight
     );
 
 
     /*
-      FRONT FILL
-
-      Broadens the illumination
-      across Oko's torso and
-      prevents the whole centre
-      from falling into shadow.
+      AIM LIGHT AT OKO'S
+      CENTRE
     */
 
 
-    const frontFill =
-      new THREE.DirectionalLight(
-
-        0xffb07c,
-
-        0.55
-
-      );
-
-
-    frontFill.position.set(
+    keyLight.target.position.set(
 
       0,
 
-      3,
+      0,
 
-      6
-
-    );
-
-
-    scene.add(
-      frontFill
-    );
-
-
-    /*
-      WARM SHADOW-SIDE BOUNCE
-
-      Extremely subtle.
-
-      Stops the dark areas from
-      becoming completely black
-      while keeping them warm
-      brown like the reference.
-    */
-
-
-    const warmBounce =
-      new THREE.DirectionalLight(
-
-        0x7a2d20,
-
-        0.12
-
-      );
-
-
-    warmBounce.position.set(
-
-      -5,
-
-      1,
-
-      4
+      0
 
     );
 
 
     scene.add(
-      warmBounce
+
+      keyLight
+
+    );
+
+
+    scene.add(
+
+      keyLight.target
+
     );
 
 
@@ -347,7 +358,9 @@
       "./OKO.glb",
 
 
-      (gltf) => {
+      function (
+        gltf
+      ) {
 
 
         console.log(
@@ -360,13 +373,15 @@
 
 
         /*
-          PREPARE MODEL
+          PREPARE MESHES
         */
 
 
         oko.traverse(
 
-          (object) => {
+          function (
+            object
+          ) {
 
 
             if (
@@ -387,7 +402,8 @@
 
 
         /*
-          FIND MODEL BOUNDS
+          CALCULATE MODEL
+          BOUNDS
         */
 
 
@@ -400,33 +416,42 @@
 
         const size =
           box.getSize(
+
             new THREE.Vector3()
+
           );
 
 
         const center =
           box.getCenter(
+
             new THREE.Vector3()
+
           );
 
 
         /*
           CENTRE OKO
+          AT WORLD ORIGIN
         */
 
 
         oko.position.sub(
+
           center
+
         );
 
 
         scene.add(
+
           oko
+
         );
 
 
         /*
-          FIT CAMERA TO MODEL
+          FIT CAMERA
         */
 
 
@@ -443,27 +468,29 @@
 
 
         const fov =
-          camera.fov *
-          (
-            Math.PI /
-            180
+          THREE.MathUtils.degToRad(
+
+            camera.fov
+
           );
 
 
         let distance =
           (
-            maxSize /
-            2
+
+            maxSize / 2
+
           ) /
+
           Math.tan(
-            fov /
-            2
+
+            fov / 2
+
           );
 
 
         /*
-          LEAVE SOME SPACE
-          AROUND OKO
+          BREATHING ROOM
         */
 
 
@@ -493,39 +520,87 @@
         );
 
 
+        /*
+          CAMERA CLIPPING
+        */
+
+
         camera.near =
           Math.max(
 
             0.01,
 
-            distance /
-            100
+            distance / 100
 
           );
 
 
         camera.far =
-          distance *
-          100;
+          distance * 100;
 
 
         camera.updateProjectionMatrix();
 
 
         console.log(
+
           "MODEL SIZE:",
 
           size
+
         );
 
 
       },
 
 
-      undefined,
+      /*
+        LOADING PROGRESS
+      */
 
 
-      (error) => {
+      function (
+        progress
+      ) {
+
+
+        if (
+          progress.total
+        ) {
+
+
+          console.log(
+
+            "LOADING:",
+
+            Math.round(
+
+              (
+                progress.loaded /
+
+                progress.total
+
+              ) * 100
+
+            ) + "%"
+
+          );
+
+
+        }
+
+
+      },
+
+
+      /*
+        ERROR
+      */
+
+
+      function (
+        error
+      ) {
 
 
         console.error(
@@ -547,39 +622,63 @@
     /* ------------------------- */
 
 
+    function resize() {
+
+
+      const width =
+        container.clientWidth;
+
+
+      const height =
+        container.clientHeight;
+
+
+      /*
+        Avoid divide-by-zero
+        issues while embedding.
+      */
+
+
+      if (
+
+        width === 0 ||
+
+        height === 0
+
+      ) {
+
+        return;
+
+      }
+
+
+      camera.aspect =
+
+        width /
+
+        height;
+
+
+      camera.updateProjectionMatrix();
+
+
+      renderer.setSize(
+
+        width,
+
+        height
+
+      );
+
+
+    }
+
+
     window.addEventListener(
 
       "resize",
 
-      () => {
-
-
-        const width =
-          container.clientWidth;
-
-
-        const height =
-          container.clientHeight;
-
-
-        camera.aspect =
-          width /
-          height;
-
-
-        camera.updateProjectionMatrix();
-
-
-        renderer.setSize(
-
-          width,
-
-          height
-
-        );
-
-
-      }
+      resize
 
     );
 
@@ -593,7 +692,9 @@
 
 
       requestAnimationFrame(
+
         animate
+
       );
 
 
