@@ -10,6 +10,8 @@
     content="width=device-width, initial-scale=1.0"
   >
 
+  <!-- THREE.JS IMPORT MAP -->
+
   <script type="importmap">
   {
     "imports": {
@@ -26,6 +28,7 @@
     body {
 
       margin: 0;
+
       width: 100%;
       height: 100%;
 
@@ -66,7 +69,9 @@
 
   <script type="module">
 
+
     import * as THREE from "three";
+
 
     import {
       GLTFLoader
@@ -76,6 +81,7 @@
     /* ------------------------- */
     /* SCENE                     */
     /* ------------------------- */
+
 
     const container =
       document.getElementById("scene");
@@ -88,6 +94,7 @@
     /* ------------------------- */
     /* CAMERA                    */
     /* ------------------------- */
+
 
     const camera =
       new THREE.PerspectiveCamera(
@@ -107,6 +114,7 @@
     /* ------------------------- */
     /* RENDERER                  */
     /* ------------------------- */
+
 
     const renderer =
       new THREE.WebGLRenderer({
@@ -129,8 +137,11 @@
     renderer.setPixelRatio(
 
       Math.min(
+
         window.devicePixelRatio,
+
         2
+
       )
 
     );
@@ -140,9 +151,13 @@
       TRANSPARENT BACKGROUND
     */
 
+
     renderer.setClearColor(
+
       0x000000,
+
       0
+
     );
 
 
@@ -150,12 +165,18 @@
       THREE.SRGBColorSpace;
 
 
+    /*
+      SOFT HIGHLIGHT / SHADOW
+      RESPONSE
+    */
+
+
     renderer.toneMapping =
       THREE.ACESFilmicToneMapping;
 
 
     renderer.toneMappingExposure =
-      1.15;
+      1.0;
 
 
     container.appendChild(
@@ -164,115 +185,116 @@
 
 
     /* ------------------------- */
-/* LIGHTING                  */
-/* ------------------------- */
+    /* LIGHTING                  */
+    /* ------------------------- */
 
 
-/*
-  VERY LOW AMBIENT LIGHT
+    /*
+      VERY LOW AMBIENT LIGHT
 
-  This is important.
-
-  The Illustrator version has
-  genuinely dark areas, so we
-  do not want to fill all of
-  Oko's shadows.
-*/
-
-const ambientLight =
-  new THREE.AmbientLight(
-
-    0xffe0d0,
-
-    0.08
-
-  );
+      Keeps the shadow areas
+      genuinely dark, closer
+      to the Illustrator logo.
+    */
 
 
-scene.add(
-  ambientLight
-);
+    const ambientLight =
+      new THREE.AmbientLight(
+
+        0xffe0d0,
+
+        0.08
+
+      );
 
 
-/*
-  MAIN LIGHT
-
-  Positioned high and to the
-  RIGHT of the camera.
-
-  This creates the bright
-  upper-right surfaces and
-  leaves the opposite side
-  in heavy shadow.
-*/
-
-const keyLight =
-  new THREE.PointLight(
-
-    0xffd0b5,
-
-    100,
-
-    0
-
-  );
+    scene.add(
+      ambientLight
+    );
 
 
-keyLight.position.set(
+    /*
+      MAIN LIGHT
 
-  4,
-  5,
-  6
+      High and to the
+      right/front of Oko.
 
-);
-
-
-scene.add(
-  keyLight
-);
-
-
-/*
-  VERY SUBTLE LEFT EDGE FILL
-
-  This is deliberately weak.
-
-  It prevents the silhouette
-  disappearing completely,
-  while keeping the strong
-  dark shadow from the
-  Illustrator version.
-*/
-
-const edgeLight =
-  new THREE.PointLight(
-
-    0xff5c28,
-
-    6,
-
-    0
-
-  );
+      This should create the
+      bright top/right surfaces
+      and strong shadow on the
+      opposite side.
+    */
 
 
-edgeLight.position.set(
+    const keyLight =
+      new THREE.PointLight(
 
-  -4,
-  1,
-  3
+        0xffd0b5,
 
-);
+        100,
+
+        0
+
+      );
 
 
-scene.add(
-  edgeLight
-);
+    keyLight.position.set(
+
+      4,
+
+      5,
+
+      6
+
+    );
+
+
+    scene.add(
+      keyLight
+    );
+
+
+    /*
+      VERY SUBTLE EDGE FILL
+
+      Just enough to keep the
+      dark side visible without
+      flattening the shadows.
+    */
+
+
+    const edgeLight =
+      new THREE.PointLight(
+
+        0xff5c28,
+
+        6,
+
+        0
+
+      );
+
+
+    edgeLight.position.set(
+
+      -4,
+
+      1,
+
+      3
+
+    );
+
+
+    scene.add(
+      edgeLight
+    );
 
 
     /* ------------------------- */
     /* LOAD OKO                  */
     /* ------------------------- */
+
 
     const loader =
       new GLTFLoader();
@@ -299,9 +321,9 @@ scene.add(
 
 
         /*
-          MAKE SURE MATERIALS
-          RENDER CORRECTLY
+          PREPARE MODEL
         */
+
 
         oko.traverse(
 
@@ -326,8 +348,9 @@ scene.add(
 
 
         /*
-          GET MODEL BOUNDS
+          FIND MODEL SIZE
         */
+
 
         const box =
           new THREE.Box3()
@@ -352,6 +375,7 @@ scene.add(
           CENTRE OKO
         */
 
+
         oko.position.sub(
           center
         );
@@ -363,45 +387,46 @@ scene.add(
 
 
         /*
-          FIT CAMERA
+          FIT CAMERA TO MODEL
         */
+
 
         const maxSize =
           Math.max(
 
             size.x,
+
             size.y,
+
             size.z
 
           );
 
 
-        /*
-          Calculate a camera
-          distance based on
-          the actual FOV.
-        */
-
         const fov =
           camera.fov *
           (
-            Math.PI / 180
+            Math.PI /
+            180
           );
 
 
         let distance =
           (
-            maxSize / 2
+            maxSize /
+            2
           ) /
           Math.tan(
-            fov / 2
+            fov /
+            2
           );
 
 
         /*
-          Leave some breathing
-          room around Oko.
+          LEAVE SOME SPACE
+          AROUND OKO
         */
+
 
         distance *=
           1.35;
@@ -410,7 +435,9 @@ scene.add(
         camera.position.set(
 
           0,
+
           0,
+
           distance
 
         );
@@ -419,7 +446,9 @@ scene.add(
         camera.lookAt(
 
           0,
+
           0,
+
           0
 
         );
@@ -427,13 +456,18 @@ scene.add(
 
         camera.near =
           Math.max(
+
             0.01,
-            distance / 100
+
+            distance /
+            100
+
           );
 
 
         camera.far =
-          distance * 100;
+          distance *
+          100;
 
 
         camera.updateProjectionMatrix();
@@ -455,8 +489,11 @@ scene.add(
 
 
         console.error(
+
           "FAILED TO LOAD OKO:",
+
           error
+
         );
 
 
@@ -468,6 +505,7 @@ scene.add(
     /* ------------------------- */
     /* RESIZE                    */
     /* ------------------------- */
+
 
     window.addEventListener(
 
@@ -488,6 +526,7 @@ scene.add(
         renderer.setSize(
 
           window.innerWidth,
+
           window.innerHeight
 
         );
@@ -502,6 +541,7 @@ scene.add(
     /* RENDER LOOP               */
     /* ------------------------- */
 
+
     function animate() {
 
 
@@ -513,6 +553,7 @@ scene.add(
       renderer.render(
 
         scene,
+
         camera
 
       );
@@ -522,6 +563,7 @@ scene.add(
 
 
     animate();
+
 
   </script>
 
