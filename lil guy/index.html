@@ -190,14 +190,6 @@
     /* ------------------------- */
 
 
-    /*
-      LOW AMBIENT LIGHT
-
-      Keeps some detail visible,
-      but allows deep shadows.
-    */
-
-
     const ambientLight =
       new THREE.AmbientLight(
 
@@ -218,16 +210,6 @@
     /* ------------------------- */
     /* MAIN KEY LIGHT            */
     /* ------------------------- */
-
-
-    /*
-      Strong light from the
-      UPPER RIGHT and FRONT.
-
-      Low penumbra creates a much
-      sharper transition between
-      the lit and shadow areas.
-    */
 
 
     const keyLight =
@@ -253,21 +235,8 @@
     );
 
 
-    /*
-      Wide enough to cover
-      the character.
-    */
-
-
     keyLight.angle =
       0.65;
-
-
-    /*
-      VERY SHARP EDGE.
-
-      Lower = harder transition.
-    */
 
 
     keyLight.penumbra =
@@ -310,13 +279,6 @@
     /* ------------------------- */
     /* SUBTLE LEFT FILL          */
     /* ------------------------- */
-
-
-    /*
-      Barely lifts the darkest
-      areas without flattening
-      the main shadow.
-    */
 
 
     const fillLight =
@@ -370,12 +332,6 @@
     /* ------------------------- */
 
 
-    /*
-      Concentrated highlight on
-      the upper-right/head area.
-    */
-
-
     const upperSpot =
       new THREE.SpotLight(
 
@@ -401,11 +357,6 @@
 
     upperSpot.angle =
       0.32;
-
-
-    /*
-      Fairly sharp highlight.
-    */
 
 
     upperSpot.penumbra =
@@ -448,13 +399,6 @@
     /* ------------------------- */
     /* BODY SPOT HIGHLIGHT       */
     /* ------------------------- */
-
-
-    /*
-      Separate highlight lower
-      on the right side of
-      the character.
-    */
 
 
     const bodySpot =
@@ -556,9 +500,44 @@
           gltf.scene;
 
 
-        /*
-          PREPARE MODEL
-        */
+        /* --------------------- */
+        /* PRINT ALL OBJECTS     */
+        /* --------------------- */
+
+
+        console.log(
+
+          "ALL OBJECTS:"
+
+        );
+
+
+        oko.traverse(
+
+          function (
+
+            object
+
+          ) {
+
+
+            console.log(
+
+              object.type,
+              ":",
+              object.name
+
+            );
+
+
+          }
+
+        );
+
+
+        /* --------------------- */
+        /* PREPARE MODEL         */
+        /* --------------------- */
 
 
         oko.traverse(
@@ -586,13 +565,6 @@
                 object.material
 
               ) {
-
-
-                /*
-                  Lower roughness gives
-                  the spotlights more
-                  visible highlights.
-                */
 
 
                 object.material.roughness =
@@ -709,11 +681,6 @@
           );
 
 
-        /*
-          BREATHING ROOM
-        */
-
-
         distance *=
           1.35;
 
@@ -738,11 +705,6 @@
           0
 
         );
-
-
-        /*
-          CAMERA CLIPPING
-        */
 
 
         camera.near =
