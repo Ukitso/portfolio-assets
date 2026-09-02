@@ -31,7 +31,7 @@
 
       overflow: hidden;
 
-      background: #1B1C1C;
+      background: transparent;
 
     }
 
@@ -47,6 +47,9 @@
     canvas {
 
       display: block;
+
+      width: 100%;
+      height: 100%;
 
     }
 
@@ -101,21 +104,14 @@
       );
 
 
-    camera.position.set(
-
-      0,
-      0,
-      5
-
-    );
-
-
     /* ------------------------- */
     /* RENDERER                  */
     /* ------------------------- */
 
     const renderer =
       new THREE.WebGLRenderer({
+
+        alpha: true,
 
         antialias: true
 
@@ -140,8 +136,26 @@
     );
 
 
+    /*
+      TRANSPARENT BACKGROUND
+    */
+
+    renderer.setClearColor(
+      0x000000,
+      0
+    );
+
+
     renderer.outputColorSpace =
       THREE.SRGBColorSpace;
+
+
+    renderer.toneMapping =
+      THREE.ACESFilmicToneMapping;
+
+
+    renderer.toneMappingExposure =
+      1.15;
 
 
     container.appendChild(
@@ -150,15 +164,22 @@
 
 
     /* ------------------------- */
-    /* LIGHTS                    */
+    /* LIGHTING                  */
     /* ------------------------- */
+
+
+    /*
+      VERY LOW GENERAL LIGHT
+
+      Keeps the dark areas dark.
+    */
 
     const ambientLight =
       new THREE.AmbientLight(
 
         0xffffff,
 
-        1.5
+        0.25
 
       );
 
@@ -168,27 +189,96 @@
     );
 
 
-    const light =
-      new THREE.DirectionalLight(
+    /*
+      MAIN ORANGE LIGHT
 
-        0xffffff,
+      This is responsible for
+      the soft bright side.
+    */
 
-        3
+    const keyLight =
+      new THREE.PointLight(
+
+        0xff7a35,
+
+        80
 
       );
 
 
-    light.position.set(
+    keyLight.position.set(
 
+      -3,
       3,
-      5,
-      5
+      4
 
     );
 
 
     scene.add(
-      light
+      keyLight
+    );
+
+
+    /*
+      VERY SUBTLE FRONT FILL
+
+      Stops the model becoming
+      completely black.
+    */
+
+    const fillLight =
+      new THREE.PointLight(
+
+        0xffb08a,
+
+        12
+
+      );
+
+
+    fillLight.position.set(
+
+      2,
+      1,
+      3
+
+    );
+
+
+    scene.add(
+      fillLight
+    );
+
+
+    /*
+      DARK BACK / EDGE LIGHT
+
+      Very subtle, just helps
+      define the silhouette.
+    */
+
+    const rimLight =
+      new THREE.PointLight(
+
+        0xff5a20,
+
+        20
+
+      );
+
+
+    rimLight.position.set(
+
+      -3,
+      0,
+      -3
+
+    );
+
+
+    scene.add(
+      rimLight
     );
 
 
@@ -198,6 +288,9 @@
 
     const loader =
       new GLTFLoader();
+
+
+    let oko;
 
 
     loader.load(
@@ -213,18 +306,40 @@
         );
 
 
-        const oko =
+        oko =
           gltf.scene;
 
 
-        scene.add(
-          oko
+        /*
+          MAKE SURE MATERIALS
+          RENDER CORRECTLY
+        */
+
+        oko.traverse(
+
+          (object) => {
+
+
+            if (
+              object.isMesh
+            ) {
+
+
+              object.frustumCulled =
+                false;
+
+
+            }
+
+
+          }
+
         );
 
 
-        /* --------------------- */
-        /* FIND MODEL SIZE       */
-        /* --------------------- */
+        /*
+          GET MODEL BOUNDS
+        */
 
         const box =
           new THREE.Box3()
@@ -245,18 +360,23 @@
           );
 
 
-        /* --------------------- */
-        /* CENTRE MODEL          */
-        /* --------------------- */
+        /*
+          CENTRE OKO
+        */
 
         oko.position.sub(
           center
         );
 
 
-        /* --------------------- */
-        /* FIT CAMERA            */
-        /* --------------------- */
+        scene.add(
+          oko
+        );
+
+
+        /*
+          FIT CAMERA
+        */
 
         const maxSize =
           Math.max(
@@ -268,12 +388,44 @@
           );
 
 
-        const distance =
-          maxSize * 1.8;
+        /*
+          Calculate a camera
+          distance based on
+          the actual FOV.
+        */
+
+        const fov =
+          camera.fov *
+          (
+            Math.PI / 180
+          );
 
 
-        camera.position.z =
-          distance;
+        let distance =
+          (
+            maxSize / 2
+          ) /
+          Math.tan(
+            fov / 2
+          );
+
+
+        /*
+          Leave some breathing
+          room around Oko.
+        */
+
+        distance *=
+          1.35;
+
+
+        camera.position.set(
+
+          0,
+          0,
+          distance
+
+        );
 
 
         camera.lookAt(
@@ -285,10 +437,25 @@
         );
 
 
+        camera.near =
+          Math.max(
+            0.01,
+            distance / 100
+          );
+
+
+        camera.far =
+          distance * 100;
+
+
+        camera.updateProjectionMatrix();
+
+
         console.log(
           "MODEL SIZE:",
           size
         );
+
 
       },
 
@@ -344,7 +511,7 @@
 
 
     /* ------------------------- */
-    /* RENDER                    */
+    /* RENDER LOOP               */
     /* ------------------------- */
 
     function animate() {
