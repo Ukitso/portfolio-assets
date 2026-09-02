@@ -313,10 +313,7 @@
 
 
     /*
-      SPOTLIGHT
-
-      Adds the sharper,
-      concentrated highlights.
+      SHARP HIGHLIGHT SPOT
     */
 
 
@@ -379,18 +376,6 @@
     /* ------------------------- */
 
 
-    /*
-      This follows the same logic
-      as your existing website eye:
-
-      target position
-      ↓
-      smooth easing
-      ↓
-      idle wandering after 2.5s
-    */
-
-
     let targetX =
       0;
 
@@ -412,14 +397,6 @@
 
 
     let idleTimer;
-
-
-    /*
-      How far the eyeball can move.
-
-      Increase these values for
-      stronger eye movement.
-    */
 
 
     const eyeMovementX =
@@ -479,11 +456,6 @@
         return;
 
       }
-
-
-      /*
-        Random idle look direction.
-      */
 
 
       targetX =
@@ -567,13 +539,6 @@
         resetIdle();
 
 
-        /*
-          Convert the mouse position
-          into a range centred on
-          the middle of the screen.
-        */
-
-
         const normalisedX =
 
           (
@@ -618,12 +583,6 @@
             2
 
           );
-
-
-        /*
-          Convert that range into
-          the maximum eyeball movement.
-        */
 
 
         targetX =
@@ -682,6 +641,43 @@
 
 
     let eyeballBasePosition =
+      new THREE.Vector3();
+
+
+    /*
+      BODY ANIMATION VALUES
+
+      These follow the eye more
+      slowly than the eyeball.
+    */
+
+
+    let bodyFollowX =
+      0;
+
+
+    let bodyFollowY =
+      0;
+
+
+    /*
+      Base transform of the model.
+
+      Saved once after centring so
+      the idle animation is always
+      relative to its proper position.
+    */
+
+
+    const bodyBasePosition =
+      new THREE.Vector3();
+
+
+    const bodyBaseRotation =
+      new THREE.Euler();
+
+
+    const bodyBaseScale =
       new THREE.Vector3();
 
 
@@ -760,9 +756,7 @@
 
                 console.log(
 
-                  "EYEBALL FOUND:",
-
-                  eyeball
+                  "EYEBALL FOUND"
 
                 );
 
@@ -771,7 +765,7 @@
 
 
               /*
-                MATERIAL TUNING
+                MATERIAL
               */
 
 
@@ -843,6 +837,34 @@
         oko.position.sub(
 
           center
+
+        );
+
+
+        /*
+          SAVE THE CENTRED
+          TRANSFORM BEFORE
+          ANIMATION STARTS.
+        */
+
+
+        bodyBasePosition.copy(
+
+          oko.position
+
+        );
+
+
+        bodyBaseRotation.copy(
+
+          oko.rotation
+
+        );
+
+
+        bodyBaseScale.copy(
+
+          oko.scale
 
         );
 
@@ -941,21 +963,6 @@
 
 
         camera.updateProjectionMatrix();
-
-
-        console.log(
-
-          "MODEL SIZE:",
-
-          size
-
-        );
-
-
-        /*
-          Start idle movement
-          once the eyeball exists.
-        */
 
 
         chooseIdleTarget();
@@ -1112,8 +1119,7 @@
 
 
       /*
-        Same smooth easing
-        as your existing code.
+        Smooth eye movement.
       */
 
 
@@ -1151,25 +1157,296 @@
         0.08;
 
 
+      /*
+        These are the directions
+        that we confirmed work
+        correctly for your model.
+      */
+
 
       eyeball.position.x =
-  eyeballBasePosition.x
-  +
-  currentX;
 
-eyeball.position.y =
-  eyeballBasePosition.y
-  -
-  currentY;
+        eyeballBasePosition.x
+
+        +
+
+        currentX;
+
+
+      eyeball.position.y =
+
+        eyeballBasePosition.y
+
+        -
+
+        currentY;
+
+
+      eyeball.position.z =
+
+        eyeballBasePosition.z;
+
+
+    }
+
+
+    /* ------------------------- */
+    /* ANIMATE BODY              */
+    /* ------------------------- */
+
+
+    function animateBody() {
+
+
+      if (
+
+        !oko
+
+      ) {
+
+        return;
+
+      }
+
+
+      /*
+        BODY LAG
+
+        The body follows the eye
+        much more slowly.
+      */
+
+
+      bodyFollowX +=
+
+        (
+
+          currentX
+
+          -
+
+          bodyFollowX
+
+        )
+
+        *
+
+        0.025;
+
+
+      bodyFollowY +=
+
+        (
+
+          currentY
+
+          -
+
+          bodyFollowY
+
+        )
+
+        *
+
+        0.025;
+
+
+      /*
+        LEFT / RIGHT LEAN
+
+        Kept extremely subtle.
+      */
+
+
+      const lookAmountX =
+
+        bodyFollowX /
+
+        eyeMovementX;
+
+
+      const lean =
+
+        lookAmountX *
+
+        0.08;
+
+
+      /*
+        UP / DOWN REACTION
+
+        Looking up/down causes
+        a very subtle squash
+        and stretch.
+      */
+
+
+      const lookAmountY =
+
+        bodyFollowY /
+
+        eyeMovementY;
+
+
+      const stretchY =
+
+        1
+
+        -
+
+        (
+
+          lookAmountY
+
+          *
+
+          0.025
+
+        );
+
+
+      const squashX =
+
+        1
+
+        +
+
+        (
+
+          lookAmountY
+
+          *
+
+          0.015
+
+        );
+
+
+      /*
+        IDLE BREATHING
+
+        Very slow and deliberately
+        subtle.
+      */
+
+
+      const time =
+
+        performance.now()
+
+        *
+
+        0.001;
+
+
+      const breathing =
+
+        Math.sin(
+
+          time *
+          1.5
+
+        )
+
+        *
+
+        0.012;
+
+
+      /*
+        TINY IDLE SWAY
+
+        This sits underneath the
+        eye-driven lean.
+      */
+
+
+      const idleSway =
+
+        Math.sin(
+
+          time *
+          0.7
+
+        )
+
+        *
+
+        0.015;
+
+
+      /*
+        APPLY ROTATION
+
+        Rotation around Z gives
+        a left/right lean on screen.
+      */
+
+
+      oko.rotation.z =
+
+        bodyBaseRotation.z
+
+        -
+
+        lean
+
+        +
+
+        idleSway;
+
+
+      /*
+        APPLY BREATHING SCALE
+
+        Breathing slightly expands
+        vertically and horizontally.
+      */
+
+
+      oko.scale.x =
+
+        bodyBaseScale.x
+
+        *
+
+        (
+
+          squashX
+
+          -
+
+          breathing *
+          0.35
+
+        );
+
+
+      oko.scale.y =
+
+        bodyBaseScale.y
+
+        *
+
+        (
+
+          stretchY
+
+          +
+
+          breathing
+
+        );
+
 
       /*
         Keep depth unchanged.
       */
 
 
-      eyeball.position.z =
+      oko.scale.z =
 
-        eyeballBasePosition.z;
+        bodyBaseScale.z;
 
 
     }
@@ -1191,6 +1468,9 @@ eyeball.position.y =
 
 
       animateEyeball();
+
+
+      animateBody();
 
 
       renderer.render(
