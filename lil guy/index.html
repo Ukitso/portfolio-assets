@@ -129,6 +129,7 @@
     renderer.setSize(
 
       window.innerWidth,
+
       window.innerHeight
 
     );
@@ -166,13 +167,16 @@
 
 
     /*
-      SOFT HIGHLIGHT / SHADOW
-      RESPONSE
+      NO CINEMATIC TONEMAPPING
+
+      Keeps the colour response
+      cleaner and closer to the
+      Illustrator reference.
     */
 
 
     renderer.toneMapping =
-      THREE.ACESFilmicToneMapping;
+      THREE.NoToneMapping;
 
 
     renderer.toneMappingExposure =
@@ -190,20 +194,21 @@
 
 
     /*
-      VERY LOW AMBIENT LIGHT
+      BASE AMBIENT LIGHT
 
-      Keeps the shadow areas
-      genuinely dark, closer
-      to the Illustrator logo.
+      Keeps Oko visible while
+      still allowing the recessed
+      and underside areas to
+      become properly dark.
     */
 
 
     const ambientLight =
       new THREE.AmbientLight(
 
-        0xffe0d0,
+        0xffd8c5,
 
-        0.08
+        0.22
 
       );
 
@@ -214,37 +219,34 @@
 
 
     /*
-      MAIN LIGHT
+      MAIN SOFTBOX LIGHT
 
-      High and to the
-      right/front of Oko.
+      Upper-right/front.
 
-      This should create the
-      bright top/right surfaces
-      and strong shadow on the
-      opposite side.
+      Pale and warm so the
+      highlights become more
+      peach / cream rather than
+      bright orange.
     */
 
 
     const keyLight =
-      new THREE.PointLight(
+      new THREE.DirectionalLight(
 
-        0xffd0b5,
+        0xffeadf,
 
-        100,
-
-        0
+        2.4
 
       );
 
 
     keyLight.position.set(
 
-      4,
-
       5,
 
-      6
+      7,
+
+      8
 
     );
 
@@ -255,39 +257,76 @@
 
 
     /*
-      VERY SUBTLE EDGE FILL
+      FRONT FILL
 
-      Just enough to keep the
-      dark side visible without
-      flattening the shadows.
+      Broadens the illumination
+      across Oko's torso and
+      prevents the whole centre
+      from falling into shadow.
     */
 
 
-    const edgeLight =
-      new THREE.PointLight(
+    const frontFill =
+      new THREE.DirectionalLight(
 
-        0xff5c28,
+        0xffb07c,
 
-        6,
-
-        0
+        0.55
 
       );
 
 
-    edgeLight.position.set(
+    frontFill.position.set(
 
-      -4,
+      0,
 
-      1,
+      3,
 
-      3
+      6
 
     );
 
 
     scene.add(
-      edgeLight
+      frontFill
+    );
+
+
+    /*
+      WARM SHADOW-SIDE BOUNCE
+
+      Extremely subtle.
+
+      Stops the dark areas from
+      becoming completely black
+      while keeping them warm
+      brown like the reference.
+    */
+
+
+    const warmBounce =
+      new THREE.DirectionalLight(
+
+        0x7a2d20,
+
+        0.12
+
+      );
+
+
+    warmBounce.position.set(
+
+      -5,
+
+      1,
+
+      4
+
+    );
+
+
+    scene.add(
+      warmBounce
     );
 
 
@@ -348,7 +387,7 @@
 
 
         /*
-          FIND MODEL SIZE
+          FIND MODEL BOUNDS
         */
 
 
@@ -475,6 +514,7 @@
 
         console.log(
           "MODEL SIZE:",
+
           size
         );
 
@@ -514,10 +554,17 @@
       () => {
 
 
-        camera.aspect =
+        const width =
+          container.clientWidth;
 
-          window.innerWidth /
-          window.innerHeight;
+
+        const height =
+          container.clientHeight;
+
+
+        camera.aspect =
+          width /
+          height;
 
 
         camera.updateProjectionMatrix();
@@ -525,9 +572,9 @@
 
         renderer.setSize(
 
-          window.innerWidth,
+          width,
 
-          window.innerHeight
+          height
 
         );
 
