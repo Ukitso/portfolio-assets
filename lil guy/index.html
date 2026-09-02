@@ -1151,33 +1151,16 @@
         0.08;
 
 
-      /*
-        The local axes of the
-        eyeball are reversed
-        horizontally relative
-        to the screen.
-
-        So X is inverted here.
-      */
-
 
       eyeball.position.x =
+  eyeballBasePosition.x
+  +
+  currentX;
 
-        eyeballBasePosition.x
-
-        -
-
-        currentX;
-
-
-      eyeball.position.y =
-
-        eyeballBasePosition.y
-
-        +
-
-        currentY;
-
+eyeball.position.y =
+  eyeballBasePosition.y
+  -
+  currentY;
 
       /*
         Keep depth unchanged.
