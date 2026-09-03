@@ -46,7 +46,6 @@
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { Timer } from "three/addons/misc/Timer.js";
 
 
 // ============================================================
@@ -337,13 +336,6 @@ let idleAction = null;
 let nextIdleAction = 2.5;
 
 
-// ============================================================
-// TIMER
-// ============================================================
-
-const clock = new THREE.Clock();
-
-  
 // ============================================================
 // LOAD MODEL
 // ============================================================
@@ -718,13 +710,11 @@ function updateShyState() {
       1;
 
 
-    // Big ear reaction
-
     earReaction =
       1;
 
     earReactionStart =
-      timer.getElapsed();
+      clock.getElapsedTime();
 
 
     // Start nervous eyes
@@ -745,7 +735,7 @@ function updateShyState() {
       );
 
     nervousEyeStart =
-      timer.getElapsed();
+      clock.getElapsedTime();
 
     nervousEyeStrength =
       1;
@@ -755,7 +745,7 @@ function updateShyState() {
 
 
     nextNervousEyeMove =
-      timer.getElapsed() +
+      clock.getElapsedTime() +
       THREE.MathUtils.randFloat(
         0.7,
         1.4
@@ -886,9 +876,6 @@ function updateNervousEyes(time) {
       1;
 
 
-    // Sometimes make a more obvious
-    // side glance.
-
     if (
       Math.random() < 0.35
     ) {
@@ -934,7 +921,7 @@ function updateNervousEyes(time) {
 
 
   // ----------------------------------------------------------
-  // TINY NERVOUS MICRO-MOVEMENT
+  // TINY NERVOUS MICRO MOVEMENT
   // ----------------------------------------------------------
 
   const microX =
@@ -1669,10 +1656,6 @@ function updateBreathing(time) {
     (breathing + 1) / 2;
 
 
-  // ----------------------------------------------------------
-  // WHOLE BODY
-  // ----------------------------------------------------------
-
   if (baseOkoScale) {
 
     const breathScale =
@@ -1687,8 +1670,7 @@ function updateBreathing(time) {
 
     oko.scale.y =
       baseOkoScale.y +
-      breathScale *
-      1.5;
+      breathScale * 1.5;
 
 
     oko.scale.z =
@@ -1704,6 +1686,10 @@ function updateBreathing(time) {
 // MAIN ANIMATION
 // ============================================================
 
+const clock =
+  new THREE.Clock();
+
+
 function animate() {
 
   requestAnimationFrame(
@@ -1712,13 +1698,11 @@ function animate() {
 
 
   // ----------------------------------------------------------
-  // TIMER
+  // TIME
   // ----------------------------------------------------------
 
-  timer.update();
-
   const time =
-    timer.getElapsed();
+    clock.getElapsedTime();
 
 
   // ----------------------------------------------------------
@@ -1753,7 +1737,6 @@ function animate() {
   updateEyeDart(
     time
   );
-
 
   updateNervousEyes(
     time
@@ -1801,9 +1784,7 @@ function animate() {
       headBaseRotation.z;
 
 
-    // --------------------------------------------------------
-    // SHY HEAD
-    // --------------------------------------------------------
+    // Shy turn
 
     head.rotation.y +=
       -currentX *
@@ -1811,19 +1792,21 @@ function animate() {
       0.16;
 
 
+    // Shy tuck
+
     head.rotation.x +=
       shyAmount *
       0.06;
 
+
+    // Startle
 
     head.rotation.z +=
       shyPulse *
       0.035;
 
 
-    // --------------------------------------------------------
-    // BREATHING
-    // --------------------------------------------------------
+    // Breathing
 
     head.rotation.x +=
       Math.sin(
@@ -1843,25 +1826,23 @@ function animate() {
     eyeMovementAmount > 0
   ) {
 
-    // Normal cursor tracking
-
     let finalEyeX =
       currentX *
       eyeMovementAmount;
+
 
     let finalEyeY =
       -currentY *
       eyeMovementAmount;
 
 
-    // --------------------------------------------------------
-    // NORMAL IDLE DART
-    // --------------------------------------------------------
+    // Normal idle dart
 
     finalEyeX +=
       eyeDartX *
       eyeMovementAmount *
       0.65;
+
 
     finalEyeY +=
       -eyeDartY *
@@ -1869,17 +1850,13 @@ function animate() {
       0.65;
 
 
-    // --------------------------------------------------------
-    // NERVOUS EYE
-    // --------------------------------------------------------
+    // Nervous eye behaviour
 
     if (
       behaviour === "shy"
     ) {
 
-      // Reduce direct cursor tracking.
-      // Oko still knows where the cursor is,
-      // but keeps looking away.
+      // Reduce cursor tracking
 
       finalEyeX =
         currentX *
@@ -1892,6 +1869,8 @@ function animate() {
         eyeMovementAmount *
         0.45;
 
+
+      // Add nervous glances
 
       finalEyeX +=
         nervousEyeX *
@@ -1958,8 +1937,6 @@ function animate() {
       shyAmount *
       0.025;
 
-
-    // Breathing
 
     const breathing =
       Math.sin(
@@ -2053,9 +2030,6 @@ function animate() {
       behaviour === "shy"
     ) {
 
-      // Two slightly different frequencies
-      // stop the arms feeling perfectly synced.
-
       const nervousLeft =
         Math.sin(
           time * 11.5
@@ -2080,9 +2054,6 @@ function animate() {
       rightArm.rotation.z -=
         nervousRight;
 
-
-      // Occasional little forward/back
-      // movement gives the hands some tension.
 
       leftArm.rotation.x +=
         Math.sin(
