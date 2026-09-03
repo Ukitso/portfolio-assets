@@ -1202,35 +1202,17 @@ function animate() {
 
 
 // ======================================
-// EAR TEST — X AXIS
+// EAR / RIG TEST
 // ======================================
 
-if (leftEar && rightEar) {
+if (head) {
 
-  const earTest =
+  const test =
     Math.sin(performance.now() * 0.004) * 0.5;
 
-
-  leftEar.rotation.x =
-    leftEarBaseRotation.x +
-    earTest;
-
-  leftEar.rotation.y =
-    leftEarBaseRotation.y;
-
-  leftEar.rotation.z =
-    leftEarBaseRotation.z;
-
-
-  rightEar.rotation.x =
-    rightEarBaseRotation.x -
-    earTest;
-
-  rightEar.rotation.y =
-    rightEarBaseRotation.y;
-
-  rightEar.rotation.z =
-    rightEarBaseRotation.z;
+  head.rotation.x =
+    headBaseRotation.x +
+    test;
 
 }
 
