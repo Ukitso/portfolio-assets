@@ -7,34 +7,8 @@
   <title>Oko Test</title>
 
   <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #1B1C1C;
-    }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-  </style>
-</head>
-
-<body>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Oko Test</title>
-
-  <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       width: 100%;
       height: 100%;
@@ -69,40 +43,38 @@ import { GLTFLoader } from
   "three/addons/loaders/GLTFLoader.js";
 
 
-// ----------------------------------------
+// ==================================================
 // SCENE
-// ----------------------------------------
+// ==================================================
 
 const scene = new THREE.Scene();
 
 scene.background = new THREE.Color(0x1B1C1C);
 
 
-// ----------------------------------------
+// ==================================================
 // CAMERA
-// ----------------------------------------
+// ==================================================
 
 const camera = new THREE.PerspectiveCamera(
   45,
   window.innerWidth / window.innerHeight,
-  0.1,
-  100
+  0.01,
+  1000
 );
 
-camera.position.set(0, 0, 12);
-camera.lookAt(0, 0, 0);
 
-
-// ----------------------------------------
+// ==================================================
 // RENDERER
-// ----------------------------------------
+// ==================================================
 
 const renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  alpha: true
+  antialias: true
 });
 
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio, 2)
+);
 
 renderer.setSize(
   window.innerWidth,
@@ -112,34 +84,40 @@ renderer.setSize(
 document.body.appendChild(renderer.domElement);
 
 
-// ----------------------------------------
+// ==================================================
 // LIGHTING
-// ----------------------------------------
+// ==================================================
 
 const ambientLight = new THREE.AmbientLight(
-  0xffffff,
-  1
-);
-
-scene.add(ambientLight);
-
-const directionalLight = new THREE.DirectionalLight(
   0xffffff,
   2
 );
 
-directionalLight.position.set(3, 5, 5);
+scene.add(ambientLight);
+
+
+const directionalLight = new THREE.DirectionalLight(
+  0xffffff,
+  3
+);
+
+directionalLight.position.set(
+  3,
+  5,
+  5
+);
 
 scene.add(directionalLight);
 
 
-// ----------------------------------------
+// ==================================================
 // LOAD OKO
-// ----------------------------------------
+// ==================================================
 
 const loader = new GLTFLoader();
 
 loader.load(
+
   "./OKO.glb",
 
   (gltf) => {
@@ -148,56 +126,199 @@ loader.load(
 
     scene.add(oko);
 
-    console.log("Oko loaded!");
-    console.log(oko);
+    console.log("================================");
+    console.log("OKO LOADED");
+    console.log("================================");
 
-    // Find every bone in the model
+
+    // ==================================================
+    // FIND BONES
+    // ==================================================
+
+    console.log("------ BONES ------");
+
     oko.traverse((object) => {
 
       if (object.isBone) {
-        console.log("BONE:", object.name);
+
+        console.log(
+          "BONE:",
+          object.name
+        );
+
       }
 
     });
 
+    console.log("-------------------");
+
+
+    // ==================================================
+    // CALCULATE MODEL BOUNDS
+    // ==================================================
+
+    const box =
+      new THREE.Box3().setFromObject(oko);
+
+    const center =
+      box.getCenter(
+        new THREE.Vector3()
+      );
+
+    const size =
+      box.getSize(
+        new THREE.Vector3()
+      );
+
+
+    console.log(
+      "Oko size:",
+      size
+    );
+
+    console.log(
+      "Oko center:",
+      center
+    );
+
+
+    // ==================================================
+    // CENTRE OKO
+    // ==================================================
+
+    oko.position.sub(center);
+
+
+    // ==================================================
+    // CALCULATE CAMERA DISTANCE
+    // ==================================================
+
+    const maxDimension =
+      Math.max(
+        size.x,
+        size.y,
+        size.z
+      );
+
+
+    const fitHeightDistance =
+      maxDimension /
+      (
+        2 *
+        Math.tan(
+          THREE.MathUtils.degToRad(
+            camera.fov / 2
+          )
+        )
+      );
+
+
+    // Pull the camera back slightly
+    // so Oko has some breathing room.
+
+    const cameraDistance =
+      fitHeightDistance * 1.5;
+
+
+    camera.position.set(
+      0,
+      0,
+      cameraDistance
+    );
+
+
+    camera.lookAt(
+      0,
+      0,
+      0
+    );
+
+
+    console.log(
+      "Camera distance:",
+      cameraDistance
+    );
+
+
+    console.log(
+      "================================"
+    );
+
   },
 
-  undefined,
+
+  // ==================================================
+  // LOADING PROGRESS
+  // ==================================================
+
+  (progress) => {
+
+    if (progress.total) {
+
+      const percent =
+        (
+          progress.loaded /
+          progress.total
+        ) * 100;
+
+      console.log(
+        "Loading Oko:",
+        percent.toFixed(0) + "%"
+      );
+
+    }
+
+  },
+
+
+  // ==================================================
+  // ERROR
+  // ==================================================
 
   (error) => {
 
-    console.error("Could not load Oko:", error);
+    console.error(
+      "COULD NOT LOAD OKO:",
+      error
+    );
+
+  }
+
+);
+
+
+// ==================================================
+// RESIZE
+// ==================================================
+
+window.addEventListener(
+  "resize",
+  () => {
+
+    camera.aspect =
+      window.innerWidth /
+      window.innerHeight;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
+    );
 
   }
 );
 
 
-// ----------------------------------------
-// RESIZE
-// ----------------------------------------
-
-window.addEventListener("resize", () => {
-
-  camera.aspect =
-    window.innerWidth / window.innerHeight;
-
-  camera.updateProjectionMatrix();
-
-  renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-  );
-
-});
-
-
-// ----------------------------------------
-// LOOP
-// ----------------------------------------
+// ==================================================
+// ANIMATION LOOP
+// ==================================================
 
 function animate() {
 
-  requestAnimationFrame(animate);
+  requestAnimationFrame(
+    animate
+  );
 
   renderer.render(
     scene,
