@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Oko Test</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #1B1C1C;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+<script type="module">
+
+import * as THREE from
+  "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
+
+import { GLTFLoader } from
+  "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/loaders/GLTFLoader.js";
+
+
+// ----------------------------------------
+// SCENE
+// ----------------------------------------
+
+const scene = new THREE.Scene();
+
+scene.background = new THREE.Color(0x1B1C1C);
+
+
+// ----------------------------------------
+// CAMERA
+// ----------------------------------------
+
+const camera = new THREE.PerspectiveCamera(
+  45,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100
+);
+
+camera.position.set(0, 0, 5);
+
+
+// ----------------------------------------
+// RENDERER
+// ----------------------------------------
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true
+});
+
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+renderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+);
+
+document.body.appendChild(renderer.domElement);
+
+
+// ----------------------------------------
+// LIGHTING
+// ----------------------------------------
+
+const ambientLight = new THREE.AmbientLight(
+  0xffffff,
+  1
+);
+
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(
+  0xffffff,
+  2
+);
+
+directionalLight.position.set(3, 5, 5);
+
+scene.add(directionalLight);
+
+
+// ----------------------------------------
+// LOAD OKO
+// ----------------------------------------
+
+const loader = new GLTFLoader();
+
+loader.load(
+  "./OKO.glb",
+
+  (gltf) => {
+
+    const oko = gltf.scene;
+
+    scene.add(oko);
+
+    console.log("Oko loaded!");
+    console.log(oko);
+
+    // Find every bone in the model
+    oko.traverse((object) => {
+
+      if (object.isBone) {
+        console.log("BONE:", object.name);
+      }
+
+    });
+
+  },
+
+  undefined,
+
+  (error) => {
+
+    console.error("Could not load Oko:", error);
+
+  }
+);
+
+
+// ----------------------------------------
+// RESIZE
+// ----------------------------------------
+
+window.addEventListener("resize", () => {
+
+  camera.aspect =
+    window.innerWidth / window.innerHeight;
+
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+
+});
+
+
+// ----------------------------------------
+// LOOP
+// ----------------------------------------
+
+function animate() {
+
+  requestAnimationFrame(animate);
+
+  renderer.render(
+    scene,
+    camera
+  );
+
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
