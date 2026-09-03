@@ -316,6 +316,11 @@ let curiousAmount = 0;
 let pointerNear = false;
 let pointerVeryNear = false;
 
+// Shy is not immediate anymore.
+// Oko has to notice that the cursor has stayed around for a while.
+let shyHoverStart = -1;
+const shyTriggerDelay = 1.8;
+
 
 // ============================================================
 // IDLE ACTION
@@ -383,13 +388,6 @@ const eyeDartDuration =
 // NERVOUS EYES
 // ============================================================
 
-let nervousEyeX = 0;
-let nervousEyeY = 0;
-
-let nervousEyeTargetX = 0;
-let nervousEyeTargetY = 0;
-
-let nextNervousEyeMove = 0;
 
 
 // ============================================================
@@ -1049,7 +1047,28 @@ function updateShyState(
     earReactionStart =
       time;
 
+    // Start the shy timer when the cursor first settles
+    // into Oko's space. He gets curious first.
+    shyHoverStart =
+      time;
+
   }
+
+
+  // If the cursor leaves Oko, the timer resets completely.
+  // You have to hover again for the full delay.
+  if (!pointerNear) {
+
+    shyHoverStart =
+      -1;
+
+  }
+
+
+  const shyReady =
+    pointerNear &&
+    shyHoverStart >= 0 &&
+    time - shyHoverStart >= shyTriggerDelay;
 
 
   // ----------------------------------------------------------
@@ -1070,7 +1089,7 @@ function updateShyState(
   }
 
   else if (
-    pointerVeryNear
+    shyReady
   ) {
 
     behaviour =
@@ -1647,7 +1666,8 @@ function startIdleAction(
 // ============================================================
 
 function updateIdleAction(
-  time
+  time,
+  delta
 ) {
 
   // ----------------------------------------------------------
@@ -1679,7 +1699,7 @@ function updateIdleAction(
         idleHeadX,
         0,
         5,
-        1 / 60
+        delta
       );
 
     idleHeadY =
@@ -1687,7 +1707,7 @@ function updateIdleAction(
         idleHeadY,
         0,
         5,
-        1 / 60
+        delta
       );
 
     idleHeadZ =
@@ -1695,7 +1715,7 @@ function updateIdleAction(
         idleHeadZ,
         0,
         5,
-        1 / 60
+        delta
       );
 
     idleLeftEarX =
@@ -1703,7 +1723,7 @@ function updateIdleAction(
         idleLeftEarX,
         0,
         5,
-        1 / 60
+        delta
       );
 
     idleRightEarX =
@@ -1711,7 +1731,7 @@ function updateIdleAction(
         idleRightEarX,
         0,
         5,
-        1 / 60
+        delta
       );
 
     idleBodyY =
@@ -1719,7 +1739,7 @@ function updateIdleAction(
         idleBodyY,
         0,
         5,
-        1 / 60
+        delta
       );
 
     idleBodyZ =
@@ -1727,7 +1747,7 @@ function updateIdleAction(
         idleBodyZ,
         0,
         5,
-        1 / 60
+        delta
       );
 
     return;
@@ -1749,13 +1769,17 @@ function updateIdleAction(
     );
 
 
-  // Smooth action envelope
+  // Smooth action envelope.
+  // Smoothstep gives a softer start and finish than a raw sine,
+  // so actions blend into the idle pose naturally.
+
+  const easedProgress =
+    rawProgress *
+    rawProgress *
+    (3 - 2 * rawProgress);
 
   const actionAmount =
-    Math.sin(
-      rawProgress *
-      Math.PI
-    );
+    easedProgress;
 
 
   // ----------------------------------------------------------
@@ -1999,234 +2023,100 @@ function updateIdleAction(
 
 
 // ============================================================
-// EYE DARTS
+// SMOOTH EYE GLANCES
 // ============================================================
 
-function updateEyeDart(
-  time
-) {
+// The eye moves between deliberate destinations rather than
+// constantly twitching. Each glance has a travel phase and a
+// short hold, so it feels like Oko is actually looking at things.
 
-  if (
-    behaviour === "shy"
-  ) {
+let eyeGlanceX = 0;
+let eyeGlanceY = 0;
+let eyeGlanceTargetX = 0;
+let eyeGlanceTargetY = 0;
+let eyeGlanceStart = -10;
+let eyeGlanceDuration = 0.55;
+let eyeGlanceHoldUntil = 0;
+let nextEyeGlance = 3.5;
+
+function smoothEyeEase(t) {
+  t = THREE.MathUtils.clamp(t, 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function startEyeGlance(time) {
+  // Keep idle glances fairly small and intentional.
+  const directions = [
+    [-0.28, 0.02],
+    [ 0.24, 0.04],
+    [-0.18, 0.15],
+    [ 0.18, 0.12],
+    [-0.12,-0.12],
+    [ 0.12,-0.10],
+    [ 0.00, 0.18],
+    [ 0.00,-0.16]
+  ];
+
+  const direction =
+    directions[Math.floor(Math.random() * directions.length)];
+
+  eyeGlanceTargetX = direction[0];
+  eyeGlanceTargetY = direction[1];
+  eyeGlanceStart = time;
+  eyeGlanceDuration = THREE.MathUtils.randFloat(0.45, 0.75);
+  eyeGlanceHoldUntil = time + eyeGlanceDuration + THREE.MathUtils.randFloat(0.7, 1.8);
+}
+
+function updateEyeGlances(time, delta) {
+  // Cursor / interaction takes priority. Return the idle glance
+  // smoothly to centre whenever Oko is actively following the pointer.
+  if (behaviour !== "idle") {
+    eyeGlanceTargetX = 0;
+    eyeGlanceTargetY = 0;
+    eyeGlanceX = damp(eyeGlanceX, 0, 5.5, delta);
+    eyeGlanceY = damp(eyeGlanceY, 0, 5.5, delta);
     return;
   }
 
-
-  if (
-    time >
-    nextEyeDart
-  ) {
-
-    eyeDartStart =
-      time;
-
-    eyeDartAmount =
-      1;
-
-
-    eyeDartTargetX =
-      THREE.MathUtils.randFloat(
-        -0.17,
-        0.17
-      );
-
-    eyeDartTargetY =
-      THREE.MathUtils.randFloat(
-        -0.10,
-        0.10
-      );
-
-
-    nextEyeDart =
-      time +
-      THREE.MathUtils.randFloat(
-        2.5,
-        6
-      );
-
+  if (time >= nextEyeGlance) {
+    startEyeGlance(time);
+    nextEyeGlance = eyeGlanceHoldUntil + THREE.MathUtils.randFloat(0.8, 2.2);
   }
 
-
-  const progress =
+  const travelProgress =
     THREE.MathUtils.clamp(
-      (
-        time -
-        eyeDartStart
-      ) /
-      eyeDartDuration,
+      (time - eyeGlanceStart) / eyeGlanceDuration,
       0,
       1
     );
 
+  if (travelProgress < 1) {
+    const eased = smoothEyeEase(travelProgress);
 
-  let amount;
+    eyeGlanceX = THREE.MathUtils.lerp(
+      eyeGlanceX,
+      eyeGlanceTargetX,
+      Math.min(1, delta * 14)
+    );
 
+    eyeGlanceY = THREE.MathUtils.lerp(
+      eyeGlanceY,
+      eyeGlanceTargetY,
+      Math.min(1, delta * 14)
+    );
 
-  if (
-    progress < 0.18
-  ) {
+    // Ease the movement envelope without introducing any jitter.
+    const startX = eyeGlanceX * (1 - eased);
+    const startY = eyeGlanceY * (1 - eased);
 
-    amount =
-      easeOut(
-        progress / 0.18
-      );
-
+    eyeGlanceX = THREE.MathUtils.lerp(startX, eyeGlanceTargetX, eased);
+    eyeGlanceY = THREE.MathUtils.lerp(startY, eyeGlanceTargetY, eased);
   } else {
-
-    amount =
-      1 -
-      easeInOut(
-        (
-          progress -
-          0.18
-        ) /
-        0.82
-      );
-
+    // Hold perfectly still at the destination.
+    eyeGlanceX = damp(eyeGlanceX, eyeGlanceTargetX, 10, delta);
+    eyeGlanceY = damp(eyeGlanceY, eyeGlanceTargetY, 10, delta);
   }
-
-
-  eyeDartX =
-    eyeDartTargetX *
-    amount *
-    eyeDartAmount;
-
-  eyeDartY =
-    eyeDartTargetY *
-    amount *
-    eyeDartAmount;
-
-
-  if (
-    progress >= 1
-  ) {
-
-    eyeDartAmount =
-      0;
-
-  }
-
 }
-
-
-// ============================================================
-// NERVOUS EYES
-// ============================================================
-
-function updateNervousEyes(
-  time,
-  delta
-) {
-
-  if (
-    behaviour !== "shy"
-  ) {
-
-    nervousEyeX =
-      damp(
-        nervousEyeX,
-        0,
-        8,
-        delta
-      );
-
-    nervousEyeY =
-      damp(
-        nervousEyeY,
-        0,
-        8,
-        delta
-      );
-
-    return;
-
-  }
-
-
-  // ----------------------------------------------------------
-  // NEW NERVOUS GLANCE
-  // ----------------------------------------------------------
-
-  if (
-    time >
-    nextNervousEyeMove
-  ) {
-
-    nervousEyeTargetX =
-      THREE.MathUtils.randFloat(
-        -0.18,
-        0.18
-      );
-
-    nervousEyeTargetY =
-      THREE.MathUtils.randFloat(
-        -0.10,
-        0.10
-      );
-
-
-    // Occasionally make the glance
-    // noticeably sideways.
-
-    if (
-      Math.random() <
-      0.35
-    ) {
-
-      nervousEyeTargetX =
-        Math.random() >
-        0.5
-          ? 0.23
-          : -0.23;
-
-    }
-
-
-    nextNervousEyeMove =
-      time +
-      THREE.MathUtils.randFloat(
-        0.45,
-        1.6
-      );
-
-  }
-
-
-  nervousEyeX =
-    damp(
-      nervousEyeX,
-      nervousEyeTargetX,
-      18,
-      delta
-    );
-
-  nervousEyeY =
-    damp(
-      nervousEyeY,
-      nervousEyeTargetY,
-      18,
-      delta
-    );
-
-
-  // Tiny nervous tremble
-
-  nervousEyeX +=
-    Math.sin(
-      time * 16
-    ) *
-    0.009;
-
-  nervousEyeY +=
-    Math.sin(
-      time * 13 +
-      1.2
-    ) *
-    0.006;
-
-}
-
 
 // ============================================================
 // EARS
@@ -2570,6 +2460,163 @@ function updateBreathing(
 
 
 // ============================================================
+// SMOOTH ANIMATION LAYER
+// ============================================================
+
+// Every animation writes into targets first. The model then
+// eases toward those targets, preventing one behaviour from
+// snapping directly into another.
+
+let smoothHeadX = 0;
+let smoothHeadY = 0;
+let smoothHeadZ = 0;
+
+let smoothLeftArmX = 0;
+let smoothLeftArmY = 0;
+let smoothLeftArmZ = 0;
+
+let smoothRightArmX = 0;
+let smoothRightArmY = 0;
+let smoothRightArmZ = 0;
+
+let smoothLeftLegZ = 0;
+let smoothRightLegZ = 0;
+
+let smoothHipZ = 0;
+
+let smoothShoulderLX = 0;
+let smoothShoulderLZ = 0;
+let smoothShoulderRX = 0;
+let smoothShoulderRZ = 0;
+
+
+// Smoothly blend one animation value toward its target.
+// The speed is expressed in "feel" rather than frame count,
+// so the transitions remain consistent at different FPS.
+
+function smoothValue(
+  current,
+  target,
+  speed,
+  delta
+) {
+  return THREE.MathUtils.damp(
+    current,
+    target,
+    speed,
+    delta
+  );
+}
+
+
+function updateSmoothBodyTargets(
+  delta
+) {
+
+  smoothHeadX =
+    smoothValue(
+      smoothHeadX,
+      idleHeadX,
+      7,
+      delta
+    );
+
+  smoothHeadY =
+    smoothValue(
+      smoothHeadY,
+      idleHeadY,
+      7,
+      delta
+    );
+
+  smoothHeadZ =
+    smoothValue(
+      smoothHeadZ,
+      idleHeadZ,
+      7,
+      delta
+    );
+
+
+  smoothLeftArmX =
+    smoothValue(
+      smoothLeftArmX,
+      idleLeftArmX,
+      9,
+      delta
+    );
+
+  smoothLeftArmY =
+    smoothValue(
+      smoothLeftArmY,
+      idleLeftArmY,
+      9,
+      delta
+    );
+
+  smoothLeftArmZ =
+    smoothValue(
+      smoothLeftArmZ,
+      idleLeftArmZ,
+      9,
+      delta
+    );
+
+
+  smoothRightArmX =
+    smoothValue(
+      smoothRightArmX,
+      idleRightArmX,
+      9,
+      delta
+    );
+
+  smoothRightArmY =
+    smoothValue(
+      smoothRightArmY,
+      idleRightArmY,
+      9,
+      delta
+    );
+
+  smoothRightArmZ =
+    smoothValue(
+      smoothRightArmZ,
+      idleRightArmZ,
+      9,
+      delta
+    );
+
+
+  smoothLeftLegZ =
+    smoothValue(
+      smoothLeftLegZ,
+      idleLeftLegZ,
+      8,
+      delta
+    );
+
+  smoothRightLegZ =
+    smoothValue(
+      smoothRightLegZ,
+      idleRightLegZ,
+      8,
+      delta
+    );
+
+
+  smoothHipZ =
+    smoothValue(
+      smoothHipZ,
+      idleHipZ,
+      8,
+      delta
+    );
+
+}
+
+
+// ============================================================
 // MAIN ANIMATION
 // ============================================================
 
@@ -2605,7 +2652,15 @@ function animate() {
 
 
   updateIdleAction(
-    time
+    time,
+    delta
+  );
+
+
+  // Blend all idle-body targets smoothly before applying them.
+
+  updateSmoothBodyTargets(
+    delta
   );
 
 
@@ -2654,7 +2709,7 @@ function animate() {
     damp(
       currentEyeX,
       targetEyeX,
-      14,
+      11,
       delta
     );
 
@@ -2662,17 +2717,12 @@ function animate() {
     damp(
       currentEyeY,
       targetEyeY,
-      14,
+      11,
       delta
     );
 
 
-  updateEyeDart(
-    time
-  );
-
-
-  updateNervousEyes(
+  updateEyeGlances(
     time,
     delta
   );
@@ -2719,13 +2769,13 @@ function animate() {
     // Idle personality
 
     headY +=
-      idleHeadY;
+      smoothHeadY;
 
     headX +=
-      idleHeadX;
+      smoothHeadX;
 
     const idleZ =
-      idleHeadZ;
+      smoothHeadZ;
 
 
     // Curious response:
@@ -2820,14 +2870,15 @@ function animate() {
       currentEyeY;
 
 
-    // Normal idle dart
+    // Deliberate idle glance. This is a smooth destination,
+    // not a random twitch.
 
     eyeX +=
-      eyeDartX *
+      eyeGlanceX *
       0.65;
 
     eyeY +=
-      eyeDartY *
+      eyeGlanceY *
       0.65;
 
 
@@ -2870,13 +2921,8 @@ function animate() {
         0.42;
 
 
-      // Nervous little glances
-
-      eyeX +=
-        nervousEyeX;
-
-      eyeY +=
-        nervousEyeY;
+      // Shy eye movement stays smooth too. The cursor tracking
+      // is deliberately reduced rather than replaced by twitching.
 
     }
 
@@ -3003,23 +3049,23 @@ function animate() {
     // --------------------------------------------------------
 
     leftArm.rotation.x +=
-      idleLeftArmX;
+      smoothLeftArmX;
 
     leftArm.rotation.y +=
-      idleLeftArmY;
+      smoothLeftArmY;
 
     leftArm.rotation.z +=
-      idleLeftArmZ;
+      smoothLeftArmZ;
 
 
     rightArm.rotation.x +=
-      idleRightArmX;
+      smoothRightArmX;
 
     rightArm.rotation.y +=
-      idleRightArmY;
+      smoothRightArmY;
 
     rightArm.rotation.z +=
-      idleRightArmZ;
+      smoothRightArmZ;
 
 
     // --------------------------------------------------------
@@ -3192,10 +3238,10 @@ function animate() {
     // --------------------------------------------------------
 
     leftLeg.rotation.z +=
-      idleLeftLegZ;
+      smoothLeftLegZ;
 
     rightLeg.rotation.z +=
-      idleRightLegZ;
+      smoothRightLegZ;
 
 
     // --------------------------------------------------------
@@ -3255,14 +3301,14 @@ function animate() {
 
     leftHip.rotation.z =
       leftHipBaseRotation.z +
-      idleHipZ +
+      smoothHipZ +
       shyAmount *
       0.015;
 
 
     rightHip.rotation.z =
       rightHipBaseRotation.z -
-      idleHipZ -
+      smoothHipZ -
       shyAmount *
       0.015;
 
