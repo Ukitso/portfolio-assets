@@ -294,10 +294,6 @@ loader.load(
             eyeball.position
           );
 
-          console.log(
-            "EYEBALL FOUND"
-          );
-
         }
 
 
@@ -315,10 +311,6 @@ loader.load(
 
           leftEarBaseRotation =
             object.rotation.clone();
-
-          console.log(
-            "LEFT EAR FOUND"
-          );
 
         }
 
@@ -338,10 +330,6 @@ loader.load(
           rightEarBaseRotation =
             object.rotation.clone();
 
-          console.log(
-            "RIGHT EAR FOUND"
-          );
-
         }
 
 
@@ -360,10 +348,6 @@ loader.load(
           leftArmBaseRotation =
             object.rotation.clone();
 
-          console.log(
-            "LEFT ARM FOUND"
-          );
-
         }
 
 
@@ -381,10 +365,6 @@ loader.load(
 
           rightArmBaseRotation =
             object.rotation.clone();
-
-          console.log(
-            "RIGHT ARM FOUND"
-          );
 
         }
 
@@ -440,10 +420,6 @@ loader.load(
           leftLegBaseRotation =
             object.rotation.clone();
 
-          console.log(
-            "LEFT LEG FOUND"
-          );
-
         }
 
 
@@ -461,10 +437,6 @@ loader.load(
 
           rightLegBaseRotation =
             object.rotation.clone();
-
-          console.log(
-            "RIGHT LEG FOUND"
-          );
 
         }
 
@@ -519,10 +491,6 @@ loader.load(
 
           headBaseRotation =
             object.rotation.clone();
-
-          console.log(
-            "HEAD FOUND"
-          );
 
         }
 
@@ -950,33 +918,38 @@ function animate() {
   // LEGS
   // ==========================================================
 
+  // EXAGGERATED TEST MOVEMENT
+  // These values are intentionally larger so we can
+  // clearly see what the leg bones are doing.
+
+
   if (
     leftLeg &&
     leftLegBaseRotation
   ) {
 
-    // Gentle weight shift
+    // Side / weight shift
     leftLeg.rotation.z =
       leftLegBaseRotation.z
       + Math.sin(
         time * 0.75
-      ) * 0.035;
+      ) * 0.12;
 
 
-    // Forward / backward movement
+    // Forward / backward
     leftLeg.rotation.x =
       leftLegBaseRotation.x
       + Math.sin(
         time * 0.6
-      ) * 0.025;
+      ) * 0.09;
 
 
-    // Small 3D twist
+    // 3D twist
     leftLeg.rotation.y =
       leftLegBaseRotation.y
       + Math.sin(
         time * 0.5
-      ) * 0.018;
+      ) * 0.07;
 
   }
 
@@ -986,28 +959,28 @@ function animate() {
     rightLegBaseRotation
   ) {
 
-    // Opposite weight shift
+    // Opposite side / weight shift
     rightLeg.rotation.z =
       rightLegBaseRotation.z
       - Math.sin(
         time * 0.75
-      ) * 0.035;
+      ) * 0.12;
 
 
-    // Opposite forward / backward movement
+    // Opposite forward / backward
     rightLeg.rotation.x =
       rightLegBaseRotation.x
       - Math.sin(
         time * 0.6
-      ) * 0.025;
+      ) * 0.09;
 
 
-    // Small 3D twist
+    // Opposite 3D twist
     rightLeg.rotation.y =
       rightLegBaseRotation.y
       - Math.sin(
         time * 0.5
-      ) * 0.018;
+      ) * 0.07;
 
   }
 
@@ -1016,9 +989,7 @@ function animate() {
   // HIPS
   // ==========================================================
 
-  // Very small movement.
-  // The hips should feel like they are responding
-  // to the legs rather than independently dancing.
+  // Keep the hips almost completely still.
 
   if (
     leftHip &&
@@ -1057,9 +1028,6 @@ function animate() {
     headBaseRotation
   ) {
 
-    // Head follows the eyes,
-    // but much more slowly.
-
     head.rotation.y =
       headBaseRotation.y
       + currentX * 0.18;
@@ -1069,8 +1037,6 @@ function animate() {
       headBaseRotation.x
       - currentY * 0.10;
 
-
-    // Very subtle natural movement
 
     head.rotation.z =
       headBaseRotation.z
