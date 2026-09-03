@@ -1202,35 +1202,35 @@ function animate() {
 
 
 // ======================================
-// EAR TEST — Y AXIS
+// EAR TEST — QUATERNION
 // ======================================
 
 if (leftEar && rightEar) {
 
   const earTest =
-    Math.sin(performance.now() * 0.004) * 0.5;
+    Math.sin(performance.now() * 0.004) * 0.6;
 
 
-  leftEar.rotation.x =
-    leftEarBaseRotation.x;
+  // LEFT EAR
 
-  leftEar.rotation.y =
-    leftEarBaseRotation.y +
-    earTest;
+  leftEar.rotation.set(
+    leftEarBaseRotation.x,
+    leftEarBaseRotation.y,
+    leftEarBaseRotation.z
+  );
 
-  leftEar.rotation.z =
-    leftEarBaseRotation.z;
+  leftEar.rotateX(earTest);
 
 
-  rightEar.rotation.x =
-    rightEarBaseRotation.x;
+  // RIGHT EAR
 
-  rightEar.rotation.y =
-    rightEarBaseRotation.y -
-    earTest;
+  rightEar.rotation.set(
+    rightEarBaseRotation.x,
+    rightEarBaseRotation.y,
+    rightEarBaseRotation.z
+  );
 
-  rightEar.rotation.z =
-    rightEarBaseRotation.z;
+  rightEar.rotateX(-earTest);
 
 }
 
