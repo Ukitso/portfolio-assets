@@ -118,37 +118,65 @@ let head = null;
 // EYE SETTINGS
 // ========================================
 
-// How far the eye can move.
-
 const eyeRangeX = 0.16;
 const eyeRangeY = 0.12;
-
-
-// Small neutral offset.
-// Moves the entire eye movement range upward.
 
 const eyeOffsetY = 0.05;
 
 
-// Original position of the eyeball bone.
+// Original eye position.
 
 const eyeBasePosition = new THREE.Vector3();
 
 
-// Current and target eye movement.
-
-let eyeTargetX = 0;
-let eyeTargetY = 0;
+// Current eye movement.
 
 let eyeCurrentX = 0;
 let eyeCurrentY = 0;
 
 
 // ========================================
-// HEAD SETTINGS
+// EYE TARGET
 // ========================================
 
-// Subtle head movement following the eye.
+let eyeTargetX = 0;
+let eyeTargetY = 0;
+
+
+// ========================================
+// IDLE SETTINGS
+// ========================================
+
+// How long the mouse must be still
+// before Oko starts looking around.
+
+const idleDelay = 2500;
+
+
+// How far idle looking can wander.
+
+const idleRangeX = 0.10;
+const idleRangeY = 0.07;
+
+
+// Whether Oko is currently idle.
+
+let isIdle = false;
+
+
+// Timer used to enter idle.
+
+let idleTimer = null;
+
+
+// Timer used to choose the next idle look.
+
+let idleLookTimer = null;
+
+
+// ========================================
+// HEAD SETTINGS
+// ========================================
 
 const headBaseRotation = new THREE.Euler();
 
@@ -158,38 +186,142 @@ let headCurrentZ = 0;
 
 
 // ========================================
+// ENTER IDLE
+// ========================================
+
+function startIdle() {
+
+  if (isIdle) {
+    return;
+  }
+
+  isIdle = true;
+
+  chooseIdleLook();
+
+}
+
+
+// ========================================
+// CHOOSE IDLE LOOK
+// ========================================
+
+function chooseIdleLook() {
+
+  if (!isIdle) {
+    return;
+  }
+
+
+  // Random position for Oko to look at.
+
+  eyeTargetX =
+    THREE.MathUtils.randFloat(
+      -idleRangeX,
+      idleRangeX
+    );
+
+
+  eyeTargetY =
+    THREE.MathUtils.randFloat(
+      -idleRangeY,
+      idleRangeY
+    );
+
+
+  // Wait somewhere between 1 and 2.5 seconds
+  // before looking somewhere else.
+
+  const delay =
+    THREE.MathUtils.randFloat(
+      1000,
+      2500
+    );
+
+
+  clearTimeout(idleLookTimer);
+
+
+  idleLookTimer = setTimeout(
+    chooseIdleLook,
+    delay
+  );
+
+}
+
+
+// ========================================
+// EXIT IDLE
+// ========================================
+
+function exitIdle() {
+
+  if (!isIdle) {
+    return;
+  }
+
+  isIdle = false;
+
+
+  clearTimeout(idleLookTimer);
+
+}
+
+
+// ========================================
 // MOUSE
 // ========================================
 
-window.addEventListener("mousemove", (event) => {
-
-  const normalizedX =
-    (event.clientX - window.innerWidth / 2) /
-    (window.innerWidth / 2);
-
-  const normalizedY =
-    (event.clientY - window.innerHeight / 2) /
-    (window.innerHeight / 2);
+window.addEventListener(
+  "mousemove",
+  (event) => {
 
 
-  // --------------------------------------
-  // EYE HORIZONTAL
-  // --------------------------------------
+    // ------------------------------------
+    // Mouse movement immediately wakes Oko.
+    // ------------------------------------
 
-  eyeTargetX =
-    normalizedX * eyeRangeX;
+    exitIdle();
 
 
-  // --------------------------------------
-  // EYE VERTICAL
-  // --------------------------------------
-  // Negative because screen Y is inverted
-  // compared with the 3D coordinate system.
+    // Reset the idle timer.
 
-  eyeTargetY =
-    -normalizedY * eyeRangeY;
+    clearTimeout(idleTimer);
 
-});
+
+    idleTimer = setTimeout(
+      startIdle,
+      idleDelay
+    );
+
+
+    // ------------------------------------
+    // NORMALIZED MOUSE POSITION
+    // ------------------------------------
+
+    const normalizedX =
+      (event.clientX - window.innerWidth / 2) /
+      (window.innerWidth / 2);
+
+
+    const normalizedY =
+      (event.clientY - window.innerHeight / 2) /
+      (window.innerHeight / 2);
+
+
+    // ------------------------------------
+    // EYE TARGET
+    // ------------------------------------
+
+    eyeTargetX =
+      normalizedX * eyeRangeX;
+
+
+    eyeTargetY =
+      -normalizedY * eyeRangeY;
+
+  }
+);
 
 
 // ========================================
@@ -219,6 +351,7 @@ loader.load(
 
     console.log("------ OBJECTS / BONES ------");
 
+
     oko.traverse((object) => {
 
       console.log(
@@ -227,6 +360,7 @@ loader.load(
       );
 
     });
+
 
     console.log("-----------------------------");
 
@@ -272,7 +406,7 @@ loader.load(
 
 
     // ====================================
-    // SAVE ORIGINAL TRANSFORMS
+    // SAVE ORIGINAL EYE POSITION
     // ====================================
 
     if (eyeballBone) {
@@ -283,6 +417,10 @@ loader.load(
 
     }
 
+
+    // ====================================
+    // SAVE ORIGINAL HEAD ROTATION
+    // ====================================
 
     if (head) {
 
@@ -317,6 +455,7 @@ loader.load(
       "Oko size:",
       size
     );
+
 
     console.log(
       "Oko center:",
@@ -373,6 +512,7 @@ loader.load(
       "Camera distance:",
       cameraDistance
     );
+
 
     console.log("================================");
 
@@ -432,7 +572,10 @@ function animate() {
 
   if (eyeballBone) {
 
+
+    // ------------------------------------
     // Smoothly approach target.
+    // ------------------------------------
 
     eyeCurrentX +=
       (
@@ -448,7 +591,9 @@ function animate() {
       ) * 0.08;
 
 
+    // ------------------------------------
     // Apply eye position.
+    // ------------------------------------
 
     eyeballBone.position.x =
       eyeBasePosition.x +
@@ -469,24 +614,25 @@ function animate() {
 
   if (head) {
 
+
     // ------------------------------------
-    // HEAD TARGET
+    // Head follows eye.
     // ------------------------------------
-    // The head follows the eye movement,
-    // but at a much smaller scale.
 
     const headTargetY =
-  eyeCurrentX * 1.4;
+      eyeCurrentX * 1.4;
 
-const headTargetX =
-  -eyeCurrentY * 1.0;
 
-const headTargetZ =
-  eyeCurrentX * -0.5;
+    const headTargetX =
+      -eyeCurrentY * 1.0;
+
+
+    const headTargetZ =
+      eyeCurrentX * -0.5;
 
 
     // ------------------------------------
-    // SMOOTH HEAD MOVEMENT
+    // Smooth head movement.
     // ------------------------------------
 
     headCurrentY +=
@@ -511,7 +657,7 @@ const headTargetZ =
 
 
     // ------------------------------------
-    // APPLY HEAD ROTATION
+    // Apply head rotation.
     // ------------------------------------
 
     head.rotation.y =
