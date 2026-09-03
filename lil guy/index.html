@@ -69,62 +69,92 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true
 });
 
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio, 2)
+);
+
 renderer.setSize(
   container.clientWidth,
   container.clientHeight
 );
 
-renderer.setClearColor(0x000000, 0);
+renderer.setClearColor(
+  0x000000,
+  0
+);
 
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.NoToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace =
+  THREE.SRGBColorSpace;
 
-container.appendChild(renderer.domElement);
+renderer.toneMapping =
+  THREE.NoToneMapping;
+
+renderer.toneMappingExposure = 1;
+
+container.appendChild(
+  renderer.domElement
+);
 
 
 // ============================================================
 // LIGHTING
 // ============================================================
 
-const ambientLight = new THREE.AmbientLight(
-  0xffffff,
-  0.45
+const ambientLight =
+  new THREE.AmbientLight(
+    0xffffff,
+    0.45
+  );
+
+scene.add(
+  ambientLight
 );
 
-scene.add(ambientLight);
 
+const directionalLight =
+  new THREE.DirectionalLight(
+    0xffffff,
+    1.8
+  );
 
-const directionalLight = new THREE.DirectionalLight(
-  0xffffff,
-  1.8
+directionalLight.position.set(
+  4,
+  5,
+  6
 );
 
-directionalLight.position.set(4, 5, 6);
-
-scene.add(directionalLight);
-
-
-const fillLight = new THREE.DirectionalLight(
-  0xffffff,
-  0.15
+scene.add(
+  directionalLight
 );
 
-fillLight.position.set(-4, 2, 3);
 
-scene.add(fillLight);
+const fillLight =
+  new THREE.DirectionalLight(
+    0xffffff,
+    0.15
+  );
+
+fillLight.position.set(
+  -4,
+  2,
+  3
+);
+
+scene.add(
+  fillLight
+);
 
 
 // ============================================================
 // CLOCK
 // ============================================================
 
-const clock = new THREE.Clock();
+const clock =
+  new THREE.Clock();
 
 
 // ============================================================
-// MODEL / RIG
+// MODEL REFERENCES
 // ============================================================
 
 let oko = null;
@@ -145,28 +175,20 @@ let rightHip = null;
 let rightLeg = null;
 
 let head = null;
+
 let eyeBone = null;
 let eyeMesh = null;
 
 
 // ============================================================
-// EYE VARIABLES
+// EYE
 // ============================================================
 
 let eyeMovementAmount = 0;
 
-let targetX = 0;
-let targetY = 0;
-
-let currentX = 0;
-let currentY = 0;
-
 let currentEyeX = 0;
 let currentEyeY = 0;
 
-
-// Head follows the eye slightly behind it.
-// This makes the eye lead and the head subtly react.
 let headEyeX = 0;
 let headEyeY = 0;
 
@@ -175,37 +197,75 @@ let headEyeY = 0;
 // MOUSE
 // ============================================================
 
-let mouseTargetX = 0;
-let mouseTargetY = 0;
+let mouseX = 0;
+let mouseY = 0;
+
+let mouseInsideContainer = false;
 
 let lastMouseMoveTime = 0;
 
-let mouseInside = false;
+
+// Mouse position relative to the Oko container.
+// This keeps the behaviour local to the character.
+
+container.addEventListener(
+  "mousemove",
+  (event) => {
+
+    const rect =
+      container.getBoundingClientRect();
+
+    const x =
+      (event.clientX - rect.left) /
+      rect.width;
+
+    const y =
+      (event.clientY - rect.top) /
+      rect.height;
+
+    mouseX =
+      x * 2 - 1;
+
+    mouseY =
+      y * 2 - 1;
+
+    lastMouseMoveTime =
+      clock.elapsedTime;
+
+    mouseInsideContainer = true;
+
+  }
+);
 
 
-// Mouse movement
-document.addEventListener("mousemove", (event) => {
+container.addEventListener(
+  "mouseenter",
+  () => {
+    mouseInsideContainer = true;
+  }
+);
 
-  const mouseX =
-    (event.clientX / window.innerWidth) * 2 - 1;
 
-  const mouseY =
-    (event.clientY / window.innerHeight) * 2 - 1;
+container.addEventListener(
+  "mouseleave",
+  () => {
 
-  mouseTargetX = mouseX * 0.45;
-  mouseTargetY = mouseY * 0.30;
+    mouseInsideContainer = false;
 
-  lastMouseMoveTime = clock.elapsedTime;
-
-  mouseInside = true;
-});
+  }
+);
 
 
 // ============================================================
 // HELPERS
 // ============================================================
 
-function damp(current, target, speed, delta) {
+function damp(
+  current,
+  target,
+  speed,
+  delta
+) {
 
   return THREE.MathUtils.damp(
     current,
@@ -217,11 +277,18 @@ function damp(current, target, speed, delta) {
 }
 
 
-function clamp(value, min, max) {
+function clamp(
+  value,
+  min,
+  max
+) {
 
   return Math.max(
     min,
-    Math.min(max, value)
+    Math.min(
+      max,
+      value
+    )
   );
 
 }
@@ -229,9 +296,18 @@ function clamp(value, min, max) {
 
 function easeOut(t) {
 
-  t = clamp(t, 0, 1);
+  t =
+    clamp(
+      t,
+      0,
+      1
+    );
 
-  return 1 - Math.pow(1 - t, 3);
+  return 1 -
+    Math.pow(
+      1 - t,
+      3
+    );
 
 }
 
@@ -240,64 +316,111 @@ function easeOut(t) {
 // LOAD MODEL
 // ============================================================
 
-const loader = new GLTFLoader();
+const loader =
+  new GLTFLoader();
 
 loader.load(
   "./OKO.glb",
 
   function(gltf) {
 
-    console.log("OKO LOADED");
+    console.log(
+      "OKO LOADED"
+    );
 
-    oko = gltf.scene;
+    oko =
+      gltf.scene;
 
 
     // ----------------------------------------------------------
-    // FIND BONES / MESHES
+    // FIND RIG
     // ----------------------------------------------------------
 
-    oko.traverse((object) => {
+    oko.traverse(
+      (object) => {
 
-      if (object.name === "left_ear")
-        leftEar = object;
+        if (
+          object.name ===
+          "left_ear"
+        )
+          leftEar = object;
 
-      if (object.name === "right_ear")
-        rightEar = object;
+        if (
+          object.name ===
+          "right_ear"
+        )
+          rightEar = object;
 
-      if (object.name === "left_shoulder")
-        leftShoulder = object;
+        if (
+          object.name ===
+          "left_shoulder"
+        )
+          leftShoulder =
+            object;
 
-      if (object.name === "left_arm")
-        leftArm = object;
+        if (
+          object.name ===
+          "left_arm"
+        )
+          leftArm = object;
 
-      if (object.name === "right_shoulder")
-        rightShoulder = object;
+        if (
+          object.name ===
+          "right_shoulder"
+        )
+          rightShoulder =
+            object;
 
-      if (object.name === "right_arm")
-        rightArm = object;
+        if (
+          object.name ===
+          "right_arm"
+        )
+          rightArm = object;
 
-      if (object.name === "left_hip_bone")
-        leftHip = object;
+        if (
+          object.name ===
+          "left_hip_bone"
+        )
+          leftHip = object;
 
-      if (object.name === "left_leg")
-        leftLeg = object;
+        if (
+          object.name ===
+          "left_leg"
+        )
+          leftLeg = object;
 
-      if (object.name === "right_hip_bone")
-        rightHip = object;
+        if (
+          object.name ===
+          "right_hip_bone"
+        )
+          rightHip = object;
 
-      if (object.name === "right_leg")
-        rightLeg = object;
+        if (
+          object.name ===
+          "right_leg"
+        )
+          rightLeg = object;
 
-      if (object.name === "HEAD")
-        head = object;
+        if (
+          object.name ===
+          "HEAD"
+        )
+          head = object;
 
-      if (object.name === "Eyeball")
-        eyeBone = object;
+        if (
+          object.name ===
+          "Eyeball"
+        )
+          eyeBone = object;
 
-      if (object.name === "EYEBALL")
-        eyeMesh = object;
+        if (
+          object.name ===
+          "EYEBALL"
+        )
+          eyeMesh = object;
 
-    });
+      }
+    );
 
 
     // ----------------------------------------------------------
@@ -305,17 +428,26 @@ loader.load(
     // ----------------------------------------------------------
 
     const box =
-      new THREE.Box3().setFromObject(oko);
+      new THREE.Box3()
+        .setFromObject(oko);
 
     const size =
-      box.getSize(new THREE.Vector3());
+      box.getSize(
+        new THREE.Vector3()
+      );
 
     const center =
-      box.getCenter(new THREE.Vector3());
+      box.getCenter(
+        new THREE.Vector3()
+      );
 
-    oko.position.sub(center);
+    oko.position.sub(
+      center
+    );
 
-    scene.add(oko);
+    scene.add(
+      oko
+    );
 
 
     // ----------------------------------------------------------
@@ -336,7 +468,9 @@ loader.load(
 
     let distance =
       (maxSize / 2) /
-      Math.tan(fov / 2);
+      Math.tan(
+        fov / 2
+      );
 
     distance *= 1.35;
 
@@ -365,32 +499,31 @@ loader.load(
 
 
     // ----------------------------------------------------------
-    // EYE MOVEMENT
+    // EYE RANGE
     // ----------------------------------------------------------
 
     eyeMovementAmount =
-      Math.max(
-        size.x,
-        size.y,
-        size.z
-      ) * 0.045;
+      maxSize * 0.045;
 
 
-    console.log("Bones found:", {
-      leftEar,
-      rightEar,
-      leftShoulder,
-      leftArm,
-      rightShoulder,
-      rightArm,
-      leftHip,
-      leftLeg,
-      rightHip,
-      rightLeg,
-      head,
-      eyeBone,
-      eyeMesh
-    });
+    console.log(
+      "Bones found:",
+      {
+        leftEar,
+        rightEar,
+        leftShoulder,
+        leftArm,
+        rightShoulder,
+        rightArm,
+        leftHip,
+        leftLeg,
+        rightHip,
+        rightLeg,
+        head,
+        eyeBone,
+        eyeMesh
+      }
+    );
 
   },
 
@@ -408,52 +541,108 @@ loader.load(
 
 
 // ============================================================
-// IDLE EYE WANDER
+// IDLE EYE WANDERING
 // ============================================================
 
-let eyeIdleX = 0;
-let eyeIdleY = 0;
+let idleEyeX = 0;
+let idleEyeY = 0;
 
-let eyeIdleTargetX = 0;
-let eyeIdleTargetY = 0;
+let idleEyeTargetX = 0;
+let idleEyeTargetY = 0;
 
-let nextEyeIdleMove = 2.0;
-
-
-// How long the mouse has to be still
-// before Oko starts looking around.
-const mouseIdleDelay = 2.0;
+let nextEyeMove = 2;
 
 
-function updateIdleEye(time, delta) {
+// ============================================================
+// SHY
+// ============================================================
 
-  const mouseIsIdle =
+let behaviour = "normal";
+
+let shyAmount = 0;
+
+let shyStartTime = -10;
+
+let nervousX = 0;
+let nervousY = 0;
+
+let nextNervousMove = 0;
+
+
+// ============================================================
+// EARS
+// ============================================================
+
+let earReactionStart = -10;
+
+
+// ============================================================
+// DETERMINE WHETHER CURSOR IS CLOSE ENOUGH
+// ============================================================
+
+function cursorIsClose() {
+
+  if (
+    !mouseInsideContainer
+  ) {
+    return false;
+  }
+
+
+  // Distance from the centre of the
+  // character in normalized screen space.
+
+  const distance =
+    Math.sqrt(
+      mouseX * mouseX +
+      mouseY * mouseY
+    );
+
+
+  // Only become shy when the cursor
+  // is reasonably close to Oko.
+  //
+  // This is intentionally generous because
+  // the canvas may be larger than the model.
+
+  return distance < 0.72;
+
+}
+
+
+// ============================================================
+// IDLE EYE
+// ============================================================
+
+function updateIdleEye(
+  time,
+  delta
+) {
+
+  const idle =
+    !mouseInsideContainer ||
     time - lastMouseMoveTime >
-    mouseIdleDelay;
+      2;
 
 
-  // ----------------------------------------------------------
-  // MOUSE ACTIVE
-  // ----------------------------------------------------------
+  if (!idle) {
 
-  if (!mouseIsIdle) {
+    idleEyeTargetX = 0;
+    idleEyeTargetY = 0;
 
-    eyeIdleTargetX = 0;
-    eyeIdleTargetY = 0;
-
-    eyeIdleX =
+    idleEyeX =
       damp(
-        eyeIdleX,
+        idleEyeX,
         0,
-        4,
+        5,
         delta
       );
 
-    eyeIdleY =
+    idleEyeY =
       damp(
-        eyeIdleY,
+        idleEyeY,
         0,
-        4,
+        5,
         delta
       );
 
@@ -462,23 +651,25 @@ function updateIdleEye(time, delta) {
   }
 
 
-  // ----------------------------------------------------------
-  // CHOOSE A NEW PLACE TO LOOK
-  // ----------------------------------------------------------
-
-  if (time > nextEyeIdleMove) {
+  if (
+    time >
+    nextEyeMove
+  ) {
 
     const directions = [
-      [-1, 0.35],
-      [-0.8, 0.8],
-      [0.9, 0.2],
-      [0.7, -0.55],
-      [-0.6, -0.65],
-      [0.1, 0.75],
-      [0.15, -0.65]
+
+      [-1.0, 0.15],
+      [-0.7, 0.65],
+      [0.85, 0.15],
+      [0.65, -0.55],
+      [-0.55, -0.55],
+      [0.10, 0.65],
+      [0.05, -0.55]
+
     ];
 
-    const choice =
+
+    const direction =
       directions[
         Math.floor(
           Math.random() *
@@ -487,89 +678,42 @@ function updateIdleEye(time, delta) {
       ];
 
 
-    eyeIdleTargetX =
-      choice[0] *
+    idleEyeTargetX =
+      direction[0] *
       eyeMovementAmount *
       0.9;
 
-    eyeIdleTargetY =
-      choice[1] *
+    idleEyeTargetY =
+      direction[1] *
       eyeMovementAmount *
       0.75;
 
 
-    // Sometimes settle for longer,
-    // sometimes look around again quickly.
-    nextEyeIdleMove =
+    nextEyeMove =
       time +
       THREE.MathUtils.randFloat(
-        1.2,
-        2.8
+        1.3,
+        2.7
       );
 
   }
 
 
-  eyeIdleX =
+  idleEyeX =
     damp(
-      eyeIdleX,
-      eyeIdleTargetX,
+      idleEyeX,
+      idleEyeTargetX,
       3.5,
       delta
     );
 
-  eyeIdleY =
+  idleEyeY =
     damp(
-      eyeIdleY,
-      eyeIdleTargetY,
+      idleEyeY,
+      idleEyeTargetY,
       3.5,
       delta
     );
-
-}
-
-
-// ============================================================
-// SHY STATE
-// ============================================================
-
-let behaviour = "normal";
-
-let shyAmount = 0;
-
-let shyArmStart = -10;
-
-let nervousEyeX = 0;
-let nervousEyeY = 0;
-
-let nextNervousEye = 0;
-
-
-// ============================================================
-// SHY ENTER / EXIT
-// ============================================================
-
-function enterShy(time) {
-
-  if (behaviour === "shy")
-    return;
-
-  behaviour = "shy";
-
-  shyArmStart = time;
-
-  nextNervousEye =
-    time + 0.05;
-
-}
-
-
-function exitShy(time) {
-
-  if (behaviour !== "shy")
-    return;
-
-  behaviour = "normal";
 
 }
 
@@ -578,30 +722,40 @@ function exitShy(time) {
 // SHY NERVOUS EYE
 // ============================================================
 
-function updateNervousEye(time) {
+function updateNervousEye(
+  time
+) {
 
-  if (behaviour !== "shy") {
+  if (
+    behaviour !== "shy"
+  ) {
 
-    nervousEyeX *= 0.85;
-    nervousEyeY *= 0.85;
+    nervousX *= 0.85;
+    nervousY *= 0.85;
 
     return;
 
   }
 
 
-  if (time > nextNervousEye) {
+  if (
+    time >
+    nextNervousMove
+  ) {
 
     const directions = [
-      [-1, 0.2],
-      [0.9, 0.15],
-      [-0.7, 0.7],
-      [0.65, -0.5],
-      [0.2, 0.75],
-      [-0.3, -0.7]
+
+      [-0.9, 0.15],
+      [0.8, 0.10],
+      [-0.65, 0.55],
+      [0.65, -0.45],
+      [0.10, 0.60],
+      [-0.2, -0.55]
+
     ];
 
-    const choice =
+
+    const direction =
       directions[
         Math.floor(
           Math.random() *
@@ -610,23 +764,22 @@ function updateNervousEye(time) {
       ];
 
 
-    nervousEyeX =
-      choice[0] *
+    nervousX =
+      direction[0] *
       eyeMovementAmount *
-      0.48;
+      0.38;
 
-    nervousEyeY =
-      choice[1] *
+    nervousY =
+      direction[1] *
       eyeMovementAmount *
-      0.40;
+      0.32;
 
 
-    // Nervous darting happens quite quickly.
-    nextNervousEye =
+    nextNervousMove =
       time +
       THREE.MathUtils.randFloat(
-        0.18,
-        0.48
+        0.25,
+        0.55
       );
 
   }
@@ -638,51 +791,57 @@ function updateNervousEye(time) {
 // EARS
 // ============================================================
 
-let earReactionStart = -10;
+function updateEars(
+  time
+) {
 
-function updateEars(time, delta) {
-
-  if (!leftEar || !rightEar)
+  if (
+    !leftEar ||
+    !rightEar
+  ) {
     return;
+  }
 
 
-  // ----------------------------------------------------------
-  // VERY SUBTLE CONSTANT IDLE MOVEMENT
-  // ----------------------------------------------------------
+  // Extremely subtle idle movement.
 
-  const leftSway =
-    Math.sin(time * 0.80) *
-    0.018;
+  const leftIdle =
+    Math.sin(
+      time * 0.8
+    ) * 0.018;
 
-  const rightSway =
-    Math.sin(time * 0.72 + 1.8) *
-    0.014;
+  const rightIdle =
+    Math.sin(
+      time * 0.72 + 1.8
+    ) * 0.014;
 
-  const leftSwayZ =
-    Math.sin(time * 0.63 + 0.5) *
-    0.012;
+  const leftIdleX =
+    Math.sin(
+      time * 0.63 + 0.5
+    ) * 0.012;
 
-  const rightSwayZ =
-    Math.sin(time * 0.68 + 2.2) *
-    0.010;
+  const rightIdleX =
+    Math.sin(
+      time * 0.68 + 2.2
+    ) * 0.010;
 
 
-  // ----------------------------------------------------------
-  // OCCASIONAL EAR TWITCH
-  // ----------------------------------------------------------
+  // Short reaction when shy.
 
   let reaction = 0;
 
-  const reactionTime =
-    time - earReactionStart;
+  const elapsed =
+    time -
+    earReactionStart;
+
 
   if (
-    reactionTime >= 0 &&
-    reactionTime < 0.32
+    elapsed >= 0 &&
+    elapsed < 0.35
   ) {
 
     const progress =
-      reactionTime / 0.32;
+      elapsed / 0.35;
 
     reaction =
       Math.sin(
@@ -693,92 +852,79 @@ function updateEars(time, delta) {
 
 
   leftEar.rotation.z =
-    leftSway +
-    reaction * 0.10;
+    leftIdle +
+    reaction * 0.06;
 
   rightEar.rotation.z =
-    rightSway -
-    reaction * 0.075;
-
+    rightIdle -
+    reaction * 0.045;
 
   leftEar.rotation.x =
-    leftSwayZ;
+    leftIdleX;
 
   rightEar.rotation.x =
-    rightSwayZ;
+    rightIdleX;
 
 
-  // Small shy reaction
-  if (behaviour === "shy") {
-
-    leftEar.rotation.z +=
-      Math.sin(time * 11) *
-      0.025;
-
-    rightEar.rotation.z +=
-      Math.sin(time * 13 + 1) *
-      0.020;
-
-  }
-
-}
-
-
-// ============================================================
-// IDLE BODY ACTIONS
-// ============================================================
-
-let idleAction = null;
-
-let nextIdleAction = 3.5;
-
-
-function chooseIdleAction(time) {
-
-  const actions = [
-    "look",
-    "look",
-    "ear",
-    "body"
-  ];
-
-  idleAction =
-    actions[
-      Math.floor(
-        Math.random() *
-        actions.length
-      )
-    ];
-
-
-  nextIdleAction =
-    time +
-    THREE.MathUtils.randFloat(
-      3.0,
-      6.0
-    );
-
-}
-
-
-function updateIdleAction(time, delta) {
+  // Slight nervous ear movement.
 
   if (
-    behaviour !== "normal"
+    behaviour === "shy"
   ) {
 
-    idleAction = null;
+    leftEar.rotation.z +=
+      Math.sin(
+        time * 9
+      ) * 0.012;
 
+    rightEar.rotation.z +=
+      Math.sin(
+        time * 10.5
+      ) * 0.010;
+
+  }
+
+}
+
+
+// ============================================================
+// SHY STATE
+// ============================================================
+
+function enterShy(
+  time
+) {
+
+  if (
+    behaviour === "shy"
+  ) {
     return;
-
   }
 
 
-  if (time > nextIdleAction) {
+  behaviour = "shy";
 
-    chooseIdleAction(time);
+  shyStartTime =
+    time;
 
+  nextNervousMove =
+    time + 0.15;
+
+  earReactionStart =
+    time;
+
+}
+
+
+function exitShy() {
+
+  if (
+    behaviour !== "shy"
+  ) {
+    return;
   }
+
+  behaviour = "normal";
 
 }
 
@@ -817,53 +963,26 @@ function animate() {
 
 
   // ==========================================================
-  // MOUSE / SHY DETECTION
+  // SHY DETECTION
   // ==========================================================
 
-  const mouseIsIdle =
-    time - lastMouseMoveTime >
-    mouseIdleDelay;
-
-
-  // If mouse is moving, Oko becomes shy.
-  // This is intentionally based on the cursor being near
-  // the character's interactive area.
-  //
-  // If your Readymag embed sends mouse movement normally,
-  // this will trigger when the cursor is over the page.
-  //
-  // To avoid making the whole page shy, the container check
-  // below can be used instead.
-
-  const rect =
-    container.getBoundingClientRect();
-
-  const mouseOverCharacter =
-    mouseInside &&
-    lastMouseMoveTime > 0 &&
-    true;
-
-
-  // ----------------------------------------------------------
-  // SHY WHEN MOUSE IS CLOSE / ACTIVE
-  // ----------------------------------------------------------
-
   if (
-    mouseOverCharacter &&
-    !mouseIsIdle
+    cursorIsClose()
   ) {
 
-    enterShy(time);
+    enterShy(
+      time
+    );
 
   } else {
 
-    exitShy(time);
+    exitShy();
 
   }
 
 
   // ==========================================================
-  // EYE
+  // EYE SOURCES
   // ==========================================================
 
   updateIdleEye(
@@ -876,58 +995,76 @@ function animate() {
   );
 
 
-  let eyeTargetX = 0;
-  let eyeTargetY = 0;
+  const mouseIdle =
+    !mouseInsideContainer ||
+    time - lastMouseMoveTime >
+      2;
 
 
-  if (behaviour === "shy") {
+  let targetEyeX = 0;
+  let targetEyeY = 0;
 
-    // Mouse direction + nervous darting.
-    eyeTargetX =
-      mouseTargetX * 0.42 +
-      nervousEyeX;
 
-    eyeTargetY =
-      mouseTargetY * 0.42 +
-      nervousEyeY;
+  if (
+    behaviour === "shy"
+  ) {
+
+    // Nervous eye still occasionally
+    // checks where the cursor is.
+
+    targetEyeX =
+      mouseX *
+      eyeMovementAmount *
+      0.30;
+
+    targetEyeY =
+      mouseY *
+      eyeMovementAmount *
+      0.22;
+
+    targetEyeX +=
+      nervousX;
+
+    targetEyeY +=
+      nervousY;
 
   }
 
-  else if (mouseIsIdle) {
+  else if (
+    mouseIdle
+  ) {
 
-    // Eye wanders independently.
-    eyeTargetX =
-      eyeIdleX;
+    targetEyeX =
+      idleEyeX;
 
-    eyeTargetY =
-      eyeIdleY;
+    targetEyeY =
+      idleEyeY;
 
   }
 
   else {
 
-    // Follow cursor.
-    eyeTargetX =
-      mouseTargetX *
+    targetEyeX =
+      mouseX *
       eyeMovementAmount;
 
-    eyeTargetY =
-      mouseTargetY *
+    targetEyeY =
+      mouseY *
       eyeMovementAmount;
 
   }
 
 
-  // ----------------------------------------------------------
-  // SMOOTH EYE
-  // ----------------------------------------------------------
+  // ==========================================================
+  // EYE
+  // ==========================================================
 
   currentEyeX =
     damp(
       currentEyeX,
-      eyeTargetX,
+      targetEyeX,
       behaviour === "shy"
-        ? 12
+        ? 11
         : 8,
       delta
     );
@@ -935,12 +1072,25 @@ function animate() {
   currentEyeY =
     damp(
       currentEyeY,
-      eyeTargetY,
+      targetEyeY,
       behaviour === "shy"
-        ? 12
+        ? 11
         : 8,
       delta
     );
+
+
+  if (
+    eyeBone
+  ) {
+
+    eyeBone.rotation.y =
+      currentEyeX;
+
+    eyeBone.rotation.x =
+      -currentEyeY;
+
+  }
 
 
   // ==========================================================
@@ -964,53 +1114,26 @@ function animate() {
     );
 
 
-  // ==========================================================
-  // EYE BONE
-  // ==========================================================
-
-  if (eyeBone) {
-
-    eyeBone.rotation.y =
-      currentEyeX;
-
-    eyeBone.rotation.x =
-      -currentEyeY;
-
-  }
-
-
-  // ==========================================================
-  // HEAD
-  // ==========================================================
-
-  if (head) {
-
-    // Eye leads.
-    // Head follows more subtly.
+  if (
+    head
+  ) {
 
     head.rotation.y =
-      headEyeX * 0.18;
+      headEyeX *
+      0.18;
 
     head.rotation.x =
-      -headEyeY * 0.10;
-
-
-    // Slight shy tuck.
-    if (behaviour === "shy") {
-
-      head.rotation.x +=
-        0.045;
-
-    }
+      -headEyeY *
+      0.10;
 
   }
 
 
   // ==========================================================
-  // SHY ARM ANIMATION
+  // SHY BODY REACTION
   // ==========================================================
 
-  let targetShyAmount =
+  const shyTarget =
     behaviour === "shy"
       ? 1
       : 0;
@@ -1019,134 +1142,12 @@ function animate() {
   shyAmount =
     damp(
       shyAmount,
-      targetShyAmount,
+      shyTarget,
       behaviour === "shy"
-        ? 12
-        : 7,
+        ? 10
+        : 6,
       delta
     );
-
-
-  if (
-    leftArm &&
-    rightArm
-  ) {
-
-    const shyElapsed =
-      time - shyArmStart;
-
-
-    // --------------------------------------------------------
-    // STARTLE
-    // --------------------------------------------------------
-
-    let startle = 0;
-
-    if (
-      behaviour === "shy" &&
-      shyElapsed >= 0 &&
-      shyElapsed < 0.28
-    ) {
-
-      const progress =
-        shyElapsed / 0.28;
-
-      startle =
-        Math.sin(
-          progress * Math.PI
-        );
-
-    }
-
-
-    // --------------------------------------------------------
-    // FACE COVER
-    // --------------------------------------------------------
-
-    let cover = 0;
-
-    if (behaviour === "shy") {
-
-      if (shyElapsed < 0.20) {
-
-        cover = 0;
-
-      }
-
-      else if (
-        shyElapsed >= 0.20 &&
-        shyElapsed < 0.65
-      ) {
-
-        const progress =
-          (shyElapsed - 0.20) /
-          0.45;
-
-        cover =
-          easeOut(progress);
-
-      }
-
-      else {
-
-        cover = 1;
-
-      }
-
-    }
-
-
-    // --------------------------------------------------------
-    // BASE ARM POSITION
-    // --------------------------------------------------------
-
-    const leftBaseZ = 0;
-    const rightBaseZ = 0;
-
-
-    // Arms shoot outward/upward first,
-    // then swing inward toward the face.
-
-    leftArm.rotation.z =
-      leftBaseZ
-      - cover * 0.24
-      - startle * 0.28;
-
-    rightArm.rotation.z =
-      rightBaseZ
-      + cover * 0.24
-      + startle * 0.28;
-
-
-    leftArm.rotation.x =
-      -cover * 0.18
-      -startle * 0.10;
-
-    rightArm.rotation.x =
-      -cover * 0.18
-      -startle * 0.10;
-
-
-    // Tiny nervous movement while hiding.
-    if (
-      behaviour === "shy" &&
-      cover > 0.8
-    ) {
-
-      const nervousWiggle =
-        Math.sin(
-          time * 15
-        ) * 0.035;
-
-      leftArm.rotation.z +=
-        nervousWiggle;
-
-      rightArm.rotation.z -=
-        nervousWiggle;
-
-    }
-
-  }
 
 
   // ==========================================================
@@ -1158,42 +1159,156 @@ function animate() {
     rightShoulder
   ) {
 
+    // Small "oh!" shoulder raise.
+    // Much safer than throwing the arms around.
+
+    const shoulderPulse =
+      Math.sin(
+        (time - shyStartTime) *
+        8
+      ) *
+      0.025 *
+      shyAmount;
+
+
     leftShoulder.rotation.z =
-      -shyAmount * 0.10;
+      -shyAmount *
+      0.055;
 
     rightShoulder.rotation.z =
-      shyAmount * 0.10;
+      shyAmount *
+      0.055;
 
 
-    // Little shoulder raise when shy.
     leftShoulder.rotation.x =
-      -shyAmount * 0.08;
+      -shyAmount *
+      0.035 +
+      shoulderPulse;
 
     rightShoulder.rotation.x =
-      -shyAmount * 0.08;
+      -shyAmount *
+      0.035 +
+      shoulderPulse;
 
   }
 
 
   // ==========================================================
-  // LEGS
+  // ARMS
   // ==========================================================
 
   if (
-    leftLeg &&
-    rightLeg
+    leftArm &&
+    rightArm
   ) {
 
-    // Subtle creature-like weight shift.
-    const legShift =
-      Math.sin(time * 1.1) *
+    /*
+      IMPORTANT:
+
+      The previous animation rotated the arms
+      aggressively toward the face.
+
+      This version deliberately stays inside
+      a very small safe range.
+
+      Think:
+        "tuck arms in"
+      rather than:
+        "cover face"
+
+      This avoids the torso intersection.
+    */
+
+
+    // Small inward tuck.
+
+    const leftSafeZ =
+      -0.075;
+
+    const rightSafeZ =
+      0.075;
+
+
+    // Slight backward/downward movement.
+
+    const leftSafeX =
       0.025;
 
-    leftLeg.rotation.z =
-      legShift;
+    const rightSafeX =
+      0.025;
 
-    rightLeg.rotation.z =
-      -legShift;
+
+    // Tiny startle pulse.
+
+    const elapsed =
+      time -
+      shyStartTime;
+
+
+    let startle =
+      0;
+
+
+    if (
+      behaviour === "shy" &&
+      elapsed >= 0 &&
+      elapsed < 0.30
+    ) {
+
+      const progress =
+        elapsed / 0.30;
+
+      startle =
+        Math.sin(
+          progress * Math.PI
+        );
+
+    }
+
+
+    leftArm.rotation.z =
+      leftSafeZ *
+      shyAmount -
+      startle *
+      0.025;
+
+    rightArm.rotation.z =
+      rightSafeZ *
+      shyAmount +
+      startle *
+      0.025;
+
+
+    leftArm.rotation.x =
+      leftSafeX *
+      shyAmount;
+
+    rightArm.rotation.x =
+      rightSafeX *
+      shyAmount;
+
+
+    // Very small nervous pulse once settled.
+
+    if (
+      behaviour === "shy" &&
+      elapsed > 0.65
+    ) {
+
+      const nervousPulse =
+        Math.sin(
+          time * 7
+        ) *
+        0.012;
+
+
+      leftArm.rotation.z +=
+        nervousPulse;
+
+      rightArm.rotation.z -=
+        nervousPulse;
+
+    }
 
   }
 
@@ -1208,8 +1323,11 @@ function animate() {
   ) {
 
     const hipShift =
-      Math.sin(time * 0.9) *
+      Math.sin(
+        time * 0.9
+      ) *
       0.018;
+
 
     leftHip.rotation.z =
       hipShift;
@@ -1221,22 +1339,36 @@ function animate() {
 
 
   // ==========================================================
+  // LEGS
+  // ==========================================================
+
+  if (
+    leftLeg &&
+    rightLeg
+  ) {
+
+    const legShift =
+      Math.sin(
+        time * 1.1
+      ) *
+      0.025;
+
+
+    leftLeg.rotation.z =
+      legShift;
+
+    rightLeg.rotation.z =
+      -legShift;
+
+  }
+
+
+  // ==========================================================
   // EARS
   // ==========================================================
 
   updateEars(
-    time,
-    delta
-  );
-
-
-  // ==========================================================
-  // IDLE ACTIONS
-  // ==========================================================
-
-  updateIdleAction(
-    time,
-    delta
+    time
   );
 
 
@@ -1269,9 +1401,7 @@ function resize() {
     width === 0 ||
     height === 0
   ) {
-
     return;
-
   }
 
 
