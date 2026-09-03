@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oko Test</title>
+  <title>Oko </title>
 
   <style>
     html,
@@ -184,18 +184,16 @@ let headIdleTimer = null;
 
 const bodyBaseRotation = new THREE.Euler();
 
-let bodyCurrentX = 0;
-let bodyCurrentY = 0;
-let bodyCurrentZ = 0;
+let body = null;
 
 
 // ========================================
-// BODY IDLE WEIGHT SHIFT
+// BODY IDLE SETTINGS
 // ========================================
 
-const bodyIdleRangeX = 0.012;
-const bodyIdleRangeY = 0.018;
-const bodyIdleRangeZ = 0.020;
+const bodyIdleRangeX = 0.006;
+const bodyIdleRangeY = 0.010;
+const bodyIdleRangeZ = 0.012;
 
 let bodyIdleTargetX = 0;
 let bodyIdleTargetY = 0;
@@ -209,49 +207,42 @@ let bodyIdleTimer = null;
 
 
 // ========================================
-// CHOOSE BODY IDLE MOVEMENT
+// CHOOSE IDLE EYE LOOK
 // ========================================
 
-function chooseBodyIdleMovement() {
+function chooseIdleLook() {
 
   if (!isIdle) {
     return;
   }
 
 
-  bodyIdleTargetX =
+  eyeTargetX =
     THREE.MathUtils.randFloat(
-      -bodyIdleRangeX,
-      bodyIdleRangeX
+      -idleRangeX,
+      idleRangeX
     );
 
 
-  bodyIdleTargetY =
+  eyeTargetY =
     THREE.MathUtils.randFloat(
-      -bodyIdleRangeY,
-      bodyIdleRangeY
-    );
-
-
-  bodyIdleTargetZ =
-    THREE.MathUtils.randFloat(
-      -bodyIdleRangeZ,
-      bodyIdleRangeZ
+      -idleRangeY,
+      idleRangeY
     );
 
 
   const delay =
     THREE.MathUtils.randFloat(
-      3500,
-      7000
+      1000,
+      2500
     );
 
 
-  clearTimeout(bodyIdleTimer);
+  clearTimeout(idleLookTimer);
 
 
-  bodyIdleTimer = setTimeout(
-    chooseBodyIdleMovement,
+  idleLookTimer = setTimeout(
+    chooseIdleLook,
     delay
   );
 
@@ -259,7 +250,7 @@ function chooseBodyIdleMovement() {
 
 
 // ========================================
-// CHOOSE HEAD IDLE MOVEMENT
+// CHOOSE IDLE HEAD MOVEMENT
 // ========================================
 
 function chooseHeadIdleMovement() {
@@ -309,6 +300,56 @@ function chooseHeadIdleMovement() {
 
 
 // ========================================
+// CHOOSE IDLE BODY MOVEMENT
+// ========================================
+
+function chooseBodyIdleMovement() {
+
+  if (!isIdle) {
+    return;
+  }
+
+
+  bodyIdleTargetX =
+    THREE.MathUtils.randFloat(
+      -bodyIdleRangeX,
+      bodyIdleRangeX
+    );
+
+
+  bodyIdleTargetY =
+    THREE.MathUtils.randFloat(
+      -bodyIdleRangeY,
+      bodyIdleRangeY
+    );
+
+
+  bodyIdleTargetZ =
+    THREE.MathUtils.randFloat(
+      -bodyIdleRangeZ,
+      bodyIdleRangeZ
+    );
+
+
+  const delay =
+    THREE.MathUtils.randFloat(
+      3500,
+      7000
+    );
+
+
+  clearTimeout(bodyIdleTimer);
+
+
+  bodyIdleTimer = setTimeout(
+    chooseBodyIdleMovement,
+    delay
+  );
+
+}
+
+
+// ========================================
 // START IDLE
 // ========================================
 
@@ -318,54 +359,15 @@ function startIdle() {
     return;
   }
 
+
   isIdle = true;
 
+
   chooseIdleLook();
+
   chooseHeadIdleMovement();
+
   chooseBodyIdleMovement();
-
-}
-
-
-// ========================================
-// CHOOSE IDLE EYE LOOK
-// ========================================
-
-function chooseIdleLook() {
-
-  if (!isIdle) {
-    return;
-  }
-
-
-  eyeTargetX =
-    THREE.MathUtils.randFloat(
-      -idleRangeX,
-      idleRangeX
-    );
-
-
-  eyeTargetY =
-    THREE.MathUtils.randFloat(
-      -idleRangeY,
-      idleRangeY
-    );
-
-
-  const delay =
-    THREE.MathUtils.randFloat(
-      1000,
-      2500
-    );
-
-
-  clearTimeout(idleLookTimer);
-
-
-  idleLookTimer = setTimeout(
-    chooseIdleLook,
-    delay
-  );
 
 }
 
@@ -380,15 +382,20 @@ function exitIdle() {
     return;
   }
 
+
   isIdle = false;
 
 
   clearTimeout(idleLookTimer);
+
   clearTimeout(headIdleTimer);
+
   clearTimeout(bodyIdleTimer);
 
 
-  // Return idle movements to neutral.
+  // --------------------------------------
+  // Return idle targets to neutral.
+  // --------------------------------------
 
   headIdleTargetX = 0;
   headIdleTargetY = 0;
@@ -409,12 +416,16 @@ window.addEventListener(
   "mousemove",
   (event) => {
 
-    // Mouse movement wakes Oko.
+    // ------------------------------------
+    // Wake Oko immediately.
+    // ------------------------------------
 
     exitIdle();
 
 
+    // ------------------------------------
     // Reset idle timer.
+    // ------------------------------------
 
     clearTimeout(idleTimer);
 
@@ -472,7 +483,7 @@ loader.load(
 
 
     // ------------------------------------
-    // GET BONES
+    // FIND OBJECTS
     // ------------------------------------
 
     eyeballBone =
@@ -490,6 +501,10 @@ loader.load(
     body =
       oko.getObjectByName("BODY_1");
 
+
+    // ------------------------------------
+    // DEBUG
+    // ------------------------------------
 
     console.log("================================");
     console.log("OKO LOADED");
@@ -517,7 +532,7 @@ loader.load(
 
 
     // ------------------------------------
-    // SAVE ORIGINAL EYE POSITION
+    // SAVE EYE POSITION
     // ------------------------------------
 
     if (eyeballBone) {
@@ -530,7 +545,7 @@ loader.load(
 
 
     // ------------------------------------
-    // SAVE ORIGINAL HEAD ROTATION
+    // SAVE HEAD ROTATION
     // ------------------------------------
 
     if (head) {
@@ -543,74 +558,16 @@ loader.load(
 
 
     // ------------------------------------
-    // SAVE ORIGINAL BODY ROTATION
+    // SAVE BODY ROTATION
     // ------------------------------------
 
-   if (body) {
+    if (body) {
 
-  // ------------------------------------
-  // BODY IDLE WEIGHT SHIFT
-  // ------------------------------------
+      bodyBaseRotation.copy(
+        body.rotation
+      );
 
-  bodyIdleCurrentX +=
-    (
-      bodyIdleTargetX -
-      bodyIdleCurrentX
-    ) * 0.008;
-
-
-  bodyIdleCurrentY +=
-    (
-      bodyIdleTargetY -
-      bodyIdleCurrentY
-    ) * 0.008;
-
-
-  bodyIdleCurrentZ +=
-    (
-      bodyIdleTargetZ -
-      bodyIdleCurrentZ
-    ) * 0.008;
-
-
-  // ------------------------------------
-  // BODY FOLLOWS HEAD SLIGHTLY
-  // ------------------------------------
-
-  const bodyFollowY =
-    headCurrentY * 0.20;
-
-
-  const bodyFollowX =
-    headCurrentX * 0.15;
-
-
-  const bodyFollowZ =
-    headCurrentZ * 0.20;
-
-
-  // ------------------------------------
-  // APPLY BODY
-  // ------------------------------------
-
-  body.rotation.x =
-    bodyBaseRotation.x +
-    bodyFollowX +
-    bodyIdleCurrentX;
-
-
-  body.rotation.y =
-    bodyBaseRotation.y +
-    bodyFollowY +
-    bodyIdleCurrentY;
-
-
-  body.rotation.z =
-    bodyBaseRotation.z +
-    bodyFollowZ +
-    bodyIdleCurrentZ;
-
-}
+    }
 
 
     // ------------------------------------
@@ -681,7 +638,7 @@ loader.load(
 
 
   // --------------------------------------
-  // LOADING
+  // LOADING PROGRESS
   // --------------------------------------
 
   (progress) => {
@@ -767,7 +724,7 @@ function animate() {
   if (head) {
 
     // ------------------------------------
-    // HEAD FOLLOWS EYE
+    // Head follows eye.
     // ------------------------------------
 
     const headTargetY =
@@ -783,7 +740,7 @@ function animate() {
 
 
     // ------------------------------------
-    // SMOOTH HEAD FOLLOW
+    // Smooth head follow.
     // ------------------------------------
 
     headCurrentY +=
@@ -808,7 +765,7 @@ function animate() {
 
 
     // ------------------------------------
-    // IDLE HEAD
+    // Smooth idle head.
     // ------------------------------------
 
     headIdleCurrentX +=
@@ -833,7 +790,7 @@ function animate() {
 
 
     // ------------------------------------
-    // APPLY HEAD
+    // Apply head rotation.
     // ------------------------------------
 
     head.rotation.x =
@@ -862,9 +819,8 @@ function animate() {
 
   if (body) {
 
-
     // ------------------------------------
-    // BODY IDLE WEIGHT SHIFT
+    // Smooth body idle movement.
     // ------------------------------------
 
     bodyIdleCurrentX +=
@@ -889,7 +845,7 @@ function animate() {
 
 
     // ------------------------------------
-    // BODY FOLLOWS HEAD SLIGHTLY
+    // Body follows head slightly.
     // ------------------------------------
 
     const bodyFollowY =
@@ -905,7 +861,7 @@ function animate() {
 
 
     // ------------------------------------
-    // APPLY BODY
+    // Apply body rotation.
     // ------------------------------------
 
     body.rotation.x =
@@ -923,7 +879,9 @@ function animate() {
     body.rotation.z =
       bodyBaseRotation.z +
       bodyFollowZ +
-      bodyIdleCurrentZ +
+      bodyIdleCurrentZ;
+
+  }
 
 
   // ======================================
