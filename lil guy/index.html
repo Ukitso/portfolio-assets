@@ -1202,14 +1202,44 @@ function animate() {
 
 
 // ======================================
-// EAR TEST — QUATERNION
+// EAR SKELETON TEST
 // ======================================
 
-if (leftEar && rightEar) {
+let leftEarBone = null;
+let rightEarBone = null;
 
-  const earTest =
-    Math.sin(performance.now() * 0.004) * 0.6;
+if (oko) {
 
+  oko.traverse((object) => {
+
+    if (
+      object.isSkinnedMesh &&
+      object.skeleton
+    ) {
+
+      console.log(
+        "SKIN BONES:",
+        object.skeleton.bones
+          .map(bone => bone.name)
+      );
+
+
+      leftEarBone =
+        object.skeleton.bones.find(
+          bone => bone.name === "left ear"
+        );
+
+
+      rightEarBone =
+        object.skeleton.bones.find(
+          bone => bone.name === "right ear"
+        );
+
+    }
+
+  });
+
+}
 
   // LEFT EAR
 
