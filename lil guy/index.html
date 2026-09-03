@@ -191,7 +191,31 @@ loader.load(
 
     console.log("OKO LOADED");
 
+
     oko = gltf.scene;
+
+
+    // ========================================================
+    // OKO HIERARCHY LOGGER
+    // ========================================================
+
+    console.log(
+      "========== OKO HIERARCHY =========="
+    );
+
+    oko.traverse(function(object) {
+
+      console.log(
+        object.type,
+        "|",
+        object.name || "(unnamed)"
+      );
+
+    });
+
+    console.log(
+      "========== END HIERARCHY =========="
+    );
 
 
     // --------------------------------------------------------
@@ -251,11 +275,6 @@ loader.load(
     // --------------------------------------------------------
     // EYE MOVEMENT SCALE
     // --------------------------------------------------------
-
-    // The old code used raw pixel movement,
-    // which is too large for this 3D model.
-    //
-    // Use the model size instead.
 
     eyeMovementAmount =
       Math.max(
