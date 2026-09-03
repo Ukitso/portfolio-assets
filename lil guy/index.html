@@ -55,34 +55,42 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 // SETUP
 // ============================================================
 
-const container = document.getElementById("oko-container");
+const container =
+  document.getElementById("oko-container");
 
-const scene = new THREE.Scene();
+const scene =
+  new THREE.Scene();
 
 
 // ============================================================
 // CAMERA
 // ============================================================
 
-const camera = new THREE.PerspectiveCamera(
-  45,
-  container.clientWidth / container.clientHeight,
-  0.01,
-  1000
-);
+const camera =
+  new THREE.PerspectiveCamera(
+    45,
+    container.clientWidth /
+    container.clientHeight,
+    0.01,
+    1000
+  );
 
 
 // ============================================================
 // RENDERER
 // ============================================================
 
-const renderer = new THREE.WebGLRenderer({
-  alpha: true,
-  antialias: true
-});
+const renderer =
+  new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true
+  });
 
 renderer.setPixelRatio(
-  Math.min(window.devicePixelRatio, 2)
+  Math.min(
+    window.devicePixelRatio,
+    2
+  )
 );
 
 renderer.setSize(
@@ -101,7 +109,8 @@ renderer.outputColorSpace =
 renderer.toneMapping =
   THREE.NoToneMapping;
 
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure =
+  1.0;
 
 container.appendChild(
   renderer.domElement
@@ -187,6 +196,12 @@ let rightArm = null;
 let leftShoulder = null;
 let rightShoulder = null;
 
+let leftLeg = null;
+let rightLeg = null;
+
+let leftHip = null;
+let rightHip = null;
+
 let head = null;
 
 
@@ -203,6 +218,12 @@ let rightArmBaseRotation = null;
 let leftShoulderBaseRotation = null;
 let rightShoulderBaseRotation = null;
 
+let leftLegBaseRotation = null;
+let rightLegBaseRotation = null;
+
+let leftHipBaseRotation = null;
+let rightHipBaseRotation = null;
+
 let headBaseRotation = null;
 
 
@@ -216,9 +237,12 @@ loader.load(
 
   function(gltf) {
 
-    console.log("OKO LOADED");
+    console.log(
+      "OKO LOADED"
+    );
 
-    oko = gltf.scene;
+    oko =
+      gltf.scene;
 
 
     // ========================================================
@@ -229,15 +253,18 @@ loader.load(
       "========== OKO HIERARCHY =========="
     );
 
-    oko.traverse(function(object) {
+    oko.traverse(
+      function(object) {
 
-      console.log(
-        object.type,
-        "|",
-        object.name || "(unnamed)"
-      );
+        console.log(
+          object.type,
+          "|",
+          object.name ||
+          "(unnamed)"
+        );
 
-    });
+      }
+    );
 
     console.log(
       "========== END HIERARCHY =========="
@@ -248,169 +275,259 @@ loader.load(
     // FIND OBJECTS + BONES
     // ========================================================
 
-    oko.traverse(function(object) {
+    oko.traverse(
+      function(object) {
 
 
-      // ------------------------------------------------------
-      // EYEBALL
-      // ------------------------------------------------------
+        // ----------------------------------------------------
+        // EYEBALL
+        // ----------------------------------------------------
 
-      if (
-        object.name === "EYEBALL"
-      ) {
+        if (
+          object.name === "EYEBALL"
+        ) {
 
-        eyeball = object;
+          eyeball =
+            object;
 
-        eyeballBasePosition.copy(
-          eyeball.position
-        );
+          eyeballBasePosition.copy(
+            eyeball.position
+          );
 
-        console.log(
-          "EYEBALL FOUND"
-        );
+          console.log(
+            "EYEBALL FOUND"
+          );
+
+        }
+
+
+        // ----------------------------------------------------
+        // LEFT EAR
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "left_ear"
+        ) {
+
+          leftEar =
+            object;
+
+          leftEarBaseRotation =
+            object.rotation.clone();
+
+          console.log(
+            "LEFT EAR FOUND"
+          );
+
+        }
+
+
+        // ----------------------------------------------------
+        // RIGHT EAR
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "right_ear"
+        ) {
+
+          rightEar =
+            object;
+
+          rightEarBaseRotation =
+            object.rotation.clone();
+
+          console.log(
+            "RIGHT EAR FOUND"
+          );
+
+        }
+
+
+        // ----------------------------------------------------
+        // LEFT ARM
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "left_arm"
+        ) {
+
+          leftArm =
+            object;
+
+          leftArmBaseRotation =
+            object.rotation.clone();
+
+          console.log(
+            "LEFT ARM FOUND"
+          );
+
+        }
+
+
+        // ----------------------------------------------------
+        // RIGHT ARM
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "right_arm"
+        ) {
+
+          rightArm =
+            object;
+
+          rightArmBaseRotation =
+            object.rotation.clone();
+
+          console.log(
+            "RIGHT ARM FOUND"
+          );
+
+        }
+
+
+        // ----------------------------------------------------
+        // LEFT SHOULDER
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "left_shoulder"
+        ) {
+
+          leftShoulder =
+            object;
+
+          leftShoulderBaseRotation =
+            object.rotation.clone();
+
+        }
+
+
+        // ----------------------------------------------------
+        // RIGHT SHOULDER
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "right_shoulder"
+        ) {
+
+          rightShoulder =
+            object;
+
+          rightShoulderBaseRotation =
+            object.rotation.clone();
+
+        }
+
+
+        // ----------------------------------------------------
+        // LEFT LEG
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "left_leg"
+        ) {
+
+          leftLeg =
+            object;
+
+          leftLegBaseRotation =
+            object.rotation.clone();
+
+          console.log(
+            "LEFT LEG FOUND"
+          );
+
+        }
+
+
+        // ----------------------------------------------------
+        // RIGHT LEG
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "right_leg"
+        ) {
+
+          rightLeg =
+            object;
+
+          rightLegBaseRotation =
+            object.rotation.clone();
+
+          console.log(
+            "RIGHT LEG FOUND"
+          );
+
+        }
+
+
+        // ----------------------------------------------------
+        // LEFT HIP
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "left_hip_bone"
+        ) {
+
+          leftHip =
+            object;
+
+          leftHipBaseRotation =
+            object.rotation.clone();
+
+        }
+
+
+        // ----------------------------------------------------
+        // RIGHT HIP
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "right_hip_bone"
+        ) {
+
+          rightHip =
+            object;
+
+          rightHipBaseRotation =
+            object.rotation.clone();
+
+        }
+
+
+        // ----------------------------------------------------
+        // HEAD
+        // ----------------------------------------------------
+
+        if (
+          object.isBone &&
+          object.name === "HEAD"
+        ) {
+
+          head =
+            object;
+
+          headBaseRotation =
+            object.rotation.clone();
+
+          console.log(
+            "HEAD FOUND"
+          );
+
+        }
 
       }
-
-
-      // ------------------------------------------------------
-      // LEFT EAR
-      // ------------------------------------------------------
-
-      if (
-        object.isBone &&
-        object.name === "left_ear"
-      ) {
-
-        leftEar = object;
-
-        leftEarBaseRotation =
-          object.rotation.clone();
-
-        console.log(
-          "LEFT EAR FOUND"
-        );
-
-      }
-
-
-      // ------------------------------------------------------
-      // RIGHT EAR
-      // ------------------------------------------------------
-
-      if (
-        object.isBone &&
-        object.name === "right_ear"
-      ) {
-
-        rightEar = object;
-
-        rightEarBaseRotation =
-          object.rotation.clone();
-
-        console.log(
-          "RIGHT EAR FOUND"
-        );
-
-      }
-
-
-      // ------------------------------------------------------
-      // LEFT ARM
-      // ------------------------------------------------------
-
-      if (
-        object.isBone &&
-        object.name === "left_arm"
-      ) {
-
-        leftArm = object;
-
-        leftArmBaseRotation =
-          object.rotation.clone();
-
-        console.log(
-          "LEFT ARM FOUND"
-        );
-
-      }
-
-
-      // ------------------------------------------------------
-      // RIGHT ARM
-      // ------------------------------------------------------
-
-      if (
-        object.isBone &&
-        object.name === "right_arm"
-      ) {
-
-        rightArm = object;
-
-        rightArmBaseRotation =
-          object.rotation.clone();
-
-        console.log(
-          "RIGHT ARM FOUND"
-        );
-
-      }
-
-
-      // ------------------------------------------------------
-      // LEFT SHOULDER
-      // ------------------------------------------------------
-
-      if (
-        object.isBone &&
-        object.name === "left_shoulder"
-      ) {
-
-        leftShoulder = object;
-
-        leftShoulderBaseRotation =
-          object.rotation.clone();
-
-      }
-
-
-      // ------------------------------------------------------
-      // RIGHT SHOULDER
-      // ------------------------------------------------------
-
-      if (
-        object.isBone &&
-        object.name === "right_shoulder"
-      ) {
-
-        rightShoulder = object;
-
-        rightShoulderBaseRotation =
-          object.rotation.clone();
-
-      }
-
-
-      // ------------------------------------------------------
-      // HEAD
-      // ------------------------------------------------------
-
-      if (
-        object.isBone &&
-        object.name === "HEAD"
-      ) {
-
-        head = object;
-
-        headBaseRotation =
-          object.rotation.clone();
-
-        console.log(
-          "HEAD FOUND"
-        );
-
-      }
-
-    });
+    );
 
 
     // ========================================================
@@ -419,7 +536,9 @@ loader.load(
 
     const box =
       new THREE.Box3()
-        .setFromObject(oko);
+        .setFromObject(
+          oko
+        );
 
     const size =
       box.getSize(
@@ -470,7 +589,9 @@ loader.load(
 
     let distance =
       (maxSize / 2) /
-      Math.tan(fov / 2);
+      Math.tan(
+        fov / 2
+      );
 
     distance *= 1.35;
 
@@ -542,16 +663,17 @@ function resetIdle() {
 
   idle = false;
 
-  idleTimer = setTimeout(
-    function() {
+  idleTimer =
+    setTimeout(
+      function() {
 
-      idle = true;
+        idle = true;
 
-      chooseIdleTarget();
+        chooseIdleTarget();
 
-    },
-    2500
-  );
+      },
+      2500
+    );
 
 }
 
@@ -670,12 +792,14 @@ function animate() {
 
     eyeball.position.x =
       eyeballBasePosition.x
-      + currentX * eyeMovementAmount;
+      + currentX *
+      eyeMovementAmount;
 
 
     eyeball.position.y =
       eyeballBasePosition.y
-      - currentY * eyeMovementAmount;
+      - currentY *
+      eyeMovementAmount;
 
 
     eyeball.position.z =
@@ -739,7 +863,6 @@ function animate() {
     leftArmBaseRotation
   ) {
 
-    // Side-to-side movement
     leftArm.rotation.z =
       leftArmBaseRotation.z
       + Math.sin(
@@ -747,7 +870,6 @@ function animate() {
       ) * 0.07;
 
 
-    // Forward/back movement
     leftArm.rotation.x =
       leftArmBaseRotation.x
       + Math.sin(
@@ -755,7 +877,6 @@ function animate() {
       ) * 0.045;
 
 
-    // Slight 3D twist
     leftArm.rotation.y =
       leftArmBaseRotation.y
       + Math.sin(
@@ -770,7 +891,6 @@ function animate() {
     rightArmBaseRotation
   ) {
 
-    // Opposite side-to-side movement
     rightArm.rotation.z =
       rightArmBaseRotation.z
       - Math.sin(
@@ -778,7 +898,6 @@ function animate() {
       ) * 0.07;
 
 
-    // Slightly different phase
     rightArm.rotation.x =
       rightArmBaseRotation.x
       - Math.sin(
@@ -786,7 +905,6 @@ function animate() {
       ) * 0.045;
 
 
-    // 3D twist
     rightArm.rotation.y =
       rightArmBaseRotation.y
       - Math.sin(
@@ -799,9 +917,6 @@ function animate() {
   // ==========================================================
   // SHOULDERS
   // ==========================================================
-
-  // Very restrained shoulder movement.
-  // Most of the animation comes from the arms.
 
   if (
     leftShoulder &&
@@ -832,6 +947,108 @@ function animate() {
 
 
   // ==========================================================
+  // LEGS
+  // ==========================================================
+
+  if (
+    leftLeg &&
+    leftLegBaseRotation
+  ) {
+
+    // Gentle weight shift
+    leftLeg.rotation.z =
+      leftLegBaseRotation.z
+      + Math.sin(
+        time * 0.75
+      ) * 0.035;
+
+
+    // Forward / backward movement
+    leftLeg.rotation.x =
+      leftLegBaseRotation.x
+      + Math.sin(
+        time * 0.6
+      ) * 0.025;
+
+
+    // Small 3D twist
+    leftLeg.rotation.y =
+      leftLegBaseRotation.y
+      + Math.sin(
+        time * 0.5
+      ) * 0.018;
+
+  }
+
+
+  if (
+    rightLeg &&
+    rightLegBaseRotation
+  ) {
+
+    // Opposite weight shift
+    rightLeg.rotation.z =
+      rightLegBaseRotation.z
+      - Math.sin(
+        time * 0.75
+      ) * 0.035;
+
+
+    // Opposite forward / backward movement
+    rightLeg.rotation.x =
+      rightLegBaseRotation.x
+      - Math.sin(
+        time * 0.6
+      ) * 0.025;
+
+
+    // Small 3D twist
+    rightLeg.rotation.y =
+      rightLegBaseRotation.y
+      - Math.sin(
+        time * 0.5
+      ) * 0.018;
+
+  }
+
+
+  // ==========================================================
+  // HIPS
+  // ==========================================================
+
+  // Very small movement.
+  // The hips should feel like they are responding
+  // to the legs rather than independently dancing.
+
+  if (
+    leftHip &&
+    leftHipBaseRotation
+  ) {
+
+    leftHip.rotation.z =
+      leftHipBaseRotation.z
+      + Math.sin(
+        time * 0.75
+      ) * 0.008;
+
+  }
+
+
+  if (
+    rightHip &&
+    rightHipBaseRotation
+  ) {
+
+    rightHip.rotation.z =
+      rightHipBaseRotation.z
+      - Math.sin(
+        time * 0.75
+      ) * 0.008;
+
+  }
+
+
+  // ==========================================================
   // HEAD
   // ==========================================================
 
@@ -840,11 +1057,8 @@ function animate() {
     headBaseRotation
   ) {
 
-    // Turn toward the direction of the mouse.
-    //
-    // Very small for the first test because we need
-    // to establish which local axes correspond to
-    // natural head movement on this rig.
+    // Head follows the eyes,
+    // but much more slowly.
 
     head.rotation.y =
       headBaseRotation.y
@@ -856,7 +1070,8 @@ function animate() {
       - currentY * 0.10;
 
 
-    // Tiny natural head sway
+    // Very subtle natural movement
+
     head.rotation.z =
       headBaseRotation.z
       + Math.sin(
