@@ -297,6 +297,27 @@ let wasNear = false;
 
 
 // ============================================================
+// PERSONALITY HIERARCHY
+// ============================================================
+
+// Priority:
+// 1. BOOP      = direct click interaction
+// 2. SHY       = cursor is very close
+// 3. CURIOUS   = cursor enters Oko's space
+// 4. IDLE      = nobody is bothering him
+
+let noticePulse = 0;
+let boopPulse = 0;
+let boopStart = -10;
+const boopDuration = 0.55;
+
+let curiousAmount = 0;
+
+let pointerNear = false;
+let pointerVeryNear = false;
+
+
+// ============================================================
 // IDLE ACTION
 // ============================================================
 
@@ -330,6 +351,12 @@ let idleRightLegY = 0;
 let idleRightLegZ = 0;
 
 let idleHipZ = 0;
+
+let idleLeftEarX = 0;
+let idleRightEarX = 0;
+
+let idleBodyY = 0;
+let idleBodyZ = 0;
 
 
 // ============================================================
@@ -911,20 +938,25 @@ function updateIdleEye(
 
 
 // ============================================================
-// SHY STATE
+// PERSONALITY STATE
 // ============================================================
 
-function updateShyState(
-  delta,
-  time
-) {
+function getPointerDistance() {
 
-  if (!oko)
-    return;
+  if (!oko || !pointerMoved)
+    return Infinity;
 
 
   const rect =
     container.getBoundingClientRect();
+
+
+  if (
+    rect.width <= 0 ||
+    rect.height <= 0
+  ) {
+    return Infinity;
+  }
 
 
   const centreX =
@@ -945,28 +977,62 @@ function updateShyState(
     centreY;
 
 
+  return Math.sqrt(
+    dx * dx +
+    dy * dy
+  );
+
+}
+
+
+function updateShyState(
+  delta,
+  time
+) {
+
+  if (!oko)
+    return;
+
+
+  const rect =
+    container.getBoundingClientRect();
+
+
   const distance =
-    Math.sqrt(
-      dx * dx +
-      dy * dy
-    );
+    getPointerDistance();
 
 
-  const hoverRadius =
+  // Two interaction rings:
+  //
+  // Near ring       = Oko notices you
+  // Very near ring  = Oko gets shy
+
+  const nearRadius =
     Math.min(
       rect.width,
       rect.height
-    ) * 0.38;
+    ) * 0.50;
+
+  const veryNearRadius =
+    Math.min(
+      rect.width,
+      rect.height
+    ) * 0.25;
 
 
-  const pointerNear =
+  pointerNear =
     pointerMoved &&
     distance <
-    hoverRadius;
+    nearRadius;
+
+  pointerVeryNear =
+    pointerMoved &&
+    distance <
+    veryNearRadius;
 
 
   // ----------------------------------------------------------
-  // ENTER SHY
+  // NEW ARRIVAL / NOTICE
   // ----------------------------------------------------------
 
   if (
@@ -974,13 +1040,8 @@ function updateShyState(
     !wasNear
   ) {
 
-    behaviour =
-      "shy";
-
-
-    shyPulse =
+    noticePulse =
       1;
-
 
     earReaction =
       1;
@@ -988,48 +1049,48 @@ function updateShyState(
     earReactionStart =
       time;
 
-
-    nervousEyeTargetX =
-      THREE.MathUtils.randFloat(
-        -0.15,
-        0.15
-      );
-
-    nervousEyeTargetY =
-      THREE.MathUtils.randFloat(
-        -0.08,
-        0.08
-      );
-
-
-    nextNervousEyeMove =
-      time +
-      THREE.MathUtils.randFloat(
-        0.45,
-        1.0
-      );
-
   }
 
 
   // ----------------------------------------------------------
-  // LEAVE SHY
+  // PERSONALITY PRIORITY
   // ----------------------------------------------------------
 
+  // A boop temporarily overrides everything else.
+
   if (
-    !pointerNear &&
-    wasNear
+    time <
+    boopStart +
+    boopDuration
   ) {
 
     behaviour =
+      "boop";
+
+  }
+
+  else if (
+    pointerVeryNear
+  ) {
+
+    behaviour =
+      "shy";
+
+  }
+
+  else if (
+    pointerNear
+  ) {
+
+    behaviour =
+      "curious";
+
+  }
+
+  else {
+
+    behaviour =
       "idle";
-
-
-    nervousEyeTargetX =
-      0;
-
-    nervousEyeTargetY =
-      0;
 
   }
 
@@ -1039,11 +1100,12 @@ function updateShyState(
 
 
   // ----------------------------------------------------------
-  // SMOOTH STATE TRANSITION
+  // SHY AMOUNT
   // ----------------------------------------------------------
 
   const shyTarget =
-    pointerNear
+    pointerVeryNear &&
+    behaviour === "shy"
       ? 1
       : 0;
 
@@ -1052,26 +1114,148 @@ function updateShyState(
     damp(
       shyAmount,
       shyTarget,
-      pointerNear
+      shyTarget > shyAmount
         ? 7
-        : 3.5,
+        : 4,
       delta
     );
 
 
   // ----------------------------------------------------------
-  // STARTLE DECAY
+  // CURIOUS AMOUNT
   // ----------------------------------------------------------
 
-  shyPulse =
+  const curiousTarget =
+    pointerNear &&
+    !pointerVeryNear &&
+    behaviour === "curious"
+      ? 1
+      : 0;
+
+
+  curiousAmount =
     damp(
-      shyPulse,
+      curiousAmount,
+      curiousTarget,
+      curiousTarget > curiousAmount
+        ? 8
+        : 5,
+      delta
+    );
+
+
+  // ----------------------------------------------------------
+  // IMPULSES
+  // ----------------------------------------------------------
+
+  noticePulse =
+    damp(
+      noticePulse,
       0,
-      10,
+      9,
+      delta
+    );
+
+  boopPulse =
+    damp(
+      boopPulse,
+      0,
+      11,
       delta
     );
 
 }
+
+
+// ============================================================
+// CLICK / BOOP
+// ============================================================
+
+container.addEventListener(
+  "pointerdown",
+  function(e) {
+
+    if (!oko)
+      return;
+
+
+    const rect =
+      container.getBoundingClientRect();
+
+
+    const centreX =
+      rect.left +
+      rect.width / 2;
+
+    const centreY =
+      rect.top +
+      rect.height / 2;
+
+
+    const dx =
+      e.clientX -
+      centreX;
+
+    const dy =
+      e.clientY -
+      centreY;
+
+
+    const distance =
+      Math.sqrt(
+        dx * dx +
+        dy * dy
+      );
+
+
+    // Only count an actual click on Oko,
+    // not a click anywhere else in the embed.
+
+    const hitRadius =
+      Math.min(
+        rect.width,
+        rect.height
+      ) * 0.42;
+
+
+    if (
+      distance >
+      hitRadius
+    ) {
+      return;
+    }
+
+
+    const time =
+      clock.elapsedTime;
+
+
+    boopStart =
+      time;
+
+    boopPulse =
+      1;
+
+    noticePulse =
+      0;
+
+    earReaction =
+      1;
+
+    earReactionStart =
+      time;
+
+
+    // Cancel any idle performance immediately.
+
+    idleAction =
+      null;
+
+    nextIdleAction =
+      time + 1.2;
+
+  }
+);
 
 
 // ============================================================
@@ -1092,9 +1276,15 @@ function startIdleAction(
 
   const types = [
     "look",
+    "look",
     "shuffle",
     "stretch",
-    "weight"
+    "weight",
+    "curious",
+    "listen",
+    "bounce",
+    "shake",
+    "lookDown"
   ];
 
 
@@ -1135,7 +1325,13 @@ function startIdleAction(
     leftLegZ: 0,
     rightLegZ: 0,
 
-    hipZ: 0
+    hipZ: 0,
+
+    leftEarX: 0,
+    rightEarX: 0,
+
+    bodyY: 0,
+    bodyZ: 0
 
   };
 
@@ -1266,6 +1462,183 @@ function startIdleAction(
 
   }
 
+
+  // ----------------------------------------------------------
+  // CURIOUS LEAN
+  // ----------------------------------------------------------
+
+  if (
+    type === "curious"
+  ) {
+
+    idleAction.headY =
+      THREE.MathUtils.randFloat(
+        -0.12,
+        0.12
+      );
+
+    idleAction.headZ =
+      THREE.MathUtils.randFloat(
+        -0.06,
+        0.06
+      );
+
+    idleAction.headX =
+      THREE.MathUtils.randFloat(
+        -0.025,
+        0.015
+      );
+
+    idleAction.hipZ =
+      idleAction.headY > 0
+        ? -0.025
+        : 0.025;
+
+    idleAction.leftLegZ =
+      idleAction.headY > 0
+        ? -0.035
+        : 0.035;
+
+    idleAction.rightLegZ =
+      idleAction.headY > 0
+        ? 0.035
+        : -0.035;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // LISTENING EAR
+  // ----------------------------------------------------------
+
+  if (
+    type === "listen"
+  ) {
+
+    if (
+      Math.random() < 0.5
+    ) {
+
+      idleAction.leftEarX =
+        THREE.MathUtils.randFloat(
+          -0.18,
+          -0.12
+        );
+
+      idleAction.rightEarX =
+        THREE.MathUtils.randFloat(
+          0.015,
+          0.04
+        );
+
+    } else {
+
+      idleAction.leftEarX =
+        THREE.MathUtils.randFloat(
+          0.015,
+          0.04
+        );
+
+      idleAction.rightEarX =
+        THREE.MathUtils.randFloat(
+          -0.18,
+          -0.12
+        );
+
+    }
+
+  }
+
+
+  // ----------------------------------------------------------
+  // LITTLE BOUNCE
+  // ----------------------------------------------------------
+
+  if (
+    type === "bounce"
+  ) {
+
+    idleAction.bodyY =
+      THREE.MathUtils.randFloat(
+        0.035,
+        0.055
+      );
+
+    idleAction.headX =
+      -0.025;
+
+    idleAction.leftArmX =
+      -0.025;
+
+    idleAction.rightArmX =
+      -0.025;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // QUICK SHAKE-OFF
+  // ----------------------------------------------------------
+
+  if (
+    type === "shake"
+  ) {
+
+    idleAction.headZ =
+      THREE.MathUtils.randFloat(
+        -0.16,
+        0.16
+      );
+
+    idleAction.leftArmZ =
+      THREE.MathUtils.randFloat(
+        -0.07,
+        0.07
+      );
+
+    idleAction.rightArmZ =
+      THREE.MathUtils.randFloat(
+        -0.07,
+        0.07
+      );
+
+    idleAction.leftLegZ =
+      THREE.MathUtils.randFloat(
+        -0.04,
+        0.04
+      );
+
+    idleAction.rightLegZ =
+      THREE.MathUtils.randFloat(
+        -0.04,
+        0.04
+      );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // LOOK DOWN
+  // ----------------------------------------------------------
+
+  if (
+    type === "lookDown"
+  ) {
+
+    idleAction.headX =
+      THREE.MathUtils.randFloat(
+        0.09,
+        0.15
+      );
+
+    idleAction.headZ =
+      THREE.MathUtils.randFloat(
+        -0.025,
+        0.025
+      );
+
+  }
+
 }
 
 
@@ -1320,6 +1693,38 @@ function updateIdleAction(
     idleHeadZ =
       damp(
         idleHeadZ,
+        0,
+        5,
+        1 / 60
+      );
+
+    idleLeftEarX =
+      damp(
+        idleLeftEarX,
+        0,
+        5,
+        1 / 60
+      );
+
+    idleRightEarX =
+      damp(
+        idleRightEarX,
+        0,
+        5,
+        1 / 60
+      );
+
+    idleBodyY =
+      damp(
+        idleBodyY,
+        0,
+        5,
+        1 / 60
+      );
+
+    idleBodyZ =
+      damp(
+        idleBodyZ,
         0,
         5,
         1 / 60
@@ -1407,6 +1812,23 @@ function updateIdleAction(
 
   const targetHipZ =
     idleAction.hipZ *
+    actionAmount;
+
+
+  const targetLeftEarX =
+    idleAction.leftEarX *
+    actionAmount;
+
+  const targetRightEarX =
+    idleAction.rightEarX *
+    actionAmount;
+
+  const targetBodyY =
+    idleAction.bodyY *
+    actionAmount;
+
+  const targetBodyZ =
+    idleAction.bodyZ *
     actionAmount;
 
 
@@ -1514,6 +1936,39 @@ function updateIdleAction(
     damp(
       idleHipZ,
       targetHipZ,
+      12,
+      1 / 60
+    );
+
+
+  idleLeftEarX =
+    damp(
+      idleLeftEarX,
+      targetLeftEarX,
+      12,
+      1 / 60
+    );
+
+  idleRightEarX =
+    damp(
+      idleRightEarX,
+      targetRightEarX,
+      12,
+      1 / 60
+    );
+
+  idleBodyY =
+    damp(
+      idleBodyY,
+      targetBodyY,
+      12,
+      1 / 60
+    );
+
+  idleBodyZ =
+    damp(
+      idleBodyZ,
+      targetBodyZ,
       12,
       1 / 60
     );
@@ -1923,7 +2378,10 @@ function updateEars(
   leftEar.rotation.x =
     leftEarBaseRotation.x +
     leftSway +
-    leftTwitch * 0.13;
+    leftTwitch * 0.13 +
+    idleLeftEarX +
+    noticePulse * 0.06 +
+    boopPulse * 0.08;
 
 
   leftEar.rotation.z =
@@ -1935,7 +2393,10 @@ function updateEars(
   rightEar.rotation.x =
     rightEarBaseRotation.x +
     rightSway +
-    rightTwitch * 0.11;
+    rightTwitch * 0.11 +
+    idleRightEarX +
+    noticePulse * 0.05 +
+    boopPulse * 0.06;
 
 
   rightEar.rotation.z =
@@ -2267,6 +2728,21 @@ function animate() {
       idleHeadZ;
 
 
+    // Curious response:
+    // the head follows the pointer a little more strongly,
+    // as if Oko is trying to work out what you are doing.
+
+    headY +=
+      currentEyeX *
+      curiousAmount *
+      0.10;
+
+    headX +=
+      -currentEyeY *
+      curiousAmount *
+      0.04;
+
+
     // Shy turn away
 
     headY +=
@@ -2278,6 +2754,17 @@ function animate() {
     headX +=
       shyAmount *
       0.06;
+
+
+    // Notice / boop reactions
+
+    const noticeZ =
+      noticePulse *
+      0.025;
+
+    const boopZ =
+      boopPulse *
+      -0.055;
 
 
     // Startle
@@ -2310,7 +2797,9 @@ function animate() {
     head.rotation.z =
       headBaseRotation.z +
       idleZ +
-      startleZ;
+      startleZ +
+      noticeZ +
+      boopZ;
 
   }
 
@@ -2343,6 +2832,25 @@ function animate() {
 
 
     // --------------------------------------------------------
+    // CURIOUS EYES
+    // --------------------------------------------------------
+
+    if (
+      behaviour === "curious"
+    ) {
+
+      eyeX +=
+        currentEyeX *
+        0.10;
+
+      eyeY +=
+        currentEyeY *
+        0.08;
+
+    }
+
+
+    // --------------------------------------------------------
     // SHY EYES
     // --------------------------------------------------------
 
@@ -2369,6 +2877,25 @@ function animate() {
 
       eyeY +=
         nervousEyeY;
+
+    }
+
+
+    // Boop: quick little recoil away from the click.
+
+    if (
+      behaviour === "boop"
+    ) {
+
+      eyeX +=
+        -currentEyeX *
+        boopPulse *
+        0.18;
+
+      eyeY +=
+        -currentEyeY *
+        boopPulse *
+        0.12;
 
     }
 
@@ -2496,6 +3023,19 @@ function animate() {
 
 
     // --------------------------------------------------------
+    // CURIOUS
+    // --------------------------------------------------------
+
+    leftArm.rotation.z +=
+      curiousAmount *
+      -0.045;
+
+    rightArm.rotation.z +=
+      curiousAmount *
+      0.045;
+
+
+    // --------------------------------------------------------
     // SHY
     // --------------------------------------------------------
 
@@ -2591,6 +3131,30 @@ function animate() {
     rightArm.rotation.x +=
       armBreathing;
 
+
+    // --------------------------------------------------------
+    // BOOP
+    // --------------------------------------------------------
+
+    // A tiny recoil, deliberately kept small so the arms
+    // never try to intersect the body.
+
+    leftArm.rotation.z +=
+      boopPulse *
+      -0.045;
+
+    rightArm.rotation.z +=
+      boopPulse *
+      0.045;
+
+    leftArm.rotation.x +=
+      boopPulse *
+      0.025;
+
+    rightArm.rotation.x +=
+      boopPulse *
+      0.025;
+
   }
 
 
@@ -2655,6 +3219,28 @@ function animate() {
       shyAmount *
       0.035;
 
+
+    // Curious stance.
+
+    leftLeg.rotation.z +=
+      curiousAmount *
+      -0.018;
+
+    rightLeg.rotation.z +=
+      curiousAmount *
+      0.018;
+
+
+    // Tiny boop recoil.
+
+    leftLeg.rotation.x +=
+      boopPulse *
+      0.018;
+
+    rightLeg.rotation.x +=
+      boopPulse *
+      0.018;
+
   }
 
 
@@ -2679,6 +3265,15 @@ function animate() {
       idleHipZ -
       shyAmount *
       0.015;
+
+
+    leftHip.rotation.z +=
+      curiousAmount *
+      -0.012;
+
+    rightHip.rotation.z +=
+      curiousAmount *
+      -0.012;
 
   }
 
@@ -2726,6 +3321,23 @@ function animate() {
       shySquash *
       0.35;
 
+
+    // Small interaction squash on a boop.
+
+    const boopSquash =
+      boopPulse *
+      0.035;
+
+    oko.scale.x -=
+      boopSquash;
+
+    oko.scale.y +=
+      boopSquash *
+      0.65;
+
+    oko.scale.z -=
+      boopSquash;
+
   }
 
 
@@ -2751,6 +3363,11 @@ function animate() {
       -0.015;
 
 
+    const boopRecoil =
+      boopPulse *
+      -0.035;
+
+
     const breathing =
       Math.sin(
         time * 1.15
@@ -2765,9 +3382,27 @@ function animate() {
 
     oko.position.y =
       baseOkoPosition.y +
+      idleBodyY +
       crouch +
       startle +
+      boopRecoil +
       breathing;
+
+  }
+
+
+  // ==========================================================
+  // IDLE BODY LEAN
+  // ==========================================================
+
+  if (oko) {
+
+    oko.rotation.z =
+      idleBodyZ +
+      curiousAmount *
+      0.008 +
+      boopPulse *
+      0.018;
 
   }
 
