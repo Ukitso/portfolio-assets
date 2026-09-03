@@ -1193,10 +1193,23 @@ function animate() {
 
 
   // ======================================
-  // EARS
-  // ======================================
+// EAR TEST
+// ======================================
 
-  if (leftEar && rightEar) {
+if (leftEar && rightEar) {
+
+  const earTest =
+    Math.sin(performance.now() * 0.004) * 0.25;
+
+  leftEar.rotation.z =
+    leftEarBaseRotation.z +
+    earTest;
+
+  rightEar.rotation.z =
+    rightEarBaseRotation.z -
+    earTest;
+
+}
 
 
     // ------------------------------------
