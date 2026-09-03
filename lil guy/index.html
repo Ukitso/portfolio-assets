@@ -258,6 +258,23 @@ let currentEyeY = 0;
 
 
 // ============================================================
+// IDLE EYE WANDER
+// ============================================================
+
+let lastPointerMoveTime = 0;
+
+let idleEyeX = 0;
+let idleEyeY = 0;
+
+let idleEyeTargetX = 0;
+let idleEyeTargetY = 0;
+
+let nextIdleEyeMove = 2.0;
+
+const idleEyeDelay = 2.0;
+
+
+// ============================================================
 // BEHAVIOUR STATE
 // ============================================================
 
@@ -638,11 +655,15 @@ loader.load(
 
 
 // ============================================================
-// MOUSE
+// MOUSE / POINTER TRACKING
 // ============================================================
 
+// Track the pointer relative to the actual Oko embed rather
+// than the browser window. This keeps the eye stable when the
+// Readymag embed is resized, moved, or given a different aspect ratio.
+
 document.addEventListener(
-  "mousemove",
+  "pointermove",
   function(e) {
 
     pointerScreenX =
@@ -654,33 +675,239 @@ document.addEventListener(
     pointerMoved =
       true;
 
+    lastPointerMoveTime =
+      clock.elapsedTime;
 
-    const mouseX =
-      (e.clientX /
-        window.innerWidth) *
-      2 - 1;
 
-    const mouseY =
-      (e.clientY /
-        window.innerHeight) *
-      2 - 1;
+    const rect =
+      container.getBoundingClientRect();
+
+    if (
+      rect.width <= 0 ||
+      rect.height <= 0
+    ) {
+      return;
+    }
+
+
+    const centreX =
+      rect.left +
+      rect.width / 2;
+
+    const centreY =
+      rect.top +
+      rect.height / 2;
+
+
+    // Convert pointer position into a stable
+    // -1 ... +1 coordinate inside the embed.
+
+    let localX =
+      (
+        e.clientX -
+        centreX
+      ) /
+      (rect.width / 2);
+
+    let localY =
+      (
+        e.clientY -
+        centreY
+      ) /
+      (rect.height / 2);
+
+
+    // Never allow the cursor to create an
+    // excessive eye target.
+
+    localX =
+      THREE.MathUtils.clamp(
+        localX,
+        -1,
+        1
+      );
+
+    localY =
+      THREE.MathUtils.clamp(
+        localY,
+        -1,
+        1
+      );
+
+
+    // Also clamp the combined diagonal distance.
+    // This gives the eye a circular movement limit.
+
+    const pointerLength =
+      Math.sqrt(
+        localX * localX +
+        localY * localY
+      );
+
+    if (
+      pointerLength > 1
+    ) {
+
+      localX /=
+        pointerLength;
+
+      localY /=
+        pointerLength;
+
+    }
 
 
     pointerX =
-      mouseX;
+      localX;
 
     pointerY =
-      mouseY;
+      localY;
 
 
     targetEyeX =
-      mouseX * 0.45;
+      localX * 0.45;
 
     targetEyeY =
-      mouseY * 0.30;
+      localY * 0.30;
 
   }
 );
+
+
+// When the pointer leaves the embed, gently
+// bring the eye back rather than leaving it stuck
+// at the last cursor position.
+
+container.addEventListener(
+  "pointerleave",
+  function() {
+
+    targetEyeX = 0;
+    targetEyeY = 0;
+
+    idleEyeTargetX = 0;
+    idleEyeTargetY = 0;
+
+  }
+);
+
+
+// ============================================================
+// IDLE EYE WANDER
+// ============================================================
+
+function updateIdleEye(
+  time,
+  delta
+) {
+
+  // While the pointer is moving, leave the idle
+  // target alone and let normal cursor tracking take over.
+
+  const pointerIdle =
+    time -
+    lastPointerMoveTime >
+    idleEyeDelay;
+
+
+  if (!pointerIdle) {
+
+    idleEyeTargetX = 0;
+    idleEyeTargetY = 0;
+
+    idleEyeX =
+      damp(
+        idleEyeX,
+        0,
+        7,
+        delta
+      );
+
+    idleEyeY =
+      damp(
+        idleEyeY,
+        0,
+        7,
+        delta
+      );
+
+    return;
+
+  }
+
+
+  // Pick a new place to look every so often.
+  // The eye pauses between movements instead of
+  // continuously drifting.
+
+  if (
+    time >
+    nextIdleEyeMove
+  ) {
+
+    const directions = [
+      [-1.00,  0.05],
+      [-0.72,  0.62],
+      [ 0.92,  0.10],
+      [ 0.68, -0.52],
+      [-0.58, -0.48],
+      [ 0.10,  0.70],
+      [ 0.05, -0.62]
+    ];
+
+
+    const direction =
+      directions[
+        Math.floor(
+          Math.random() *
+          directions.length
+        )
+      ];
+
+
+    // Keep idle wandering slightly inside the
+    // normal tracking range.
+
+    idleEyeTargetX =
+      direction[0] *
+      0.34;
+
+    idleEyeTargetY =
+      direction[1] *
+      0.23;
+
+
+    // Sometimes hold the glance longer,
+    // making it feel like Oko is actually
+    // looking at something.
+
+    nextIdleEyeMove =
+      time +
+      THREE.MathUtils.randFloat(
+        1.1,
+        2.8
+      );
+
+  }
+
+
+  idleEyeX =
+    damp(
+      idleEyeX,
+      idleEyeTargetX,
+      5.5,
+      delta
+    );
+
+  idleEyeY =
+    damp(
+      idleEyeY,
+      idleEyeTargetY,
+      5.5,
+      delta
+    );
+
+}
 
 
 // ============================================================
@@ -1925,11 +2152,48 @@ function animate() {
   // EYE TRACKING
   // ----------------------------------------------------------
 
+  // ----------------------------------------------------------
+  // CHOOSE EYE TARGET
+  // ----------------------------------------------------------
+
+  const pointerIdle =
+    time -
+    lastPointerMoveTime >
+    idleEyeDelay;
+
+
+  if (
+    behaviour !== "shy" &&
+    pointerIdle
+  ) {
+
+    // After roughly two seconds without pointer
+    // movement, stop following the last cursor
+    // position and start wandering independently.
+
+    updateIdleEye(
+      time,
+      delta
+    );
+
+    targetEyeX =
+      idleEyeX;
+
+    targetEyeY =
+      idleEyeY;
+
+  }
+
+
+  // Smooth but responsive tracking.
+  // The target is now based on the embed itself,
+  // so this remains consistent at different sizes.
+
   currentEyeX =
     damp(
       currentEyeX,
       targetEyeX,
-      9,
+      14,
       delta
     );
 
@@ -1937,7 +2201,7 @@ function animate() {
     damp(
       currentEyeY,
       targetEyeY,
-      9,
+      14,
       delta
     );
 
