@@ -1,23 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Oko</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
     html,
     body {
       margin: 0;
-      padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
       background: transparent;
     }
 
-    #oko-container {
+    #kkzywz {
       width: 100%;
       height: 100%;
       position: relative;
@@ -43,7 +40,7 @@
 
 <body>
 
-<div id="oko-container"></div>
+<div id="kkzywz"></div>
 
 <script type="module">
 
@@ -55,176 +52,182 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 // SETUP
 // ============================================================
 
-const container =
-  document.getElementById("oko-container");
+const container = document.getElementById("kkzywz");
 
-const scene =
-  new THREE.Scene();
+const scene = new THREE.Scene();
 
 
 // ============================================================
 // CAMERA
 // ============================================================
 
-const camera =
-  new THREE.PerspectiveCamera(
-    45,
-    container.clientWidth /
-    container.clientHeight,
-    0.01,
-    1000
-  );
+const camera = new THREE.PerspectiveCamera(
+  45,
+  container.clientWidth / container.clientHeight,
+  0.01,
+  1000
+);
 
 
 // ============================================================
 // RENDERER
 // ============================================================
 
-const renderer =
-  new THREE.WebGLRenderer({
-    alpha: true,
-    antialias: true
-  });
+const renderer = new THREE.WebGLRenderer({
+  alpha: true,
+  antialias: true
+});
 
-renderer.setPixelRatio(
-  Math.min(
-    window.devicePixelRatio,
-    2
-  )
-);
-
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(
   container.clientWidth,
   container.clientHeight
 );
 
-renderer.setClearColor(
-  0x000000,
-  0
-);
+renderer.setClearColor(0x000000, 0);
 
-renderer.outputColorSpace =
-  THREE.SRGBColorSpace;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;
+renderer.toneMappingExposure = 1.0;
 
-renderer.toneMapping =
-  THREE.NoToneMapping;
-
-renderer.toneMappingExposure =
-  1.0;
-
-container.appendChild(
-  renderer.domElement
-);
+container.appendChild(renderer.domElement);
 
 
 // ============================================================
 // LIGHTING
 // ============================================================
 
-const ambientLight =
-  new THREE.AmbientLight(
-    0xffffff,
-    0.45
-  );
-
-scene.add(
-  ambientLight
+const ambientLight = new THREE.AmbientLight(
+  0xffffff,
+  0.45
 );
 
+scene.add(ambientLight);
 
-const directionalLight =
-  new THREE.DirectionalLight(
-    0xffffff,
-    1.8
-  );
 
-directionalLight.position.set(
-  4,
-  5,
-  6
+const directionalLight = new THREE.DirectionalLight(
+  0xffffff,
+  1.8
 );
 
-scene.add(
-  directionalLight
+directionalLight.position.set(4, 5, 6);
+
+scene.add(directionalLight);
+
+
+const fillLight = new THREE.DirectionalLight(
+  0xffffff,
+  0.15
 );
 
+fillLight.position.set(-4, 2, 3);
 
-const fillLight =
-  new THREE.DirectionalLight(
-    0xffffff,
-    0.15
-  );
-
-fillLight.position.set(
-  -4,
-  2,
-  3
-);
-
-scene.add(
-  fillLight
-);
+scene.add(fillLight);
 
 
 // ============================================================
 // MODEL
 // ============================================================
 
-const loader =
-  new GLTFLoader();
+const loader = new GLTFLoader();
 
-let oko = null;
-
-let eyeball = null;
-
-let eyeballBasePosition =
-  new THREE.Vector3();
-
-let eyeMovementAmount = 0;
+let oko;
 
 
 // ============================================================
 // BONES
 // ============================================================
 
-let leftEar = null;
-let rightEar = null;
+let leftEar;
+let rightEar;
 
-let leftArm = null;
-let rightArm = null;
+let leftShoulder;
+let rightShoulder;
 
-let leftShoulder = null;
-let rightShoulder = null;
+let leftArm;
+let rightArm;
 
-let leftLeg = null;
-let rightLeg = null;
+let leftHip;
+let rightHip;
 
-let leftHip = null;
-let rightHip = null;
+let leftLeg;
+let rightLeg;
 
-let head = null;
+let head;
+let eyeball;
 
 
 // ============================================================
-// BASE ROTATIONS
+// BASE TRANSFORMS
 // ============================================================
 
-let leftEarBaseRotation = null;
-let rightEarBaseRotation = null;
+let leftEarBaseRotation;
+let rightEarBaseRotation;
 
-let leftArmBaseRotation = null;
-let rightArmBaseRotation = null;
+let leftShoulderBaseRotation;
+let rightShoulderBaseRotation;
 
-let leftShoulderBaseRotation = null;
-let rightShoulderBaseRotation = null;
+let leftArmBaseRotation;
+let rightArmBaseRotation;
 
-let leftLegBaseRotation = null;
-let rightLegBaseRotation = null;
+let leftHipBaseRotation;
+let rightHipBaseRotation;
 
-let leftHipBaseRotation = null;
-let rightHipBaseRotation = null;
+let leftLegBaseRotation;
+let rightLegBaseRotation;
 
-let headBaseRotation = null;
+let headBaseRotation;
+
+let eyeballBasePosition;
+
+let baseOkoPosition;
+let baseOkoScale;
+
+
+// ============================================================
+// EYE
+// ============================================================
+
+let eyeMovementAmount = 0;
+
+let targetX = 0;
+let targetY = 0;
+
+let currentX = 0;
+let currentY = 0;
+
+
+// ============================================================
+// POINTER
+// ============================================================
+
+let pointerX = 0;
+let pointerY = 0;
+
+let pointerScreenX = 0;
+let pointerScreenY = 0;
+
+let pointerMoved = false;
+
+
+// ============================================================
+// BEHAVIOUR STATE
+// ============================================================
+
+let behaviour = "idle";
+
+let shyAmount = 0;
+let shyPulse = 0;
+
+let wasNear = false;
+
+
+// ============================================================
+// IDLE SYSTEM
+// ============================================================
+
+let idleAction = null;
+let nextIdleAction = 2.5;
 
 
 // ============================================================
@@ -232,304 +235,142 @@ let headBaseRotation = null;
 // ============================================================
 
 loader.load(
-
   "./OKO.glb",
 
   function(gltf) {
 
-    console.log(
-      "OKO LOADED"
+    console.log("OKO LOADED");
+
+    oko = gltf.scene;
+
+
+    // --------------------------------------------------------
+    // CENTER MODEL
+    // --------------------------------------------------------
+
+    const box = new THREE.Box3().setFromObject(oko);
+
+    const size = box.getSize(
+      new THREE.Vector3()
     );
 
-    oko =
-      gltf.scene;
-
-
-    // ========================================================
-    // HIERARCHY
-    // ========================================================
-
-    console.log(
-      "========== OKO HIERARCHY =========="
+    const center = box.getCenter(
+      new THREE.Vector3()
     );
 
-    oko.traverse(
-      function(object) {
+    oko.position.sub(center);
 
-        console.log(
-          object.type,
-          "|",
-          object.name ||
-          "(unnamed)"
-        );
+    scene.add(oko);
 
-      }
-    );
 
-    console.log(
-      "========== END HIERARCHY =========="
-    );
+    // --------------------------------------------------------
+    // SAVE BASE TRANSFORM
+    // --------------------------------------------------------
 
+    baseOkoPosition = oko.position.clone();
+    baseOkoScale = oko.scale.clone();
 
-    // ========================================================
-    // FIND OBJECTS + BONES
-    // ========================================================
 
-    oko.traverse(
-      function(object) {
+    // --------------------------------------------------------
+    // FIND BONES
+    // --------------------------------------------------------
 
+    leftEar = oko.getObjectByName("left_ear");
+    rightEar = oko.getObjectByName("right_ear");
 
-        // ----------------------------------------------------
-        // EYEBALL
-        // ----------------------------------------------------
+    leftShoulder =
+      oko.getObjectByName("left_shoulder");
 
-        if (
-          object.name === "EYEBALL"
-        ) {
+    rightShoulder =
+      oko.getObjectByName("right_shoulder");
 
-          eyeball =
-            object;
+    leftArm =
+      oko.getObjectByName("left_arm");
 
-          eyeballBasePosition.copy(
-            eyeball.position
-          );
+    rightArm =
+      oko.getObjectByName("right_arm");
 
-        }
+    leftHip =
+      oko.getObjectByName("left_hip_bone");
 
+    rightHip =
+      oko.getObjectByName("right_hip_bone");
 
-        // ----------------------------------------------------
-        // LEFT EAR
-        // ----------------------------------------------------
+    leftLeg =
+      oko.getObjectByName("left_leg");
 
-        if (
-          object.isBone &&
-          object.name === "left_ear"
-        ) {
+    rightLeg =
+      oko.getObjectByName("right_leg");
 
-          leftEar =
-            object;
+    head =
+      oko.getObjectByName("HEAD");
 
-          leftEarBaseRotation =
-            object.rotation.clone();
+    eyeball =
+      oko.getObjectByName("Eyeball");
 
-        }
 
+    // --------------------------------------------------------
+    // SAVE BASE ROTATIONS
+    // --------------------------------------------------------
 
-        // ----------------------------------------------------
-        // RIGHT EAR
-        // ----------------------------------------------------
+    if (leftEar)
+      leftEarBaseRotation =
+        leftEar.rotation.clone();
 
-        if (
-          object.isBone &&
-          object.name === "right_ear"
-        ) {
+    if (rightEar)
+      rightEarBaseRotation =
+        rightEar.rotation.clone();
 
-          rightEar =
-            object;
 
-          rightEarBaseRotation =
-            object.rotation.clone();
+    if (leftShoulder)
+      leftShoulderBaseRotation =
+        leftShoulder.rotation.clone();
 
-        }
+    if (rightShoulder)
+      rightShoulderBaseRotation =
+        rightShoulder.rotation.clone();
 
 
-        // ----------------------------------------------------
-        // LEFT ARM
-        // ----------------------------------------------------
+    if (leftArm)
+      leftArmBaseRotation =
+        leftArm.rotation.clone();
 
-        if (
-          object.isBone &&
-          object.name === "left_arm"
-        ) {
+    if (rightArm)
+      rightArmBaseRotation =
+        rightArm.rotation.clone();
 
-          leftArm =
-            object;
 
-          leftArmBaseRotation =
-            object.rotation.clone();
+    if (leftHip)
+      leftHipBaseRotation =
+        leftHip.rotation.clone();
 
-        }
+    if (rightHip)
+      rightHipBaseRotation =
+        rightHip.rotation.clone();
 
 
-        // ----------------------------------------------------
-        // RIGHT ARM
-        // ----------------------------------------------------
+    if (leftLeg)
+      leftLegBaseRotation =
+        leftLeg.rotation.clone();
 
-        if (
-          object.isBone &&
-          object.name === "right_arm"
-        ) {
+    if (rightLeg)
+      rightLegBaseRotation =
+        rightLeg.rotation.clone();
 
-          rightArm =
-            object;
 
-          rightArmBaseRotation =
-            object.rotation.clone();
+    if (head)
+      headBaseRotation =
+        head.rotation.clone();
 
-        }
 
+    if (eyeball)
+      eyeballBasePosition =
+        eyeball.position.clone();
 
-        // ----------------------------------------------------
-        // LEFT SHOULDER
-        // ----------------------------------------------------
 
-        if (
-          object.isBone &&
-          object.name === "left_shoulder"
-        ) {
-
-          leftShoulder =
-            object;
-
-          leftShoulderBaseRotation =
-            object.rotation.clone();
-
-        }
-
-
-        // ----------------------------------------------------
-        // RIGHT SHOULDER
-        // ----------------------------------------------------
-
-        if (
-          object.isBone &&
-          object.name === "right_shoulder"
-        ) {
-
-          rightShoulder =
-            object;
-
-          rightShoulderBaseRotation =
-            object.rotation.clone();
-
-        }
-
-
-        // ----------------------------------------------------
-        // LEFT LEG
-        // ----------------------------------------------------
-
-        if (
-          object.isBone &&
-          object.name === "left_leg"
-        ) {
-
-          leftLeg =
-            object;
-
-          leftLegBaseRotation =
-            object.rotation.clone();
-
-        }
-
-
-        // ----------------------------------------------------
-        // RIGHT LEG
-        // ----------------------------------------------------
-
-        if (
-          object.isBone &&
-          object.name === "right_leg"
-        ) {
-
-          rightLeg =
-            object;
-
-          rightLegBaseRotation =
-            object.rotation.clone();
-
-        }
-
-
-        // ----------------------------------------------------
-        // LEFT HIP
-        // ----------------------------------------------------
-
-        if (
-          object.isBone &&
-          object.name === "left_hip_bone"
-        ) {
-
-          leftHip =
-            object;
-
-          leftHipBaseRotation =
-            object.rotation.clone();
-
-        }
-
-
-        // ----------------------------------------------------
-        // RIGHT HIP
-        // ----------------------------------------------------
-
-        if (
-          object.isBone &&
-          object.name === "right_hip_bone"
-        ) {
-
-          rightHip =
-            object;
-
-          rightHipBaseRotation =
-            object.rotation.clone();
-
-        }
-
-
-        // ----------------------------------------------------
-        // HEAD
-        // ----------------------------------------------------
-
-        if (
-          object.isBone &&
-          object.name === "HEAD"
-        ) {
-
-          head =
-            object;
-
-          headBaseRotation =
-            object.rotation.clone();
-
-        }
-
-      }
-    );
-
-
-    // ========================================================
-    // CENTRE MODEL
-    // ========================================================
-
-    const box =
-      new THREE.Box3()
-        .setFromObject(
-          oko
-        );
-
-    const size =
-      box.getSize(
-        new THREE.Vector3()
-      );
-
-    const center =
-      box.getCenter(
-        new THREE.Vector3()
-      );
-
-    oko.position.sub(
-      center
-    );
-
-    scene.add(
-      oko
-    );
-
-
-    // ========================================================
-    // EYE MOVEMENT SCALE
-    // ========================================================
+    // --------------------------------------------------------
+    // EYE MOVEMENT
+    // --------------------------------------------------------
 
     eyeMovementAmount =
       Math.max(
@@ -539,9 +380,9 @@ loader.load(
       ) * 0.045;
 
 
-    // ========================================================
+    // --------------------------------------------------------
     // CAMERA
-    // ========================================================
+    // --------------------------------------------------------
 
     const maxSize =
       Math.max(
@@ -557,12 +398,9 @@ loader.load(
 
     let distance =
       (maxSize / 2) /
-      Math.tan(
-        fov / 2
-      );
+      Math.tan(fov / 2);
 
     distance *= 1.35;
-
 
     camera.position.set(
       0,
@@ -575,7 +413,6 @@ loader.load(
       0,
       0
     );
-
 
     camera.near =
       Math.max(
@@ -595,94 +432,12 @@ loader.load(
   function(error) {
 
     console.error(
-      "FAILED TO LOAD OKO:",
+      "ERROR LOADING OKO:",
       error
     );
 
   }
-
 );
-
-
-// ============================================================
-// EYE TRACKING
-// ============================================================
-
-let targetX = 0;
-let targetY = 0;
-
-let currentX = 0;
-let currentY = 0;
-
-let idle = true;
-
-let idleTimer;
-
-
-// ============================================================
-// RESET IDLE
-// ============================================================
-
-function resetIdle() {
-
-  clearTimeout(
-    idleTimer
-  );
-
-  idle = false;
-
-  idleTimer =
-    setTimeout(
-      function() {
-
-        idle = true;
-
-        chooseIdleTarget();
-
-      },
-      2500
-    );
-
-}
-
-
-// ============================================================
-// IDLE
-// ============================================================
-
-function chooseIdleTarget() {
-
-  if (!idle) return;
-
-
-  targetX =
-    THREE.MathUtils.randFloat(
-      -0.45,
-      0.45
-    );
-
-  targetY =
-    THREE.MathUtils.randFloat(
-      -0.3,
-      0.3
-    );
-
-
-  setTimeout(
-    function() {
-
-      if (idle) {
-        chooseIdleTarget();
-      }
-
-    },
-    THREE.MathUtils.randFloat(
-      1000,
-      2500
-    )
-  );
-
-}
 
 
 // ============================================================
@@ -693,22 +448,30 @@ document.addEventListener(
   "mousemove",
   function(e) {
 
-    resetIdle();
+    pointerScreenX = e.clientX;
+    pointerScreenY = e.clientY;
 
+    pointerMoved = true;
+
+
+    // --------------------------------------------------------
+    // NORMALISED MOUSE POSITION
+    // --------------------------------------------------------
 
     const mouseX =
-      (
-        e.clientX /
-        window.innerWidth
-      ) * 2 - 1;
-
+      (e.clientX / window.innerWidth) * 2 - 1;
 
     const mouseY =
-      (
-        e.clientY /
-        window.innerHeight
-      ) * 2 - 1;
+      (e.clientY / window.innerHeight) * 2 - 1;
 
+
+    pointerX = mouseX;
+    pointerY = mouseY;
+
+
+    // --------------------------------------------------------
+    // EYE TARGET
+    // --------------------------------------------------------
 
     targetX =
       mouseX * 0.45;
@@ -721,8 +484,394 @@ document.addEventListener(
 
 
 // ============================================================
-// ANIMATION
+// SHY DETECTION
 // ============================================================
+
+function updateShyState() {
+
+  if (!oko) return;
+
+
+  const rect =
+    container.getBoundingClientRect();
+
+
+  // Centre of the Oko canvas
+
+  const centreX =
+    rect.left + rect.width / 2;
+
+  const centreY =
+    rect.top + rect.height / 2;
+
+
+  const dx =
+    pointerScreenX - centreX;
+
+  const dy =
+    pointerScreenY - centreY;
+
+
+  const distance =
+    Math.sqrt(
+      dx * dx +
+      dy * dy
+    );
+
+
+  // Radius around Oko that triggers shyness
+
+  const hoverRadius =
+    Math.min(
+      rect.width,
+      rect.height
+    ) * 0.38;
+
+
+  const pointerNear =
+    pointerMoved &&
+    distance < hoverRadius;
+
+
+  // --------------------------------------------------------
+  // ENTER SHY
+  // --------------------------------------------------------
+
+  if (
+    pointerNear &&
+    !wasNear
+  ) {
+
+    behaviour = "shy";
+
+    shyPulse = 1;
+
+  }
+
+
+  // --------------------------------------------------------
+  // LEAVE SHY
+  // --------------------------------------------------------
+
+  if (
+    !pointerNear &&
+    wasNear
+  ) {
+
+    behaviour = "idle";
+
+  }
+
+
+  wasNear = pointerNear;
+
+
+  // --------------------------------------------------------
+  // SHY AMOUNT
+  // --------------------------------------------------------
+
+  const targetShy =
+    pointerNear ? 1 : 0;
+
+
+  shyAmount =
+    THREE.MathUtils.damp(
+      shyAmount,
+      targetShy,
+      pointerNear ? 9 : 4,
+      1 / 60
+    );
+
+
+  // Quick startle impulse
+
+  shyPulse =
+    THREE.MathUtils.damp(
+      shyPulse,
+      0,
+      12,
+      1 / 60
+    );
+
+}
+
+
+// ============================================================
+// IDLE ACTIONS
+// ============================================================
+
+function startIdleAction(time) {
+
+  if (
+    behaviour !== "idle" ||
+    idleAction
+  ) {
+    return;
+  }
+
+
+  const actions = [
+    "look",
+    "weight",
+    "ear"
+  ];
+
+
+  const type =
+    actions[
+      Math.floor(
+        Math.random() *
+        actions.length
+      )
+    ];
+
+
+  idleAction = {
+
+    type: type,
+
+    start: time,
+
+    duration:
+      type === "ear"
+        ? 0.45
+        : type === "look"
+          ? 1.1
+          : 0.9
+
+  };
+
+}
+
+
+// ============================================================
+// EASING
+// ============================================================
+
+function easeInOut(t) {
+
+  return (
+    t < 0.5
+      ? 2 * t * t
+      : 1 -
+        Math.pow(
+          -2 * t + 2,
+          2
+        ) / 2
+  );
+
+}
+
+
+function easeOut(t) {
+
+  return 1 -
+    Math.pow(
+      1 - t,
+      3
+    );
+
+}
+
+
+// ============================================================
+// IDLE ACTION UPDATE
+// ============================================================
+
+function updateIdleAction(time) {
+
+  if (!oko) return;
+
+
+  // Don't perform idle actions while shy
+
+  if (
+    behaviour !== "idle"
+  ) {
+
+    idleAction = null;
+
+    return;
+
+  }
+
+
+  // Start a new action
+
+  if (
+    !idleAction &&
+    time > nextIdleAction
+  ) {
+
+    startIdleAction(time);
+
+  }
+
+
+  if (!idleAction)
+    return;
+
+
+  const elapsed =
+    time - idleAction.start;
+
+  const progress =
+    Math.min(
+      elapsed /
+      idleAction.duration,
+      1
+    );
+
+
+  // ----------------------------------------------------------
+  // LOOK
+  // ----------------------------------------------------------
+
+  if (
+    idleAction.type === "look"
+  ) {
+
+    const p =
+      Math.sin(
+        progress * Math.PI
+      );
+
+
+    const direction =
+      Math.random() > 0.5
+        ? 1
+        : -1;
+
+
+    if (head) {
+
+      head.rotation.y =
+        headBaseRotation.y +
+        direction *
+        p *
+        0.12;
+
+    }
+
+  }
+
+
+  // ----------------------------------------------------------
+  // WEIGHT SHIFT
+  // ----------------------------------------------------------
+
+  if (
+    idleAction.type === "weight"
+  ) {
+
+    const p =
+      Math.sin(
+        progress * Math.PI
+      );
+
+
+    if (leftLeg) {
+
+      leftLeg.rotation.z =
+        leftLegBaseRotation.z +
+        p * 0.14;
+
+    }
+
+
+    if (rightLeg) {
+
+      rightLeg.rotation.z =
+        rightLegBaseRotation.z -
+        p * 0.14;
+
+    }
+
+
+    if (leftHip) {
+
+      leftHip.rotation.z =
+        leftHipBaseRotation.z +
+        p * 0.025;
+
+    }
+
+
+    if (rightHip) {
+
+      rightHip.rotation.z =
+        rightHipBaseRotation.z -
+        p * 0.025;
+
+    }
+
+  }
+
+
+  // ----------------------------------------------------------
+  // EAR TWITCH
+  // ----------------------------------------------------------
+
+  if (
+    idleAction.type === "ear"
+  ) {
+
+    const p =
+      Math.sin(
+        progress * Math.PI
+      );
+
+
+    if (leftEar) {
+
+      leftEar.rotation.x =
+        leftEarBaseRotation.x +
+        p * 0.22;
+
+    }
+
+
+    if (rightEar) {
+
+      rightEar.rotation.x =
+        rightEarBaseRotation.x -
+        p * 0.12;
+
+    }
+
+  }
+
+
+  // ----------------------------------------------------------
+  // FINISH ACTION
+  // ----------------------------------------------------------
+
+  if (
+    progress >= 1
+  ) {
+
+    idleAction = null;
+
+
+    nextIdleAction =
+      time +
+      THREE.MathUtils.randFloat(
+        1.8,
+        4.5
+      );
+
+  }
+
+}
+
+
+// ============================================================
+// MAIN CHARACTER ANIMATION
+// ============================================================
+
+const clock =
+  new THREE.Clock();
+
 
 function animate() {
 
@@ -732,12 +881,26 @@ function animate() {
 
 
   const time =
-    performance.now() * 0.001;
+    clock.getElapsedTime();
 
 
-  // ==========================================================
-  // EYE
-  // ==========================================================
+  // ----------------------------------------------------------
+  // SHY DETECTION
+  // ----------------------------------------------------------
+
+  updateShyState();
+
+
+  // ----------------------------------------------------------
+  // IDLE ACTIONS
+  // ----------------------------------------------------------
+
+  updateIdleAction(time);
+
+
+  // ----------------------------------------------------------
+  // EYE SMOOTHING
+  // ----------------------------------------------------------
 
   currentX +=
     (
@@ -753,22 +916,82 @@ function animate() {
     ) * 0.08;
 
 
+  if (!oko) {
+
+    renderer.render(
+      scene,
+      camera
+    );
+
+    return;
+
+  }
+
+
+  // ==========================================================
+  // BASE HEAD
+  // ==========================================================
+
+  if (head) {
+
+    head.rotation.y =
+      headBaseRotation.y +
+      currentX * 0.18;
+
+    head.rotation.x =
+      headBaseRotation.x -
+      currentY * 0.10;
+
+    head.rotation.z =
+      headBaseRotation.z;
+
+
+    // --------------------------------------------------------
+    // SHY HEAD TURN
+    // --------------------------------------------------------
+
+    // Turn slightly away from the cursor
+
+    head.rotation.y +=
+      -currentX *
+      shyAmount *
+      0.16;
+
+
+    // Small downward tuck
+
+    head.rotation.x +=
+      shyAmount *
+      0.06;
+
+
+    // Startle jerk
+
+    head.rotation.z +=
+      shyPulse *
+      0.035;
+
+  }
+
+
+  // ==========================================================
+  // EYES
+  // ==========================================================
+
   if (
     eyeball &&
     eyeMovementAmount > 0
   ) {
 
     eyeball.position.x =
-      eyeballBasePosition.x
-      + currentX *
+      eyeballBasePosition.x +
+      currentX *
       eyeMovementAmount;
-
 
     eyeball.position.y =
-      eyeballBasePosition.y
-      - currentY *
+      eyeballBasePosition.y -
+      currentY *
       eyeMovementAmount;
-
 
     eyeball.position.z =
       eyeballBasePosition.z;
@@ -782,102 +1005,58 @@ function animate() {
 
   if (
     leftEar &&
-    leftEarBaseRotation
+    rightEar
   ) {
 
-    leftEar.rotation.x =
-      leftEarBaseRotation.x
-      + Math.sin(
-        time * 1.25
-      ) * 0.12;
+    // Normal state
+
+    if (
+      !idleAction ||
+      idleAction.type !== "ear"
+    ) {
+
+      leftEar.rotation.x =
+        leftEarBaseRotation.x;
+
+      rightEar.rotation.x =
+        rightEarBaseRotation.x;
+
+    }
 
 
-    leftEar.rotation.z =
-      leftEarBaseRotation.z
-      + Math.sin(
-        time * 0.9
-      ) * 0.15;
+    // --------------------------------------------------------
+    // SHY
+    // --------------------------------------------------------
 
-  }
+    leftEar.rotation.x +=
+      shyAmount *
+      0.18;
 
-
-  if (
-    rightEar &&
-    rightEarBaseRotation
-  ) {
-
-    rightEar.rotation.x =
-      rightEarBaseRotation.x
-      + Math.sin(
-        time * 1.1 + 1.4
-      ) * 0.12;
+    rightEar.rotation.x +=
+      shyAmount *
+      0.18;
 
 
-    rightEar.rotation.z =
-      rightEarBaseRotation.z
-      + Math.sin(
-        time * 0.85 + 1.2
-      ) * 0.15;
+    // Ears fold slightly outward
 
-  }
+    leftEar.rotation.z +=
+      shyAmount *
+      0.13;
 
-
-  // ==========================================================
-  // ARMS
-  // ==========================================================
-
-  if (
-    leftArm &&
-    leftArmBaseRotation
-  ) {
-
-    leftArm.rotation.z =
-      leftArmBaseRotation.z
-      + Math.sin(
-        time * 0.8
-      ) * 0.07;
+    rightEar.rotation.z -=
+      shyAmount *
+      0.13;
 
 
-    leftArm.rotation.x =
-      leftArmBaseRotation.x
-      + Math.sin(
-        time * 0.65 + 0.7
-      ) * 0.045;
+    // Quick startle
 
+    leftEar.rotation.z +=
+      shyPulse *
+      0.16;
 
-    leftArm.rotation.y =
-      leftArmBaseRotation.y
-      + Math.sin(
-        time * 0.55
-      ) * 0.035;
-
-  }
-
-
-  if (
-    rightArm &&
-    rightArmBaseRotation
-  ) {
-
-    rightArm.rotation.z =
-      rightArmBaseRotation.z
-      - Math.sin(
-        time * 0.8
-      ) * 0.07;
-
-
-    rightArm.rotation.x =
-      rightArmBaseRotation.x
-      - Math.sin(
-        time * 0.65 + 0.7
-      ) * 0.045;
-
-
-    rightArm.rotation.y =
-      rightArmBaseRotation.y
-      - Math.sin(
-        time * 0.55
-      ) * 0.035;
+    rightEar.rotation.z -=
+      shyPulse *
+      0.16;
 
   }
 
@@ -888,28 +1067,92 @@ function animate() {
 
   if (
     leftShoulder &&
-    leftShoulderBaseRotation
+    rightShoulder
   ) {
 
     leftShoulder.rotation.z =
-      leftShoulderBaseRotation.z
-      + Math.sin(
-        time * 0.8
-      ) * 0.012;
+      leftShoulderBaseRotation.z;
+
+    rightShoulder.rotation.z =
+      rightShoulderBaseRotation.z;
+
+
+    // Pull shoulders inward/up
+
+    leftShoulder.rotation.z +=
+      shyAmount *
+      0.025;
+
+    rightShoulder.rotation.z -=
+      shyAmount *
+      0.025;
 
   }
 
 
+  // ==========================================================
+  // ARMS
+  // ==========================================================
+
   if (
-    rightShoulder &&
-    rightShoulderBaseRotation
+    leftArm &&
+    rightArm
   ) {
 
-    rightShoulder.rotation.z =
-      rightShoulderBaseRotation.z
-      - Math.sin(
-        time * 0.8
-      ) * 0.012;
+    // Normal arm pose
+
+    leftArm.rotation.z =
+      leftArmBaseRotation.z;
+
+    rightArm.rotation.z =
+      rightArmBaseRotation.z;
+
+
+    leftArm.rotation.x =
+      leftArmBaseRotation.x;
+
+    rightArm.rotation.x =
+      rightArmBaseRotation.x;
+
+
+    leftArm.rotation.y =
+      leftArmBaseRotation.y;
+
+    rightArm.rotation.y =
+      rightArmBaseRotation.y;
+
+
+    // --------------------------------------------------------
+    // SHY: TUCK ARMS IN
+    // --------------------------------------------------------
+
+    leftArm.rotation.z +=
+      shyAmount *
+      0.16;
+
+    rightArm.rotation.z -=
+      shyAmount *
+      0.16;
+
+
+    leftArm.rotation.x +=
+      shyAmount *
+      0.08;
+
+    rightArm.rotation.x +=
+      shyAmount *
+      0.08;
+
+
+    // Quick startle
+
+    leftArm.rotation.z +=
+      shyPulse *
+      0.10;
+
+    rightArm.rotation.z -=
+      shyPulse *
+      0.10;
 
   }
 
@@ -918,69 +1161,54 @@ function animate() {
   // LEGS
   // ==========================================================
 
-  // EXAGGERATED TEST MOVEMENT
-  // These values are intentionally larger so we can
-  // clearly see what the leg bones are doing.
-
-
   if (
     leftLeg &&
-    leftLegBaseRotation
+    rightLeg
   ) {
 
-    // Side / weight shift
+    // Reset
+
     leftLeg.rotation.z =
-      leftLegBaseRotation.z
-      + Math.sin(
-        time * 0.75
-      ) * 0.12;
+      leftLegBaseRotation.z;
 
-
-    // Forward / backward
-    leftLeg.rotation.x =
-      leftLegBaseRotation.x
-      + Math.sin(
-        time * 0.6
-      ) * 0.09;
-
-
-    // 3D twist
-    leftLeg.rotation.y =
-      leftLegBaseRotation.y
-      + Math.sin(
-        time * 0.5
-      ) * 0.07;
-
-  }
-
-
-  if (
-    rightLeg &&
-    rightLegBaseRotation
-  ) {
-
-    // Opposite side / weight shift
     rightLeg.rotation.z =
-      rightLegBaseRotation.z
-      - Math.sin(
-        time * 0.75
-      ) * 0.12;
+      rightLegBaseRotation.z;
 
+    leftLeg.rotation.x =
+      leftLegBaseRotation.x;
 
-    // Opposite forward / backward
     rightLeg.rotation.x =
-      rightLegBaseRotation.x
-      - Math.sin(
-        time * 0.6
-      ) * 0.09;
+      rightLegBaseRotation.x;
 
+    leftLeg.rotation.y =
+      leftLegBaseRotation.y;
 
-    // Opposite 3D twist
     rightLeg.rotation.y =
-      rightLegBaseRotation.y
-      - Math.sin(
-        time * 0.5
-      ) * 0.07;
+      rightLegBaseRotation.y;
+
+
+    // --------------------------------------------------------
+    // SHY WEIGHT SHIFT
+    // --------------------------------------------------------
+
+    leftLeg.rotation.z +=
+      shyAmount *
+      0.055;
+
+    rightLeg.rotation.z -=
+      shyAmount *
+      0.055;
+
+
+    // Tiny crouch
+
+    leftLeg.rotation.x +=
+      shyAmount *
+      0.035;
+
+    rightLeg.rotation.x +=
+      shyAmount *
+      0.035;
 
   }
 
@@ -989,60 +1217,87 @@ function animate() {
   // HIPS
   // ==========================================================
 
-  // Keep the hips almost completely still.
-
   if (
     leftHip &&
-    leftHipBaseRotation
+    rightHip
   ) {
 
     leftHip.rotation.z =
-      leftHipBaseRotation.z
-      + Math.sin(
-        time * 0.75
-      ) * 0.008;
-
-  }
-
-
-  if (
-    rightHip &&
-    rightHipBaseRotation
-  ) {
+      leftHipBaseRotation.z;
 
     rightHip.rotation.z =
-      rightHipBaseRotation.z
-      - Math.sin(
-        time * 0.75
-      ) * 0.008;
+      rightHipBaseRotation.z;
+
+
+    leftHip.rotation.z +=
+      shyAmount *
+      0.015;
+
+    rightHip.rotation.z -=
+      shyAmount *
+      0.015;
 
   }
 
 
   // ==========================================================
-  // HEAD
+  // WHOLE BODY SHY REACTION
   // ==========================================================
 
-  if (
-    head &&
-    headBaseRotation
-  ) {
-
-    head.rotation.y =
-      headBaseRotation.y
-      + currentX * 0.18;
+  const shySquash =
+    shyAmount *
+    0.035 +
+    shyPulse *
+    0.025;
 
 
-    head.rotation.x =
-      headBaseRotation.x
-      - currentY * 0.10;
+  if (baseOkoScale) {
+
+    oko.scale.x =
+      baseOkoScale.x +
+      shySquash * 0.35;
+
+    oko.scale.y =
+      baseOkoScale.y -
+      shySquash;
+
+    oko.scale.z =
+      baseOkoScale.z +
+      shySquash * 0.35;
+
+  }
 
 
-    head.rotation.z =
-      headBaseRotation.z
-      + Math.sin(
-        time * 0.45
-      ) * 0.008;
+  // ----------------------------------------------------------
+  // BODY MOVES AWAY FROM CURSOR
+  // ----------------------------------------------------------
+
+  if (baseOkoPosition) {
+
+    const awayX =
+      -currentX *
+      shyAmount *
+      0.035;
+
+
+    const crouch =
+      shyAmount *
+      -0.025;
+
+
+    const startle =
+      shyPulse *
+      -0.015;
+
+
+    oko.position.x =
+      baseOkoPosition.x +
+      awayX;
+
+    oko.position.y =
+      baseOkoPosition.y +
+      crouch +
+      startle;
 
   }
 
@@ -1057,6 +1312,9 @@ function animate() {
   );
 
 }
+
+
+animate();
 
 
 // ============================================================
@@ -1098,17 +1356,6 @@ window.addEventListener(
   "resize",
   resize
 );
-
-
-// ============================================================
-// START
-// ============================================================
-
-resize();
-
-animate();
-
-chooseIdleTarget();
 
 </script>
 
