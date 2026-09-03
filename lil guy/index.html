@@ -258,10 +258,25 @@ let wasNear = false;
 // ============================================================
 
 let earReaction = 0;
-
 let earReactionStart = -10;
 
 const earReactionDuration = 0.42;
+
+
+// ============================================================
+// EAR IDLE TWITCH
+// ============================================================
+
+let earTwitchLeft = 0;
+let earTwitchRight = 0;
+
+let nextLeftEarTwitch = 2.5;
+let nextRightEarTwitch = 4.0;
+
+let leftEarTwitchStart = -10;
+let rightEarTwitchStart = -10;
+
+const earTwitchDuration = 0.28;
 
 
 // ============================================================
@@ -621,7 +636,7 @@ function updateShyState() {
 
 
   // ----------------------------------------------------------
-  // ENTER
+  // ENTER SHY
   // ----------------------------------------------------------
 
   if (
@@ -636,7 +651,7 @@ function updateShyState() {
       1;
 
 
-    // Start ear reaction
+    // Big ear reaction
 
     earReaction =
       1;
@@ -648,7 +663,7 @@ function updateShyState() {
 
 
   // ----------------------------------------------------------
-  // LEAVE
+  // LEAVE SHY
   // ----------------------------------------------------------
 
   if (
@@ -703,7 +718,254 @@ function updateShyState() {
 
 
 // ============================================================
-// EAR REACTION
+// RANDOM EAR TWITCHES
+// ============================================================
+
+function updateEarTwitches(time) {
+
+  if (
+    !leftEar ||
+    !rightEar
+  ) {
+    return;
+  }
+
+
+  // ----------------------------------------------------------
+  // LEFT EAR
+  // ----------------------------------------------------------
+
+  if (
+    time >
+    nextLeftEarTwitch
+  ) {
+
+    leftEarTwitchStart =
+      time;
+
+    earTwitchLeft =
+      1;
+
+
+    nextLeftEarTwitch =
+      time +
+      THREE.MathUtils.randFloat(
+        2.5,
+        6
+      );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // RIGHT EAR
+  // ----------------------------------------------------------
+
+  if (
+    time >
+    nextRightEarTwitch
+  ) {
+
+    rightEarTwitchStart =
+      time;
+
+    earTwitchRight =
+      1;
+
+
+    nextRightEarTwitch =
+      time +
+      THREE.MathUtils.randFloat(
+        3,
+        7
+      );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // LEFT TWITCH
+  // ----------------------------------------------------------
+
+  const leftElapsed =
+    time -
+    leftEarTwitchStart;
+
+
+  let leftProgress =
+    THREE.MathUtils.clamp(
+      leftElapsed /
+      earTwitchDuration,
+      0,
+      1
+    );
+
+
+  let leftTwitch =
+    0;
+
+
+  if (
+    leftProgress < 0.25
+  ) {
+
+    leftTwitch =
+      easeOut(
+        leftProgress / 0.25
+      );
+
+  } else {
+
+    leftTwitch =
+      1 -
+      easeInOut(
+        (leftProgress - 0.25) /
+        0.75
+      );
+
+  }
+
+
+  leftTwitch *=
+    earTwitchLeft;
+
+
+  // ----------------------------------------------------------
+  // RIGHT TWITCH
+  // ----------------------------------------------------------
+
+  const rightElapsed =
+    time -
+    rightEarTwitchStart;
+
+
+  let rightProgress =
+    THREE.MathUtils.clamp(
+      rightElapsed /
+      earTwitchDuration,
+      0,
+      1
+    );
+
+
+  let rightTwitch =
+    0;
+
+
+  if (
+    rightProgress < 0.25
+  ) {
+
+    rightTwitch =
+      easeOut(
+        rightProgress / 0.25
+      );
+
+  } else {
+
+    rightTwitch =
+      1 -
+      easeInOut(
+        (rightProgress - 0.25) /
+        0.75
+      );
+
+  }
+
+
+  rightTwitch *=
+    earTwitchRight;
+
+
+  // ----------------------------------------------------------
+  // VERY SUBTLE CONSTANT EAR LIFE
+  // ----------------------------------------------------------
+
+  const leftSway =
+    Math.sin(
+      time * 0.80
+    ) * 0.018;
+
+
+  const rightSway =
+    Math.sin(
+      time * 0.72 +
+      1.8
+    ) * 0.014;
+
+
+  const leftSwayZ =
+    Math.sin(
+      time * 0.63 +
+      0.5
+    ) * 0.012;
+
+
+  const rightSwayZ =
+    Math.sin(
+      time * 0.68 +
+      2.2
+    ) * 0.010;
+
+
+  // ----------------------------------------------------------
+  // APPLY LEFT EAR
+  // ----------------------------------------------------------
+
+  leftEar.rotation.x =
+    leftEarBaseRotation.x +
+    leftSway +
+    leftTwitch * 0.13;
+
+
+  leftEar.rotation.z =
+    leftEarBaseRotation.z +
+    leftSwayZ +
+    leftTwitch * 0.08;
+
+
+  // ----------------------------------------------------------
+  // APPLY RIGHT EAR
+  // ----------------------------------------------------------
+
+  rightEar.rotation.x =
+    rightEarBaseRotation.x +
+    rightSway +
+    rightTwitch * 0.11;
+
+
+  rightEar.rotation.z =
+    rightEarBaseRotation.z +
+    rightSwayZ -
+    rightTwitch * 0.07;
+
+
+  // ----------------------------------------------------------
+  // FINISH TWITCHES
+  // ----------------------------------------------------------
+
+  if (
+    leftProgress >= 1
+  ) {
+
+    earTwitchLeft = 0;
+
+  }
+
+
+  if (
+    rightProgress >= 1
+  ) {
+
+    earTwitchRight = 0;
+
+  }
+
+}
+
+
+// ============================================================
+// BIG SHY EAR REACTION
 // ============================================================
 
 function updateEarReaction(time) {
@@ -734,16 +996,15 @@ function updateEarReaction(time) {
     );
 
 
-  // ----------------------------------------------------------
-  // QUICK REACTION CURVE
-  // ----------------------------------------------------------
+  let reaction = 0;
 
-  // Fast movement at the beginning,
-  // then a sharp settle.
 
-  let reaction;
+  // Quick movement in,
+  // then sharp settle.
 
-  if (progress < 0.35) {
+  if (
+    progress < 0.35
+  ) {
 
     const p =
       progress / 0.35;
@@ -769,35 +1030,27 @@ function updateEarReaction(time) {
 
 
   // ----------------------------------------------------------
-  // LEFT EAR
+  // ADD ON TOP OF BASE EAR LIFE
   // ----------------------------------------------------------
 
-  leftEar.rotation.x =
-    leftEarBaseRotation.x +
+  leftEar.rotation.x +=
     reaction * 0.24;
 
 
-  leftEar.rotation.z =
-    leftEarBaseRotation.z +
+  leftEar.rotation.z +=
     reaction * 0.10;
 
 
-  // ----------------------------------------------------------
-  // RIGHT EAR
-  // ----------------------------------------------------------
-
-  rightEar.rotation.x =
-    rightEarBaseRotation.x +
+  rightEar.rotation.x +=
     reaction * 0.18;
 
 
-  rightEar.rotation.z =
-    rightEarBaseRotation.z -
+  rightEar.rotation.z -=
     reaction * 0.14;
 
 
   // ----------------------------------------------------------
-  // FINISHED
+  // FINISH
   // ----------------------------------------------------------
 
   if (
@@ -805,18 +1058,6 @@ function updateEarReaction(time) {
   ) {
 
     earReaction = 0;
-
-    leftEar.rotation.x =
-      leftEarBaseRotation.x;
-
-    leftEar.rotation.z =
-      leftEarBaseRotation.z;
-
-    rightEar.rotation.x =
-      rightEarBaseRotation.x;
-
-    rightEar.rotation.z =
-      rightEarBaseRotation.z;
 
   }
 
@@ -1045,33 +1286,15 @@ function updateIdleAction(time) {
   // IDLE EAR TWITCH
   // ----------------------------------------------------------
 
+  // The dedicated ear twitch system handles
+  // the ears now, so this action does nothing
+  // to avoid competing animations.
+
   if (
     idleAction.type === "ear"
   ) {
 
-    const p =
-      Math.sin(
-        progress *
-        Math.PI
-      );
-
-
-    if (leftEar) {
-
-      leftEar.rotation.x =
-        leftEarBaseRotation.x +
-        p * 0.22;
-
-    }
-
-
-    if (rightEar) {
-
-      rightEar.rotation.x =
-        rightEarBaseRotation.x -
-        p * 0.12;
-
-    }
+    // Intentionally empty.
 
   }
 
@@ -1194,7 +1417,7 @@ function animate() {
       0.06;
 
 
-    // Quick startle
+    // Startle
 
     head.rotation.z +=
       shyPulse *
@@ -1233,6 +1456,15 @@ function animate() {
   // ==========================================================
   // EARS
   // ==========================================================
+
+  // Constant subtle life + occasional twitches
+
+  updateEarTwitches(
+    time
+  );
+
+
+  // Bigger shy reaction layered on top
 
   updateEarReaction(
     time
