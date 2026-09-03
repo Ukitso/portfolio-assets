@@ -1,18 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oko Test</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Oko</title>
+
+  <!-- THREE.JS IMPORT MAP -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+    }
+  }
+  </script>
 
   <style>
     html,
     body {
       margin: 0;
+      padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
       background: #1B1C1C;
+    }
+
+    #oko-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
     }
 
     canvas {
@@ -25,14 +43,7 @@
 
 <body>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
-  }
-}
-</script>
+<div id="oko-container"></div>
 
 <script type="module">
 
@@ -40,54 +51,45 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 
+// ============================================================
+// BASIC SETUP
+// ============================================================
 
-// ========================================
-// SCENE
-// ========================================
+const container = document.getElementById("oko-container");
 
 const scene = new THREE.Scene();
-
 scene.background = new THREE.Color(0x1B1C1C);
 
 
-
-// ========================================
 // CAMERA
-// ========================================
-
 const camera = new THREE.PerspectiveCamera(
   45,
-  window.innerWidth / window.innerHeight,
+  container.clientWidth / container.clientHeight,
   0.01,
-  1000
+  100
 );
 
 
-
-// ========================================
 // RENDERER
-// ========================================
-
 const renderer = new THREE.WebGLRenderer({
   antialias: true
 });
 
-renderer.setPixelRatio(
-  Math.min(window.devicePixelRatio, 2)
-);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 renderer.setSize(
-  window.innerWidth,
-  window.innerHeight
+  container.clientWidth,
+  container.clientHeight
 );
 
-document.body.appendChild(renderer.domElement);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+container.appendChild(renderer.domElement);
 
 
-
-// ========================================
+// ============================================================
 // LIGHTING
-// ========================================
+// ============================================================
 
 const ambientLight = new THREE.AmbientLight(
   0xffffff,
@@ -102,843 +104,167 @@ const directionalLight = new THREE.DirectionalLight(
   3
 );
 
-directionalLight.position.set(3, 5, 5);
+directionalLight.position.set(
+  3,
+  5,
+  4
+);
 
 scene.add(directionalLight);
 
 
-
-// ========================================
-// OKO VARIABLES
-// ========================================
-
-let oko = null;
-
-let eyeballBone = null;
-let eyeballMesh = null;
-
-let head = null;
-let body = null;
-
-let leftEar = null;
-let rightEar = null;
-
-
-
-// ========================================
-// EYE SETTINGS
-// ========================================
-
-const eyeRangeX = 0.16;
-const eyeRangeY = 0.12;
-
-const eyeOffsetY = 0.05;
-
-const eyeBasePosition = new THREE.Vector3();
-
-let eyeCurrentX = 0;
-let eyeCurrentY = 0;
-
-let eyeTargetX = 0;
-let eyeTargetY = 0;
-
-
-
-// ========================================
-// IDLE SETTINGS
-// ========================================
-
-const idleDelay = 2500;
-
-const idleRangeX = 0.10;
-const idleRangeY = 0.07;
-
-let isIdle = false;
-
-let idleTimer = null;
-let idleLookTimer = null;
-
-
-
-// ========================================
-// HEAD SETTINGS
-// ========================================
-
-const headBaseRotation = new THREE.Euler();
-
-let headCurrentX = 0;
-let headCurrentY = 0;
-let headCurrentZ = 0;
-
-
-
-// ========================================
-// HEAD IDLE SETTINGS
-// ========================================
-
-const headIdleRangeX = 0.025;
-const headIdleRangeY = 0.035;
-const headIdleRangeZ = 0.045;
-
-let headIdleTargetX = 0;
-let headIdleTargetY = 0;
-let headIdleTargetZ = 0;
-
-let headIdleCurrentX = 0;
-let headIdleCurrentY = 0;
-let headIdleCurrentZ = 0;
-
-let headIdleTimer = null;
-
-
-
-// ========================================
-// BODY SETTINGS
-// ========================================
-
-const bodyBaseRotation = new THREE.Euler();
-
-
-
-// ========================================
-// BODY IDLE SETTINGS
-// ========================================
-
-const bodyIdleRangeX = 0.006;
-const bodyIdleRangeY = 0.010;
-const bodyIdleRangeZ = 0.012;
-
-let bodyIdleTargetX = 0;
-let bodyIdleTargetY = 0;
-let bodyIdleTargetZ = 0;
-
-let bodyIdleCurrentX = 0;
-let bodyIdleCurrentY = 0;
-let bodyIdleCurrentZ = 0;
-
-let bodyIdleTimer = null;
-
-
-
-// ========================================
-// EAR SETTINGS
-// ========================================
-
-// Save original Blender rotations.
-
-const leftEarBaseRotation = new THREE.Euler();
-const rightEarBaseRotation = new THREE.Euler();
-
-
-
-// ----------------------------------------
-// Normal idle ear movement
-// ----------------------------------------
-
-const earIdleRangeX = 0.035;
-const earIdleRangeY = 0.025;
-const earIdleRangeZ = 0.045;
-
-
-
-// ----------------------------------------
-// Current ear targets
-// ----------------------------------------
-
-let leftEarTargetX = 0;
-let leftEarTargetY = 0;
-let leftEarTargetZ = 0;
-
-let rightEarTargetX = 0;
-let rightEarTargetY = 0;
-let rightEarTargetZ = 0;
-
-
-
-// ----------------------------------------
-// Current ear positions
-// ----------------------------------------
-
-let leftEarCurrentX = 0;
-let leftEarCurrentY = 0;
-let leftEarCurrentZ = 0;
-
-let rightEarCurrentX = 0;
-let rightEarCurrentY = 0;
-let rightEarCurrentZ = 0;
-
-
-
-// ----------------------------------------
-// Ear timer
-// ----------------------------------------
-
-let earIdleTimer = null;
-
-
-
-// ========================================
-// CHOOSE EAR IDLE MOVEMENT
-// ========================================
-
-function chooseEarIdleMovement() {
-
-  if (!isIdle) {
-    return;
-  }
-
-
-  const behaviour =
-    THREE.MathUtils.randInt(0, 3);
-
-
-
-  // ======================================
-  // 0 — SMALL ASYMMETRIC TWITCH
-  // ======================================
-
-  if (behaviour === 0) {
-
-    const twitchLeft =
-      Math.random() < 0.5;
-
-
-    if (twitchLeft) {
-
-      leftEarTargetX =
-        THREE.MathUtils.randFloat(
-          -earIdleRangeX,
-          earIdleRangeX
-        );
-
-      leftEarTargetY =
-        THREE.MathUtils.randFloat(
-          -earIdleRangeY,
-          earIdleRangeY
-        );
-
-      leftEarTargetZ =
-        THREE.MathUtils.randFloat(
-          -earIdleRangeZ,
-          earIdleRangeZ
-        );
-
-    } else {
-
-      rightEarTargetX =
-        THREE.MathUtils.randFloat(
-          -earIdleRangeX,
-          earIdleRangeX
-        );
-
-      rightEarTargetY =
-        THREE.MathUtils.randFloat(
-          -earIdleRangeY,
-          earIdleRangeY
-        );
-
-      rightEarTargetZ =
-        THREE.MathUtils.randFloat(
-          -earIdleRangeZ,
-          earIdleRangeZ
-        );
-
-    }
-
-  }
-
-
-
-  // ======================================
-  // 1 — BOTH EARS PERK
-  // ======================================
-
-  else if (behaviour === 1) {
-
-    const perk =
-      THREE.MathUtils.randFloat(
-        0.025,
-        0.055
-      );
-
-
-    leftEarTargetX = -perk;
-
-    rightEarTargetX = -perk;
-
-
-    leftEarTargetZ =
-      THREE.MathUtils.randFloat(
-        -0.015,
-        0.015
-      );
-
-    rightEarTargetZ =
-      THREE.MathUtils.randFloat(
-        -0.015,
-        0.015
-      );
-
-  }
-
-
-
-  // ======================================
-  // 2 — BOTH EARS RELAX
-  // ======================================
-
-  else if (behaviour === 2) {
-
-    leftEarTargetX =
-      THREE.MathUtils.randFloat(
-        -0.015,
-        0.015
-      );
-
-    rightEarTargetX =
-      THREE.MathUtils.randFloat(
-        -0.015,
-        0.015
-      );
-
-
-    leftEarTargetY =
-      THREE.MathUtils.randFloat(
-        -0.015,
-        0.015
-      );
-
-    rightEarTargetY =
-      THREE.MathUtils.randFloat(
-        -0.015,
-        0.015
-      );
-
-  }
-
-
-
-  // ======================================
-  // 3 — ONE EAR LISTENS
-  // ======================================
-
-  else {
-
-    const listeningLeft =
-      Math.random() < 0.5;
-
-
-    if (listeningLeft) {
-
-      leftEarTargetY =
-        THREE.MathUtils.randFloat(
-          0.025,
-          0.06
-        );
-
-      leftEarTargetZ =
-        THREE.MathUtils.randFloat(
-          -0.025,
-          0.025
-        );
-
-    } else {
-
-      rightEarTargetY =
-        THREE.MathUtils.randFloat(
-          -0.06,
-          -0.025
-        );
-
-      rightEarTargetZ =
-        THREE.MathUtils.randFloat(
-          -0.025,
-          0.025
-        );
-
-    }
-
-  }
-
-
-
-  // ======================================
-  // NEXT EAR MOVEMENT
-  // ======================================
-
-  const delay =
-    THREE.MathUtils.randFloat(
-      1800,
-      5000
-    );
-
-
-  clearTimeout(earIdleTimer);
-
-
-  earIdleTimer = setTimeout(
-    chooseEarIdleMovement,
-    delay
-  );
-
-}
-
-
-
-// ========================================
-// START IDLE
-// ========================================
-
-function startIdle() {
-
-  if (isIdle) {
-    return;
-  }
-
-
-  isIdle = true;
-
-
-  chooseIdleLook();
-
-  chooseHeadIdleMovement();
-
-  chooseBodyIdleMovement();
-
-  chooseEarIdleMovement();
-
-}
-
-
-
-// ========================================
-// CHOOSE IDLE EYE LOOK
-// ========================================
-
-function chooseIdleLook() {
-
-  if (!isIdle) {
-    return;
-  }
-
-
-  eyeTargetX =
-    THREE.MathUtils.randFloat(
-      -idleRangeX,
-      idleRangeX
-    );
-
-
-  eyeTargetY =
-    THREE.MathUtils.randFloat(
-      -idleRangeY,
-      idleRangeY
-    );
-
-
-  const delay =
-    THREE.MathUtils.randFloat(
-      1000,
-      2500
-    );
-
-
-  clearTimeout(idleLookTimer);
-
-
-  idleLookTimer = setTimeout(
-    chooseIdleLook,
-    delay
-  );
-
-}
-
-
-
-// ========================================
-// CHOOSE HEAD IDLE MOVEMENT
-// ========================================
-
-function chooseHeadIdleMovement() {
-
-  if (!isIdle) {
-    return;
-  }
-
-
-  headIdleTargetX =
-    THREE.MathUtils.randFloat(
-      -headIdleRangeX,
-      headIdleRangeX
-    );
-
-
-  headIdleTargetY =
-    THREE.MathUtils.randFloat(
-      -headIdleRangeY,
-      headIdleRangeY
-    );
-
-
-  headIdleTargetZ =
-    THREE.MathUtils.randFloat(
-      -headIdleRangeZ,
-      headIdleRangeZ
-    );
-
-
-  const delay =
-    THREE.MathUtils.randFloat(
-      2500,
-      5000
-    );
-
-
-  clearTimeout(headIdleTimer);
-
-
-  headIdleTimer = setTimeout(
-    chooseHeadIdleMovement,
-    delay
-  );
-
-}
-
-
-
-// ========================================
-// CHOOSE BODY IDLE MOVEMENT
-// ========================================
-
-function chooseBodyIdleMovement() {
-
-  if (!isIdle) {
-    return;
-  }
-
-
-  bodyIdleTargetX =
-    THREE.MathUtils.randFloat(
-      -bodyIdleRangeX,
-      bodyIdleRangeX
-    );
-
-
-  bodyIdleTargetY =
-    THREE.MathUtils.randFloat(
-      -bodyIdleRangeY,
-      bodyIdleRangeY
-    );
-
-
-  bodyIdleTargetZ =
-    THREE.MathUtils.randFloat(
-      -bodyIdleRangeZ,
-      bodyIdleRangeZ
-    );
-
-
-  const delay =
-    THREE.MathUtils.randFloat(
-      3500,
-      7000
-    );
-
-
-  clearTimeout(bodyIdleTimer);
-
-
-  bodyIdleTimer = setTimeout(
-    chooseBodyIdleMovement,
-    delay
-  );
-
-}
-
-
-
-// ========================================
-// EXIT IDLE
-// ========================================
-
-function exitIdle() {
-
-  if (!isIdle) {
-    return;
-  }
-
-
-  isIdle = false;
-
-
-  clearTimeout(idleLookTimer);
-
-  clearTimeout(headIdleTimer);
-
-  clearTimeout(bodyIdleTimer);
-
-  clearTimeout(earIdleTimer);
-
-
-  headIdleTargetX = 0;
-  headIdleTargetY = 0;
-  headIdleTargetZ = 0;
-
-
-  bodyIdleTargetX = 0;
-  bodyIdleTargetY = 0;
-  bodyIdleTargetZ = 0;
-
-
-  leftEarTargetX = 0;
-  leftEarTargetY = 0;
-  leftEarTargetZ = 0;
-
-
-  rightEarTargetX = 0;
-  rightEarTargetY = 0;
-  rightEarTargetZ = 0;
-
-}
-
-
-
-// ========================================
-// MOUSE
-// ========================================
-
-window.addEventListener(
-  "mousemove",
-  (event) => {
-
-    exitIdle();
-
-
-    clearTimeout(idleTimer);
-
-
-    idleTimer = setTimeout(
-      startIdle,
-      idleDelay
-    );
-
-
-    const normalizedX =
-      (event.clientX - window.innerWidth / 2) /
-      (window.innerWidth / 2);
-
-
-    const normalizedY =
-      (event.clientY - window.innerHeight / 2) /
-      (window.innerHeight / 2);
-
-
-    eyeTargetX =
-      normalizedX * eyeRangeX;
-
-
-    eyeTargetY =
-      -normalizedY * eyeRangeY;
-
-  }
-);
-
-
-
-// ========================================
-// LOAD GLB
-// ========================================
+// ============================================================
+// LOAD OKO
+// ============================================================
 
 const loader = new GLTFLoader();
 
 loader.load(
-
   "./OKO.glb",
 
   (gltf) => {
 
-    oko = gltf.scene;
+    const oko = gltf.scene;
 
     scene.add(oko);
 
 
-    // ------------------------------------
-    // FIND OBJECTS
-    // ------------------------------------
+    // ========================================================
+    // FIND IMPORTANT OBJECTS
+    // ========================================================
 
-    eyeballBone =
-      oko.getObjectByName("Eyeball");
+    let eyeballBone = null;
+    let eyeballMesh = null;
 
+    let head = null;
+    let body = null;
 
-    eyeballMesh =
-      oko.getObjectByName("EYEBALL");
+    let leftEar = null;
+    let rightEar = null;
 
-
-    head =
-      oko.getObjectByName("HEAD");
-
-
-    body =
-      oko.getObjectByName("BODY_1");
+    let skinnedMesh = null;
 
 
-    leftEar =
-      oko.getObjectByName("left ear");
+    oko.traverse((object) => {
+
+      if (object.name === "Eyeball") {
+        eyeballBone = object;
+      }
+
+      if (object.name === "EYEBALL") {
+        eyeballMesh = object;
+      }
+
+      if (object.name === "HEAD") {
+        head = object;
+      }
+
+      if (object.name === "BODY_1") {
+        body = object;
+      }
+
+      if (object.isSkinnedMesh && object.skeleton) {
+        skinnedMesh = object;
+      }
+
+    });
 
 
-    rightEar =
-      oko.getObjectByName("right ear");
+    // ========================================================
+    // GET EARS DIRECTLY FROM THE SKELETON
+    // ========================================================
+
+    if (skinnedMesh && skinnedMesh.skeleton) {
+
+      const bones = skinnedMesh.skeleton.bones;
+
+      console.log("Oko skeleton bones:");
+
+      bones.forEach((bone, index) => {
+        console.log(index, bone.name);
+      });
 
 
-    // ------------------------------------
-    // DEBUG
-    // ------------------------------------
+      // Current GLB:
+      // index 2 = left ear
+      // index 3 = right ear
 
-    console.log("================================");
-    console.log("OKO LOADED");
-    console.log("================================");
-
-    console.log(
-      "Eyeball BONE:",
-      eyeballBone
-    );
-
-    console.log(
-      "Eyeball MESH:",
-      eyeballMesh
-    );
-
-    console.log(
-      "Head:",
-      head
-    );
-
-    console.log(
-      "Body:",
-      body
-    );
-
-    console.log(
-      "Left Ear:",
-      leftEar
-    );
-
-    console.log(
-      "Right Ear:",
-      rightEar
-    );
+      leftEar = bones[2];
+      rightEar = bones[3];
 
 
-    // ------------------------------------
-    // SAVE EYE POSITION
-    // ------------------------------------
+      console.log(
+        "LEFT EAR:",
+        leftEar?.name,
+        leftEar
+      );
 
-    if (eyeballBone) {
+      console.log(
+        "RIGHT EAR:",
+        rightEar?.name,
+        rightEar
+      );
 
-      eyeBasePosition.copy(
-        eyeballBone.position
+      console.log(
+        "LEFT EAR IS SKELETON BONE:",
+        leftEar === bones[2]
+      );
+
+      console.log(
+        "RIGHT EAR IS SKELETON BONE:",
+        rightEar === bones[3]
       );
 
     }
 
 
-    // ------------------------------------
-    // SAVE HEAD ROTATION
-    // ------------------------------------
+    // ========================================================
+    // CHECK EVERYTHING LOADED
+    // ========================================================
 
-    if (head) {
-
-      headBaseRotation.copy(
-        head.rotation
-      );
-
-    }
+    console.log("EYEBALL BONE:", eyeballBone);
+    console.log("EYEBALL MESH:", eyeballMesh);
+    console.log("HEAD:", head);
+    console.log("BODY:", body);
+    console.log("SKINNED MESH:", skinnedMesh);
 
 
-    // ------------------------------------
-    // SAVE BODY ROTATION
-    // ------------------------------------
+    // ========================================================
+    // CENTER OKO
+    // ========================================================
 
-    if (body) {
+    const box = new THREE.Box3().setFromObject(oko);
 
-      bodyBaseRotation.copy(
-        body.rotation
-      );
-
-    }
-
-
-    // ------------------------------------
-    // SAVE EAR ROTATIONS
-    // ------------------------------------
-
-    if (leftEar) {
-
-      leftEarBaseRotation.copy(
-        leftEar.rotation
-      );
-
-    }
-
-
-    if (rightEar) {
-
-      rightEarBaseRotation.copy(
-        rightEar.rotation
-      );
-
-    }
-
-
-    // ------------------------------------
-    // CENTRE OKO
-    // ------------------------------------
-
-    const box =
-      new THREE.Box3().setFromObject(oko);
-
-
-    const center =
-      box.getCenter(
-        new THREE.Vector3()
-      );
-
-
-    const size =
-      box.getSize(
-        new THREE.Vector3()
-      );
-
+    const center = box.getCenter(
+      new THREE.Vector3()
+    );
 
     oko.position.sub(center);
 
 
-    // ------------------------------------
-    // CAMERA
-    // ------------------------------------
+    // ========================================================
+    // CAMERA FRAMING
+    // ========================================================
 
-    const maxDimension =
-      Math.max(
-        size.x,
-        size.y,
-        size.z
-      );
+    const centeredBox = new THREE.Box3().setFromObject(oko);
 
+    const size = centeredBox.getSize(
+      new THREE.Vector3()
+    );
 
-    const fitHeightDistance =
-      maxDimension /
-      (
-        2 *
-        Math.tan(
-          THREE.MathUtils.degToRad(
-            camera.fov / 2
-          )
-        )
-      );
+    const maxDimension = Math.max(
+      size.x,
+      size.y,
+      size.z
+    );
 
+    const fov = camera.fov * Math.PI / 180;
 
-    const cameraDistance =
-      fitHeightDistance * 1.5;
+    let cameraDistance =
+      (maxDimension / 2) /
+      Math.tan(fov / 2);
+
+    cameraDistance *= 1.15;
 
 
     camera.position.set(
@@ -947,362 +273,661 @@ loader.load(
       cameraDistance
     );
 
-
-    camera.lookAt(
-      0,
-      0,
-      0
-    );
-
-  },
+    camera.lookAt(0, 0, 0);
 
 
-  // --------------------------------------
-  // LOADING
-  // --------------------------------------
+    // ========================================================
+    // SAVE ORIGINAL POSITIONS / ROTATIONS
+    // ========================================================
 
-  (progress) => {
-
-    if (progress.total) {
-
-      const percent =
-        (progress.loaded / progress.total) * 100;
+    const eyeBasePosition = eyeballBone
+      ? eyeballBone.position.clone()
+      : new THREE.Vector3();
 
 
-      console.log(
-        "Loading Oko:",
-        percent.toFixed(0) + "%"
+    const headBaseRotation = head
+      ? head.rotation.clone()
+      : new THREE.Euler();
+
+
+    const bodyBaseRotation = body
+      ? body.rotation.clone()
+      : new THREE.Euler();
+
+
+    const leftEarBaseRotation = leftEar
+      ? leftEar.rotation.clone()
+      : new THREE.Euler();
+
+
+    const rightEarBaseRotation = rightEar
+      ? rightEar.rotation.clone()
+      : new THREE.Euler();
+
+
+    // ========================================================
+    // EYE SETTINGS
+    // ========================================================
+
+    const eyeRangeX = 0.16;
+    const eyeRangeY = 0.12;
+
+    const eyeOffsetY = 0.05;
+
+
+    let eyeTargetX = 0;
+    let eyeTargetY = 0;
+
+    let eyeCurrentX = 0;
+    let eyeCurrentY = 0;
+
+
+    // ========================================================
+    // HEAD SETTINGS
+    // ========================================================
+
+    let headTargetX = 0;
+    let headTargetY = 0;
+    let headTargetZ = 0;
+
+    let headCurrentX = 0;
+    let headCurrentY = 0;
+    let headCurrentZ = 0;
+
+
+    // ========================================================
+    // BODY SETTINGS
+    // ========================================================
+
+    let bodyCurrentX = 0;
+    let bodyCurrentY = 0;
+    let bodyCurrentZ = 0;
+
+
+    // ========================================================
+    // IDLE
+    // ========================================================
+
+    let idle = false;
+
+    let idleTimer = null;
+
+    const idleDelay = 2500;
+
+
+    let idleEyeTargetX = 0;
+    let idleEyeTargetY = 0;
+
+
+    let idleHeadTargetX = 0;
+    let idleHeadTargetY = 0;
+    let idleHeadTargetZ = 0;
+
+
+    let idleBodyTargetX = 0;
+    let idleBodyTargetY = 0;
+    let idleBodyTargetZ = 0;
+
+
+    // ========================================================
+    // EAR IDLE
+    // ========================================================
+
+    let earTargetLeftX = 0;
+    let earTargetLeftY = 0;
+    let earTargetLeftZ = 0;
+
+    let earTargetRightX = 0;
+    let earTargetRightY = 0;
+    let earTargetRightZ = 0;
+
+
+    let earCurrentLeftX = 0;
+    let earCurrentLeftY = 0;
+    let earCurrentLeftZ = 0;
+
+    let earCurrentRightX = 0;
+    let earCurrentRightY = 0;
+    let earCurrentRightZ = 0;
+
+
+    let nextEarMovement = 0;
+
+
+    // ========================================================
+    // RANDOM RANGE
+    // ========================================================
+
+    function randomRange(min, max) {
+
+      return min + Math.random() * (max - min);
+
+    }
+
+
+    // ========================================================
+    // START IDLE
+    // ========================================================
+
+    function startIdle() {
+
+      idle = true;
+
+      chooseIdleEyeTarget();
+      chooseIdleHeadTarget();
+      chooseIdleBodyTarget();
+      chooseEarTarget();
+
+    }
+
+
+    // ========================================================
+    // EXIT IDLE
+    // ========================================================
+
+    function exitIdle() {
+
+      idle = false;
+
+      idleEyeTargetX = 0;
+      idleEyeTargetY = 0;
+
+      idleHeadTargetX = 0;
+      idleHeadTargetY = 0;
+      idleHeadTargetZ = 0;
+
+      idleBodyTargetX = 0;
+      idleBodyTargetY = 0;
+      idleBodyTargetZ = 0;
+
+      earTargetLeftX = 0;
+      earTargetLeftY = 0;
+      earTargetLeftZ = 0;
+
+      earTargetRightX = 0;
+      earTargetRightY = 0;
+      earTargetRightZ = 0;
+
+    }
+
+
+    // ========================================================
+    // IDLE EYE TARGET
+    // ========================================================
+
+    function chooseIdleEyeTarget() {
+
+      idleEyeTargetX = randomRange(
+        -0.10,
+        0.10
+      );
+
+      idleEyeTargetY = randomRange(
+        -0.07,
+        0.07
       );
 
     }
 
+
+    // ========================================================
+    // IDLE HEAD TARGET
+    // ========================================================
+
+    function chooseIdleHeadTarget() {
+
+      idleHeadTargetX = randomRange(
+        -0.025,
+        0.025
+      );
+
+      idleHeadTargetY = randomRange(
+        -0.035,
+        0.035
+      );
+
+      idleHeadTargetZ = randomRange(
+        -0.045,
+        0.045
+      );
+
+    }
+
+
+    // ========================================================
+    // IDLE BODY TARGET
+    // ========================================================
+
+    function chooseIdleBodyTarget() {
+
+      idleBodyTargetX = randomRange(
+        -0.006,
+        0.006
+      );
+
+      idleBodyTargetY = randomRange(
+        -0.010,
+        0.010
+      );
+
+      idleBodyTargetZ = randomRange(
+        -0.012,
+        0.012
+      );
+
+    }
+
+
+    // ========================================================
+    // EAR TARGET
+    // ========================================================
+
+    function chooseEarTarget() {
+
+      earTargetLeftX = randomRange(
+        -0.035,
+        0.035
+      );
+
+      earTargetLeftY = randomRange(
+        -0.025,
+        0.025
+      );
+
+      earTargetLeftZ = randomRange(
+        -0.045,
+        0.045
+      );
+
+
+      earTargetRightX = randomRange(
+        -0.035,
+        0.035
+      );
+
+      earTargetRightY = randomRange(
+        -0.025,
+        0.025
+      );
+
+      earTargetRightZ = randomRange(
+        -0.045,
+        0.045
+      );
+
+
+      nextEarMovement =
+        performance.now() +
+        randomRange(1800, 5000);
+
+    }
+
+
+    // ========================================================
+    // MOUSE
+    // ========================================================
+
+    window.addEventListener(
+      "mousemove",
+      (event) => {
+
+        exitIdle();
+
+
+        clearTimeout(idleTimer);
+
+        idleTimer = setTimeout(
+          startIdle,
+          idleDelay
+        );
+
+
+        const normalizedX =
+          (event.clientX / window.innerWidth) * 2 - 1;
+
+
+        const normalizedY =
+          (event.clientY / window.innerHeight) * 2 - 1;
+
+
+        // Eye physically moves rather than rotating
+
+        eyeTargetX =
+          normalizedX * eyeRangeX;
+
+
+        eyeTargetY =
+          -normalizedY * eyeRangeY;
+
+      }
+    );
+
+
+    // ========================================================
+    // ANIMATION
+    // ========================================================
+
+    function animate() {
+
+      requestAnimationFrame(animate);
+
+
+      const now = performance.now();
+
+      const time = now * 0.001;
+
+
+      // ======================================================
+      // IDLE EYES
+      // ======================================================
+
+      if (idle) {
+
+        eyeTargetX = idleEyeTargetX;
+        eyeTargetY = idleEyeTargetY;
+
+      }
+
+
+      // ======================================================
+      // EYE SMOOTHING
+      // ======================================================
+
+      eyeCurrentX +=
+        (eyeTargetX - eyeCurrentX) *
+        0.08;
+
+
+      eyeCurrentY +=
+        (eyeTargetY - eyeCurrentY) *
+        0.08;
+
+
+      // ======================================================
+      // MOVE EYEBALL
+      // ======================================================
+
+      if (eyeballBone) {
+
+        eyeballBone.position.x =
+          eyeBasePosition.x +
+          eyeCurrentX;
+
+
+        eyeballBone.position.y =
+          eyeBasePosition.y +
+          eyeOffsetY +
+          eyeCurrentY;
+
+      }
+
+
+      // ======================================================
+      // HEAD FOLLOW
+      // ======================================================
+
+      let targetHeadY =
+        eyeCurrentX * 1.4;
+
+
+      let targetHeadX =
+        -eyeCurrentY * 1.0;
+
+
+      let targetHeadZ =
+        eyeCurrentX * -0.5;
+
+
+      if (idle) {
+
+        targetHeadX += idleHeadTargetX;
+        targetHeadY += idleHeadTargetY;
+        targetHeadZ += idleHeadTargetZ;
+
+      }
+
+
+      headCurrentX +=
+        (targetHeadX - headCurrentX) *
+        0.035;
+
+
+      headCurrentY +=
+        (targetHeadY - headCurrentY) *
+        0.035;
+
+
+      headCurrentZ +=
+        (targetHeadZ - headCurrentZ) *
+        0.035;
+
+
+      // ======================================================
+      // APPLY HEAD
+      // ======================================================
+
+      if (head) {
+
+        head.rotation.x =
+          headBaseRotation.x +
+          headCurrentX;
+
+
+        head.rotation.y =
+          headBaseRotation.y +
+          headCurrentY;
+
+
+        head.rotation.z =
+          headBaseRotation.z +
+          headCurrentZ;
+
+      }
+
+
+      // ======================================================
+      // BODY FOLLOW
+      // ======================================================
+
+      let targetBodyX =
+        headCurrentX * 0.15;
+
+      let targetBodyY =
+        headCurrentY * 0.20;
+
+      let targetBodyZ =
+        headCurrentZ * 0.20;
+
+
+      if (idle) {
+
+        targetBodyX += idleBodyTargetX;
+        targetBodyY += idleBodyTargetY;
+        targetBodyZ += idleBodyTargetZ;
+
+      }
+
+
+      bodyCurrentX +=
+        (targetBodyX - bodyCurrentX) *
+        0.008;
+
+
+      bodyCurrentY +=
+        (targetBodyY - bodyCurrentY) *
+        0.008;
+
+
+      bodyCurrentZ +=
+        (targetBodyZ - bodyCurrentZ) *
+        0.008;
+
+
+      // ======================================================
+      // APPLY BODY
+      // ======================================================
+
+      if (body) {
+
+        body.rotation.x =
+          bodyBaseRotation.x +
+          bodyCurrentX;
+
+
+        body.rotation.y =
+          bodyBaseRotation.y +
+          bodyCurrentY;
+
+
+        body.rotation.z =
+          bodyBaseRotation.z +
+          bodyCurrentZ;
+
+      }
+
+
+      // ======================================================
+      // EARS
+      // ======================================================
+
+      if (leftEar && rightEar) {
+
+        // Pick a new subtle ear pose occasionally
+
+        if (idle && now >= nextEarMovement) {
+
+          chooseEarTarget();
+
+        }
+
+
+        // Smooth left ear
+
+        earCurrentLeftX +=
+          (earTargetLeftX - earCurrentLeftX) *
+          0.015;
+
+
+        earCurrentLeftY +=
+          (earTargetLeftY - earCurrentLeftY) *
+          0.015;
+
+
+        earCurrentLeftZ +=
+          (earTargetLeftZ - earCurrentLeftZ) *
+          0.015;
+
+
+        // Smooth right ear
+
+        earCurrentRightX +=
+          (earTargetRightX - earCurrentRightX) *
+          0.015;
+
+
+        earCurrentRightY +=
+          (earTargetRightY - earCurrentRightY) *
+          0.015;
+
+
+        earCurrentRightZ +=
+          (earTargetRightZ - earCurrentRightZ) *
+          0.015;
+
+
+        // Apply relative to Blender's original rotations
+
+        leftEar.rotation.x =
+          leftEarBaseRotation.x +
+          earCurrentLeftX;
+
+
+        leftEar.rotation.y =
+          leftEarBaseRotation.y +
+          earCurrentLeftY;
+
+
+        leftEar.rotation.z =
+          leftEarBaseRotation.z +
+          earCurrentLeftZ;
+
+
+        rightEar.rotation.x =
+          rightEarBaseRotation.x +
+          earCurrentRightX;
+
+
+        rightEar.rotation.y =
+          rightEarBaseRotation.y +
+          earCurrentRightY;
+
+
+        rightEar.rotation.z =
+          rightEarBaseRotation.z +
+          earCurrentRightZ;
+
+
+        // Make absolutely sure the skin gets updated
+
+        skinnedMesh.skeleton.update();
+
+      }
+
+
+      // ======================================================
+      // RENDER
+      // ======================================================
+
+      renderer.render(
+        scene,
+        camera
+      );
+
+    }
+
+
+    animate();
+
   },
 
+  (progress) => {
 
-  // --------------------------------------
-  // ERROR
-  // --------------------------------------
+    console.log(
+      "Loading:",
+      (progress.loaded / progress.total * 100).toFixed(1) + "%"
+    );
+
+  },
 
   (error) => {
 
     console.error(
-      "COULD NOT LOAD OKO:",
+      "Failed to load Oko:",
       error
     );
 
   }
-
 );
 
 
-
-// ========================================
-// ANIMATION LOOP
-// ========================================
-
-function animate() {
-
-  requestAnimationFrame(animate);
-
-
-
-  // ======================================
-  // EYE
-  // ======================================
-
-  if (eyeballBone) {
-
-    eyeCurrentX +=
-      (
-        eyeTargetX -
-        eyeCurrentX
-      ) * 0.08;
-
-
-    eyeCurrentY +=
-      (
-        eyeTargetY -
-        eyeCurrentY
-      ) * 0.08;
-
-
-    eyeballBone.position.x =
-      eyeBasePosition.x +
-      eyeCurrentX;
-
-
-    eyeballBone.position.y =
-      eyeBasePosition.y +
-      eyeOffsetY +
-      eyeCurrentY;
-
-  }
-
-
-
-  // ======================================
-  // HEAD
-  // ======================================
-
-  if (head) {
-
-    const headTargetY =
-      eyeCurrentX * 1.4;
-
-
-    const headTargetX =
-      -eyeCurrentY * 1.0;
-
-
-    const headTargetZ =
-      eyeCurrentX * -0.5;
-
-
-    // ------------------------------------
-    // Normal head follow.
-    // ------------------------------------
-
-    headCurrentY +=
-      (
-        headTargetY -
-        headCurrentY
-      ) * 0.035;
-
-
-    headCurrentX +=
-      (
-        headTargetX -
-        headCurrentX
-      ) * 0.035;
-
-
-    headCurrentZ +=
-      (
-        headTargetZ -
-        headCurrentZ
-      ) * 0.035;
-
-
-    // ------------------------------------
-    // Idle head.
-    // ------------------------------------
-
-    headIdleCurrentX +=
-      (
-        headIdleTargetX -
-        headIdleCurrentX
-      ) * 0.015;
-
-
-    headIdleCurrentY +=
-      (
-        headIdleTargetY -
-        headIdleCurrentY
-      ) * 0.015;
-
-
-    headIdleCurrentZ +=
-      (
-        headIdleTargetZ -
-        headIdleCurrentZ
-      ) * 0.015;
-
-
-    // ------------------------------------
-    // Apply head.
-    // ------------------------------------
-
-    head.rotation.x =
-      headBaseRotation.x +
-      headCurrentX +
-      headIdleCurrentX;
-
-
-    head.rotation.y =
-      headBaseRotation.y +
-      headCurrentY +
-      headIdleCurrentY;
-
-
-    head.rotation.z =
-      headBaseRotation.z +
-      headCurrentZ +
-      headIdleCurrentZ;
-
-  }
-
-
-
-  // ======================================
-  // BODY
-  // ======================================
-
-  if (body) {
-
-    bodyIdleCurrentX +=
-      (
-        bodyIdleTargetX -
-        bodyIdleCurrentX
-      ) * 0.008;
-
-
-    bodyIdleCurrentY +=
-      (
-        bodyIdleTargetY -
-        bodyIdleCurrentY
-      ) * 0.008;
-
-
-    bodyIdleCurrentZ +=
-      (
-        bodyIdleTargetZ -
-        bodyIdleCurrentZ
-      ) * 0.008;
-
-
-    // ------------------------------------
-    // Body follows head slightly.
-    // ------------------------------------
-
-    const bodyFollowY =
-      headCurrentY * 0.20;
-
-
-    const bodyFollowX =
-      headCurrentX * 0.15;
-
-
-    const bodyFollowZ =
-      headCurrentZ * 0.20;
-
-
-    // ------------------------------------
-    // Apply body.
-    // ------------------------------------
-
-    body.rotation.x =
-      bodyBaseRotation.x +
-      bodyFollowX +
-      bodyIdleCurrentX;
-
-
-    body.rotation.y =
-      bodyBaseRotation.y +
-      bodyFollowY +
-      bodyIdleCurrentY;
-
-
-    body.rotation.z =
-      bodyBaseRotation.z +
-      bodyFollowZ +
-      bodyIdleCurrentZ;
-
-  }
-
-
-
-// ======================================
-// EAR SKELETON TEST
-// ======================================
-
-let leftEarBone = null;
-let rightEarBone = null;
-
-if (oko) {
-
-  oko.traverse((object) => {
-
-    if (
-      object.isSkinnedMesh &&
-      object.skeleton
-    ) {
-
-      console.log(
-        "SKIN BONES:",
-        object.skeleton.bones
-          .map(bone => bone.name)
-      );
-
-
-      leftEarBone =
-        object.skeleton.bones.find(
-          bone => bone.name === "left ear"
-        );
-
-
-      rightEarBone =
-        object.skeleton.bones.find(
-          bone => bone.name === "right ear"
-        );
-
-    }
-
-  });
-
-}
-
-  // LEFT EAR
-
-  leftEar.rotation.set(
-    leftEarBaseRotation.x,
-    leftEarBaseRotation.y,
-    leftEarBaseRotation.z
-  );
-
-  leftEar.rotateX(earTest);
-
-
-  // RIGHT EAR
-
-  rightEar.rotation.set(
-    rightEarBaseRotation.x,
-    rightEarBaseRotation.y,
-    rightEarBaseRotation.z
-  );
-
-  rightEar.rotateX(-earTest);
-
-
-  // ======================================
-  // RENDER
-  // ======================================
-
-  renderer.render(
-    scene,
-    camera
-  );
-
-}
-
-
-
-// ========================================
-// START
-// ========================================
-
-animate();
-
-
-
-// ========================================
+// ============================================================
 // RESIZE
-// ========================================
+// ============================================================
 
 window.addEventListener(
   "resize",
   () => {
 
     camera.aspect =
-      window.innerWidth /
-      window.innerHeight;
-
+      container.clientWidth /
+      container.clientHeight;
 
     camera.updateProjectionMatrix();
 
 
     renderer.setSize(
-      window.innerWidth,
-      window.innerHeight
+      container.clientWidth,
+      container.clientHeight
     );
 
   }
