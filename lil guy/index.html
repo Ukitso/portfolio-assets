@@ -97,7 +97,6 @@ const ambientLight = new THREE.AmbientLight(
 scene.add(ambientLight);
 
 
-
 const directionalLight = new THREE.DirectionalLight(
   0xffffff,
   3
@@ -289,11 +288,6 @@ function chooseEarIdleMovement() {
   }
 
 
-
-  // --------------------------------------
-  // Randomly choose what the ears do.
-  // --------------------------------------
-
   const behaviour =
     THREE.MathUtils.randInt(0, 3);
 
@@ -307,7 +301,6 @@ function chooseEarIdleMovement() {
 
     const twitchLeft =
       Math.random() < 0.5;
-
 
 
     if (twitchLeft) {
@@ -369,11 +362,9 @@ function chooseEarIdleMovement() {
       );
 
 
-
     leftEarTargetX = -perk;
 
     rightEarTargetX = -perk;
-
 
 
     leftEarTargetZ =
@@ -411,7 +402,6 @@ function chooseEarIdleMovement() {
       );
 
 
-
     leftEarTargetY =
       THREE.MathUtils.randFloat(
         -0.015,
@@ -436,7 +426,6 @@ function chooseEarIdleMovement() {
 
     const listeningLeft =
       Math.random() < 0.5;
-
 
 
     if (listeningLeft) {
@@ -484,9 +473,7 @@ function chooseEarIdleMovement() {
     );
 
 
-
   clearTimeout(earIdleTimer);
-
 
 
   earIdleTimer = setTimeout(
@@ -509,9 +496,7 @@ function startIdle() {
   }
 
 
-
   isIdle = true;
-
 
 
   chooseIdleLook();
@@ -537,13 +522,11 @@ function chooseIdleLook() {
   }
 
 
-
   eyeTargetX =
     THREE.MathUtils.randFloat(
       -idleRangeX,
       idleRangeX
     );
-
 
 
   eyeTargetY =
@@ -553,7 +536,6 @@ function chooseIdleLook() {
     );
 
 
-
   const delay =
     THREE.MathUtils.randFloat(
       1000,
@@ -561,9 +543,7 @@ function chooseIdleLook() {
     );
 
 
-
   clearTimeout(idleLookTimer);
-
 
 
   idleLookTimer = setTimeout(
@@ -586,13 +566,11 @@ function chooseHeadIdleMovement() {
   }
 
 
-
   headIdleTargetX =
     THREE.MathUtils.randFloat(
       -headIdleRangeX,
       headIdleRangeX
     );
-
 
 
   headIdleTargetY =
@@ -602,13 +580,11 @@ function chooseHeadIdleMovement() {
     );
 
 
-
   headIdleTargetZ =
     THREE.MathUtils.randFloat(
       -headIdleRangeZ,
       headIdleRangeZ
     );
-
 
 
   const delay =
@@ -618,9 +594,7 @@ function chooseHeadIdleMovement() {
     );
 
 
-
   clearTimeout(headIdleTimer);
-
 
 
   headIdleTimer = setTimeout(
@@ -643,13 +617,11 @@ function chooseBodyIdleMovement() {
   }
 
 
-
   bodyIdleTargetX =
     THREE.MathUtils.randFloat(
       -bodyIdleRangeX,
       bodyIdleRangeX
     );
-
 
 
   bodyIdleTargetY =
@@ -659,13 +631,11 @@ function chooseBodyIdleMovement() {
     );
 
 
-
   bodyIdleTargetZ =
     THREE.MathUtils.randFloat(
       -bodyIdleRangeZ,
       bodyIdleRangeZ
     );
-
 
 
   const delay =
@@ -675,9 +645,7 @@ function chooseBodyIdleMovement() {
     );
 
 
-
   clearTimeout(bodyIdleTimer);
-
 
 
   bodyIdleTimer = setTimeout(
@@ -700,9 +668,7 @@ function exitIdle() {
   }
 
 
-
   isIdle = false;
-
 
 
   clearTimeout(idleLookTimer);
@@ -714,15 +680,9 @@ function exitIdle() {
   clearTimeout(earIdleTimer);
 
 
-
-  // --------------------------------------
-  // Return idle targets to neutral.
-  // --------------------------------------
-
   headIdleTargetX = 0;
   headIdleTargetY = 0;
   headIdleTargetZ = 0;
-
 
 
   bodyIdleTargetX = 0;
@@ -730,11 +690,9 @@ function exitIdle() {
   bodyIdleTargetZ = 0;
 
 
-
   leftEarTargetX = 0;
   leftEarTargetY = 0;
   leftEarTargetZ = 0;
-
 
 
   rightEarTargetX = 0;
@@ -753,18 +711,10 @@ window.addEventListener(
   "mousemove",
   (event) => {
 
-    // Mouse wakes Oko.
-
     exitIdle();
 
 
-
-    // ------------------------------------
-    // Reset idle timer.
-    // ------------------------------------
-
     clearTimeout(idleTimer);
-
 
 
     idleTimer = setTimeout(
@@ -773,15 +723,9 @@ window.addEventListener(
     );
 
 
-
-    // ------------------------------------
-    // NORMALIZED MOUSE POSITION
-    // ------------------------------------
-
     const normalizedX =
       (event.clientX - window.innerWidth / 2) /
       (window.innerWidth / 2);
-
 
 
     const normalizedY =
@@ -789,14 +733,8 @@ window.addEventListener(
       (window.innerHeight / 2);
 
 
-
-    // ------------------------------------
-    // EYE TARGET
-    // ------------------------------------
-
     eyeTargetX =
       normalizedX * eyeRangeX;
-
 
 
     eyeTargetY =
@@ -824,7 +762,6 @@ loader.load(
     scene.add(oko);
 
 
-
     // ------------------------------------
     // FIND OBJECTS
     // ------------------------------------
@@ -833,30 +770,24 @@ loader.load(
       oko.getObjectByName("Eyeball");
 
 
-
     eyeballMesh =
       oko.getObjectByName("EYEBALL");
-
 
 
     head =
       oko.getObjectByName("HEAD");
 
 
-
     body =
       oko.getObjectByName("BODY_1");
-
 
 
     leftEar =
       oko.getObjectByName("left ear");
 
 
-
     rightEar =
       oko.getObjectByName("right ear");
-
 
 
     // ------------------------------------
@@ -898,7 +829,6 @@ loader.load(
     );
 
 
-
     // ------------------------------------
     // SAVE EYE POSITION
     // ------------------------------------
@@ -910,7 +840,6 @@ loader.load(
       );
 
     }
-
 
 
     // ------------------------------------
@@ -926,7 +855,6 @@ loader.load(
     }
 
 
-
     // ------------------------------------
     // SAVE BODY ROTATION
     // ------------------------------------
@@ -938,7 +866,6 @@ loader.load(
       );
 
     }
-
 
 
     // ------------------------------------
@@ -954,7 +881,6 @@ loader.load(
     }
 
 
-
     if (rightEar) {
 
       rightEarBaseRotation.copy(
@@ -962,7 +888,6 @@ loader.load(
       );
 
     }
-
 
 
     // ------------------------------------
@@ -973,12 +898,10 @@ loader.load(
       new THREE.Box3().setFromObject(oko);
 
 
-
     const center =
       box.getCenter(
         new THREE.Vector3()
       );
-
 
 
     const size =
@@ -987,9 +910,7 @@ loader.load(
       );
 
 
-
     oko.position.sub(center);
-
 
 
     // ------------------------------------
@@ -1004,7 +925,6 @@ loader.load(
       );
 
 
-
     const fitHeightDistance =
       maxDimension /
       (
@@ -1017,10 +937,8 @@ loader.load(
       );
 
 
-
     const cameraDistance =
       fitHeightDistance * 1.5;
-
 
 
     camera.position.set(
@@ -1030,7 +948,6 @@ loader.load(
     );
 
 
-
     camera.lookAt(
       0,
       0,
@@ -1038,7 +955,6 @@ loader.load(
     );
 
   },
-
 
 
   // --------------------------------------
@@ -1053,7 +969,6 @@ loader.load(
         (progress.loaded / progress.total) * 100;
 
 
-
       console.log(
         "Loading Oko:",
         percent.toFixed(0) + "%"
@@ -1062,7 +977,6 @@ loader.load(
     }
 
   },
-
 
 
   // --------------------------------------
@@ -1105,7 +1019,6 @@ function animate() {
       ) * 0.08;
 
 
-
     eyeCurrentY +=
       (
         eyeTargetY -
@@ -1113,11 +1026,9 @@ function animate() {
       ) * 0.08;
 
 
-
     eyeballBone.position.x =
       eyeBasePosition.x +
       eyeCurrentX;
-
 
 
     eyeballBone.position.y =
@@ -1139,15 +1050,12 @@ function animate() {
       eyeCurrentX * 1.4;
 
 
-
     const headTargetX =
       -eyeCurrentY * 1.0;
 
 
-
     const headTargetZ =
       eyeCurrentX * -0.5;
-
 
 
     // ------------------------------------
@@ -1161,7 +1069,6 @@ function animate() {
       ) * 0.035;
 
 
-
     headCurrentX +=
       (
         headTargetX -
@@ -1169,13 +1076,11 @@ function animate() {
       ) * 0.035;
 
 
-
     headCurrentZ +=
       (
         headTargetZ -
         headCurrentZ
       ) * 0.035;
-
 
 
     // ------------------------------------
@@ -1189,7 +1094,6 @@ function animate() {
       ) * 0.015;
 
 
-
     headIdleCurrentY +=
       (
         headIdleTargetY -
@@ -1197,13 +1101,11 @@ function animate() {
       ) * 0.015;
 
 
-
     headIdleCurrentZ +=
       (
         headIdleTargetZ -
         headIdleCurrentZ
       ) * 0.015;
-
 
 
     // ------------------------------------
@@ -1216,12 +1118,10 @@ function animate() {
       headIdleCurrentX;
 
 
-
     head.rotation.y =
       headBaseRotation.y +
       headCurrentY +
       headIdleCurrentY;
-
 
 
     head.rotation.z =
@@ -1246,7 +1146,6 @@ function animate() {
       ) * 0.008;
 
 
-
     bodyIdleCurrentY +=
       (
         bodyIdleTargetY -
@@ -1254,13 +1153,11 @@ function animate() {
       ) * 0.008;
 
 
-
     bodyIdleCurrentZ +=
       (
         bodyIdleTargetZ -
         bodyIdleCurrentZ
       ) * 0.008;
-
 
 
     // ------------------------------------
@@ -1271,15 +1168,12 @@ function animate() {
       headCurrentY * 0.20;
 
 
-
     const bodyFollowX =
       headCurrentX * 0.15;
 
 
-
     const bodyFollowZ =
       headCurrentZ * 0.20;
-
 
 
     // ------------------------------------
@@ -1292,12 +1186,10 @@ function animate() {
       bodyIdleCurrentX;
 
 
-
     body.rotation.y =
       bodyBaseRotation.y +
       bodyFollowY +
       bodyIdleCurrentY;
-
 
 
     body.rotation.z =
@@ -1326,8 +1218,10 @@ function animate() {
     leftEar.rotation.x =
       leftEarBaseRotation.x;
 
+
     leftEar.rotation.y =
       leftEarBaseRotation.y;
+
 
     leftEar.rotation.z =
       leftEarBaseRotation.z +
@@ -1337,84 +1231,14 @@ function animate() {
     rightEar.rotation.x =
       rightEarBaseRotation.x;
 
+
     rightEar.rotation.y =
       rightEarBaseRotation.y;
+
 
     rightEar.rotation.z =
       rightEarBaseRotation.z -
       earTest;
-
-  }
-
-    // ------------------------------------
-    // Smooth right ear.
-    // ------------------------------------
-
-    rightEarCurrentX +=
-      (
-        rightEarTargetX -
-        rightEarCurrentX
-      ) * 0.035;
-
-
-
-    rightEarCurrentY +=
-      (
-        rightEarTargetY -
-        rightEarCurrentY
-      ) * 0.035;
-
-
-
-    rightEarCurrentZ +=
-      (
-        rightEarTargetZ -
-        rightEarCurrentZ
-      ) * 0.035;
-
-
-
-    // ------------------------------------
-    // Apply left ear.
-    // ------------------------------------
-
-    leftEar.rotation.x =
-      leftEarBaseRotation.x +
-      leftEarCurrentX;
-
-
-
-    leftEar.rotation.y =
-      leftEarBaseRotation.y +
-      leftEarCurrentY;
-
-
-
-    leftEar.rotation.z =
-      leftEarBaseRotation.z +
-      leftEarCurrentZ;
-
-
-
-    // ------------------------------------
-    // Apply right ear.
-    // ------------------------------------
-
-    rightEar.rotation.x =
-      rightEarBaseRotation.x +
-      rightEarCurrentX;
-
-
-
-    rightEar.rotation.y =
-      rightEarBaseRotation.y +
-      rightEarCurrentY;
-
-
-
-    rightEar.rotation.z =
-      rightEarBaseRotation.z +
-      rightEarCurrentZ;
 
   }
 
@@ -1454,9 +1278,7 @@ window.addEventListener(
       window.innerHeight;
 
 
-
     camera.updateProjectionMatrix();
-
 
 
     renderer.setSize(
