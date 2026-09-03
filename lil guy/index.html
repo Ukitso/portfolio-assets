@@ -46,40 +46,49 @@
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { Timer } from "three/addons/misc/Timer.js";
 
 
 // ============================================================
 // SETUP
 // ============================================================
 
-const container = document.getElementById("kkzywz");
+const container =
+  document.getElementById("kkzywz");
 
-const scene = new THREE.Scene();
+const scene =
+  new THREE.Scene();
 
 
 // ============================================================
 // CAMERA
 // ============================================================
 
-const camera = new THREE.PerspectiveCamera(
-  45,
-  container.clientWidth / container.clientHeight,
-  0.01,
-  1000
-);
+const camera =
+  new THREE.PerspectiveCamera(
+    45,
+    container.clientWidth /
+      container.clientHeight,
+    0.01,
+    1000
+  );
 
 
 // ============================================================
 // RENDERER
 // ============================================================
 
-const renderer = new THREE.WebGLRenderer({
-  alpha: true,
-  antialias: true
-});
+const renderer =
+  new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true
+  });
 
 renderer.setPixelRatio(
-  Math.min(window.devicePixelRatio, 2)
+  Math.min(
+    window.devicePixelRatio,
+    2
+  )
 );
 
 renderer.setSize(
@@ -98,7 +107,8 @@ renderer.outputColorSpace =
 renderer.toneMapping =
   THREE.NoToneMapping;
 
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure =
+  1.0;
 
 container.appendChild(
   renderer.domElement
@@ -258,6 +268,7 @@ let wasNear = false;
 // ============================================================
 
 let earReaction = 0;
+
 let earReactionStart = -10;
 
 const earReactionDuration = 0.42;
@@ -289,6 +300,14 @@ let nextIdleAction = 2.5;
 
 
 // ============================================================
+// TIMER
+// ============================================================
+
+const timer =
+  new Timer();
+
+
+// ============================================================
 // LOAD MODEL
 // ============================================================
 
@@ -297,9 +316,12 @@ loader.load(
 
   function(gltf) {
 
-    console.log("OKO LOADED");
+    console.log(
+      "OKO LOADED"
+    );
 
-    oko = gltf.scene;
+    oko =
+      gltf.scene;
 
 
     // --------------------------------------------------------
@@ -308,7 +330,9 @@ loader.load(
 
     const box =
       new THREE.Box3()
-        .setFromObject(oko);
+        .setFromObject(
+          oko
+        );
 
     const size =
       box.getSize(
@@ -414,59 +438,100 @@ loader.load(
     // BASE ROTATIONS
     // --------------------------------------------------------
 
-    if (leftEar)
+    if (leftEar) {
+
       leftEarBaseRotation =
         leftEar.rotation.clone();
 
-    if (rightEar)
+    }
+
+
+    if (rightEar) {
+
       rightEarBaseRotation =
         rightEar.rotation.clone();
 
+    }
 
-    if (leftShoulder)
+
+    if (leftShoulder) {
+
       leftShoulderBaseRotation =
         leftShoulder.rotation.clone();
 
-    if (rightShoulder)
+    }
+
+
+    if (rightShoulder) {
+
       rightShoulderBaseRotation =
         rightShoulder.rotation.clone();
 
+    }
 
-    if (leftArm)
+
+    if (leftArm) {
+
       leftArmBaseRotation =
         leftArm.rotation.clone();
 
-    if (rightArm)
+    }
+
+
+    if (rightArm) {
+
       rightArmBaseRotation =
         rightArm.rotation.clone();
 
+    }
 
-    if (leftHip)
+
+    if (leftHip) {
+
       leftHipBaseRotation =
         leftHip.rotation.clone();
 
-    if (rightHip)
+    }
+
+
+    if (rightHip) {
+
       rightHipBaseRotation =
         rightHip.rotation.clone();
 
+    }
 
-    if (leftLeg)
+
+    if (leftLeg) {
+
       leftLegBaseRotation =
         leftLeg.rotation.clone();
 
-    if (rightLeg)
+    }
+
+
+    if (rightLeg) {
+
       rightLegBaseRotation =
         rightLeg.rotation.clone();
 
+    }
 
-    if (head)
+
+    if (head) {
+
       headBaseRotation =
         head.rotation.clone();
 
+    }
 
-    if (eyeball)
+
+    if (eyeball) {
+
       eyeballBasePosition =
         eyeball.position.clone();
+
+    }
 
 
     // --------------------------------------------------------
@@ -499,9 +564,12 @@ loader.load(
 
     let distance =
       (maxSize / 2) /
-      Math.tan(fov / 2);
+      Math.tan(
+        fov / 2
+      );
 
     distance *= 1.35;
+
 
     camera.position.set(
       0,
@@ -560,17 +628,20 @@ document.addEventListener(
 
     const mouseX =
       (e.clientX /
-      window.innerWidth) *
+        window.innerWidth) *
       2 - 1;
 
     const mouseY =
       (e.clientY /
-      window.innerHeight) *
+        window.innerHeight) *
       2 - 1;
 
 
-    pointerX = mouseX;
-    pointerY = mouseY;
+    pointerX =
+      mouseX;
+
+    pointerY =
+      mouseY;
 
 
     targetX =
@@ -651,13 +722,11 @@ function updateShyState() {
       1;
 
 
-    // Big ear reaction
-
     earReaction =
       1;
 
     earReactionStart =
-      clock.getElapsedTime();
+      timer.getElapsed();
 
   }
 
@@ -795,7 +864,7 @@ function updateEarTwitches(time) {
   let leftProgress =
     THREE.MathUtils.clamp(
       leftElapsed /
-      earTwitchDuration,
+        earTwitchDuration,
       0,
       1
     );
@@ -842,7 +911,7 @@ function updateEarTwitches(time) {
   let rightProgress =
     THREE.MathUtils.clamp(
       rightElapsed /
-      earTwitchDuration,
+        earTwitchDuration,
       0,
       1
     );
@@ -909,7 +978,7 @@ function updateEarTwitches(time) {
 
 
   // ----------------------------------------------------------
-  // APPLY LEFT EAR
+  // LEFT EAR
   // ----------------------------------------------------------
 
   leftEar.rotation.x =
@@ -925,7 +994,7 @@ function updateEarTwitches(time) {
 
 
   // ----------------------------------------------------------
-  // APPLY RIGHT EAR
+  // RIGHT EAR
   // ----------------------------------------------------------
 
   rightEar.rotation.x =
@@ -941,14 +1010,15 @@ function updateEarTwitches(time) {
 
 
   // ----------------------------------------------------------
-  // FINISH TWITCHES
+  // FINISH
   // ----------------------------------------------------------
 
   if (
     leftProgress >= 1
   ) {
 
-    earTwitchLeft = 0;
+    earTwitchLeft =
+      0;
 
   }
 
@@ -957,7 +1027,8 @@ function updateEarTwitches(time) {
     rightProgress >= 1
   ) {
 
-    earTwitchRight = 0;
+    earTwitchRight =
+      0;
 
   }
 
@@ -996,11 +1067,13 @@ function updateEarReaction(time) {
     );
 
 
-  let reaction = 0;
+  let reaction =
+    0;
 
 
-  // Quick movement in,
-  // then sharp settle.
+  // ----------------------------------------------------------
+  // QUICK REACTION
+  // ----------------------------------------------------------
 
   if (
     progress < 0.35
@@ -1030,12 +1103,11 @@ function updateEarReaction(time) {
 
 
   // ----------------------------------------------------------
-  // ADD ON TOP OF BASE EAR LIFE
+  // ADD TO BASE EAR LIFE
   // ----------------------------------------------------------
 
   leftEar.rotation.x +=
     reaction * 0.24;
-
 
   leftEar.rotation.z +=
     reaction * 0.10;
@@ -1044,22 +1116,8 @@ function updateEarReaction(time) {
   rightEar.rotation.x +=
     reaction * 0.18;
 
-
   rightEar.rotation.z -=
     reaction * 0.14;
-
-
-  // ----------------------------------------------------------
-  // FINISH
-  // ----------------------------------------------------------
-
-  if (
-    progress >= 1
-  ) {
-
-    earReaction = 0;
-
-  }
 
 }
 
@@ -1080,8 +1138,7 @@ function startIdleAction(time) {
 
   const actions = [
     "look",
-    "weight",
-    "ear"
+    "weight"
   ];
 
 
@@ -1101,11 +1158,9 @@ function startIdleAction(time) {
     start: time,
 
     duration:
-      type === "ear"
-        ? 0.45
-        : type === "look"
-          ? 1.1
-          : 0.9
+      type === "look"
+        ? 1.1
+        : 0.9
 
   };
 
@@ -1158,7 +1213,8 @@ function updateIdleAction(time) {
     behaviour !== "idle"
   ) {
 
-    idleAction = null;
+    idleAction =
+      null;
 
     return;
 
@@ -1190,7 +1246,7 @@ function updateIdleAction(time) {
   const progress =
     Math.min(
       elapsed /
-      idleAction.duration,
+        idleAction.duration,
       1
     );
 
@@ -1230,7 +1286,7 @@ function updateIdleAction(time) {
 
 
   // ----------------------------------------------------------
-  // WEIGHT
+  // WEIGHT SHIFT
   // ----------------------------------------------------------
 
   if (
@@ -1283,23 +1339,6 @@ function updateIdleAction(time) {
 
 
   // ----------------------------------------------------------
-  // IDLE EAR TWITCH
-  // ----------------------------------------------------------
-
-  // The dedicated ear twitch system handles
-  // the ears now, so this action does nothing
-  // to avoid competing animations.
-
-  if (
-    idleAction.type === "ear"
-  ) {
-
-    // Intentionally empty.
-
-  }
-
-
-  // ----------------------------------------------------------
   // FINISH
   // ----------------------------------------------------------
 
@@ -1307,7 +1346,8 @@ function updateIdleAction(time) {
     progress >= 1
   ) {
 
-    idleAction = null;
+    idleAction =
+      null;
 
 
     nextIdleAction =
@@ -1326,10 +1366,6 @@ function updateIdleAction(time) {
 // MAIN ANIMATION
 // ============================================================
 
-const clock =
-  new THREE.Clock();
-
-
 function animate() {
 
   requestAnimationFrame(
@@ -1337,8 +1373,13 @@ function animate() {
   );
 
 
+  // IMPORTANT:
+  // Timer replaces the deprecated THREE.Clock
+
+  timer.update();
+
   const time =
-    clock.getElapsedTime();
+    timer.getElapsed();
 
 
   // ----------------------------------------------------------
@@ -1353,7 +1394,7 @@ function animate() {
 
 
   // ----------------------------------------------------------
-  // EYES
+  // EYE SMOOTHING
   // ----------------------------------------------------------
 
   currentX +=
@@ -1457,14 +1498,9 @@ function animate() {
   // EARS
   // ==========================================================
 
-  // Constant subtle life + occasional twitches
-
   updateEarTwitches(
     time
   );
-
-
-  // Bigger shy reaction layered on top
 
   updateEarReaction(
     time
