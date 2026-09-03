@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oko </title>
+  <title>Oko Test</title>
 
   <style>
     html,
@@ -111,8 +111,12 @@ let oko = null;
 
 let eyeballBone = null;
 let eyeballMesh = null;
+
 let head = null;
 let body = null;
+
+let leftEar = null;
+let rightEar = null;
 
 
 // ========================================
@@ -205,6 +209,294 @@ let bodyIdleTimer = null;
 
 
 // ========================================
+// EAR SETTINGS
+// ========================================
+
+// Save the original Blender rotations.
+
+const leftEarBaseRotation =
+  new THREE.Euler();
+
+const rightEarBaseRotation =
+  new THREE.Euler();
+
+
+// ----------------------------------------
+// Normal idle ear movement
+// ----------------------------------------
+
+// Small adjustments when Oko is idle.
+
+const earIdleRangeX = 0.035;
+const earIdleRangeY = 0.025;
+const earIdleRangeZ = 0.045;
+
+
+// ----------------------------------------
+// Current ear targets
+// ----------------------------------------
+
+let leftEarTargetX = 0;
+let leftEarTargetY = 0;
+let leftEarTargetZ = 0;
+
+let rightEarTargetX = 0;
+let rightEarTargetY = 0;
+let rightEarTargetZ = 0;
+
+
+// ----------------------------------------
+// Current ear positions
+// ----------------------------------------
+
+let leftEarCurrentX = 0;
+let leftEarCurrentY = 0;
+let leftEarCurrentZ = 0;
+
+let rightEarCurrentX = 0;
+let rightEarCurrentY = 0;
+let rightEarCurrentZ = 0;
+
+
+// Timer for ear behaviour.
+
+let earIdleTimer = null;
+
+
+// ========================================
+// CHOOSE EAR IDLE MOVEMENT
+// ========================================
+
+function chooseEarIdleMovement() {
+
+  if (!isIdle) {
+    return;
+  }
+
+
+  // --------------------------------------
+  // Randomly choose what the ears do.
+  // --------------------------------------
+
+  const behaviour =
+    THREE.MathUtils.randInt(0, 3);
+
+
+  // ======================================
+  // 0 — SMALL ASYMMETRIC TWITCH
+  // ======================================
+
+  if (behaviour === 0) {
+
+    const twitchLeft =
+      Math.random() < 0.5;
+
+
+    if (twitchLeft) {
+
+      leftEarTargetX =
+        THREE.MathUtils.randFloat(
+          -earIdleRangeX,
+          earIdleRangeX
+        );
+
+      leftEarTargetY =
+        THREE.MathUtils.randFloat(
+          -earIdleRangeY,
+          earIdleRangeY
+        );
+
+      leftEarTargetZ =
+        THREE.MathUtils.randFloat(
+          -earIdleRangeZ,
+          earIdleRangeZ
+        );
+
+    } else {
+
+      rightEarTargetX =
+        THREE.MathUtils.randFloat(
+          -earIdleRangeX,
+          earIdleRangeX
+        );
+
+      rightEarTargetY =
+        THREE.MathUtils.randFloat(
+          -earIdleRangeY,
+          earIdleRangeY
+        );
+
+      rightEarTargetZ =
+        THREE.MathUtils.randFloat(
+          -earIdleRangeZ,
+          earIdleRangeZ
+        );
+
+    }
+
+  }
+
+
+  // ======================================
+  // 1 — BOTH EARS PERK
+  // ======================================
+
+  else if (behaviour === 1) {
+
+    const perk =
+      THREE.MathUtils.randFloat(
+        0.025,
+        0.055
+      );
+
+
+    leftEarTargetX = -perk;
+
+    rightEarTargetX = -perk;
+
+
+    // Tiny individual differences.
+
+    leftEarTargetZ =
+      THREE.MathUtils.randFloat(
+        -0.015,
+        0.015
+      );
+
+    rightEarTargetZ =
+      THREE.MathUtils.randFloat(
+        -0.015,
+        0.015
+      );
+
+  }
+
+
+  // ======================================
+  // 2 — BOTH EARS RELAX
+  // ======================================
+
+  else if (behaviour === 2) {
+
+    leftEarTargetX =
+      THREE.MathUtils.randFloat(
+        -0.015,
+        0.015
+      );
+
+    rightEarTargetX =
+      THREE.MathUtils.randFloat(
+        -0.015,
+        0.015
+      );
+
+
+    leftEarTargetY =
+      THREE.MathUtils.randFloat(
+        -0.015,
+        0.015
+      );
+
+    rightEarTargetY =
+      THREE.MathUtils.randFloat(
+        -0.015,
+        0.015
+      );
+
+  }
+
+
+  // ======================================
+  // 3 — ONE EAR LISTENS
+  // ======================================
+
+  else {
+
+    const listeningLeft =
+      Math.random() < 0.5;
+
+
+    if (listeningLeft) {
+
+      leftEarTargetY =
+        THREE.MathUtils.randFloat(
+          0.025,
+          0.06
+        );
+
+      leftEarTargetZ =
+        THREE.MathUtils.randFloat(
+          -0.025,
+          0.025
+        );
+
+    } else {
+
+      rightEarTargetY =
+        THREE.MathUtils.randFloat(
+          -0.06,
+          -0.025
+        );
+
+      rightEarTargetZ =
+        THREE.MathUtils.randFloat(
+          -0.025,
+          0.025
+        );
+
+    }
+
+  }
+
+
+  // ======================================
+  // NEXT EAR MOVEMENT
+  // ======================================
+
+  const delay =
+    THREE.MathUtils.randFloat(
+      1800,
+      5000
+    );
+
+
+  clearTimeout(earIdleTimer);
+
+
+  earIdleTimer = setTimeout(
+    chooseEarIdleMovement,
+    delay
+  );
+
+}
+
+
+// ========================================
+// START IDLE
+// ========================================
+
+function startIdle() {
+
+  if (isIdle) {
+    return;
+  }
+
+
+  isIdle = true;
+
+
+  chooseIdleLook();
+
+  chooseHeadIdleMovement();
+
+  chooseBodyIdleMovement();
+
+  chooseEarIdleMovement();
+
+}
+
+
+// ========================================
 // CHOOSE IDLE EYE LOOK
 // ========================================
 
@@ -248,7 +540,7 @@ function chooseIdleLook() {
 
 
 // ========================================
-// CHOOSE IDLE HEAD MOVEMENT
+// CHOOSE HEAD IDLE MOVEMENT
 // ========================================
 
 function chooseHeadIdleMovement() {
@@ -298,7 +590,7 @@ function chooseHeadIdleMovement() {
 
 
 // ========================================
-// CHOOSE IDLE BODY MOVEMENT
+// CHOOSE BODY IDLE MOVEMENT
 // ========================================
 
 function chooseBodyIdleMovement() {
@@ -348,29 +640,6 @@ function chooseBodyIdleMovement() {
 
 
 // ========================================
-// START IDLE
-// ========================================
-
-function startIdle() {
-
-  if (isIdle) {
-    return;
-  }
-
-
-  isIdle = true;
-
-
-  chooseIdleLook();
-
-  chooseHeadIdleMovement();
-
-  chooseBodyIdleMovement();
-
-}
-
-
-// ========================================
 // EXIT IDLE
 // ========================================
 
@@ -390,6 +659,8 @@ function exitIdle() {
 
   clearTimeout(bodyIdleTimer);
 
+  clearTimeout(earIdleTimer);
+
 
   // --------------------------------------
   // Return idle targets to neutral.
@@ -399,9 +670,20 @@ function exitIdle() {
   headIdleTargetY = 0;
   headIdleTargetZ = 0;
 
+
   bodyIdleTargetX = 0;
   bodyIdleTargetY = 0;
   bodyIdleTargetZ = 0;
+
+
+  leftEarTargetX = 0;
+  leftEarTargetY = 0;
+  leftEarTargetZ = 0;
+
+
+  rightEarTargetX = 0;
+  rightEarTargetY = 0;
+  rightEarTargetZ = 0;
 
 }
 
@@ -414,16 +696,12 @@ window.addEventListener(
   "mousemove",
   (event) => {
 
-    // ------------------------------------
-    // Wake Oko immediately.
-    // ------------------------------------
+    // Mouse wakes Oko.
 
     exitIdle();
 
 
-    // ------------------------------------
     // Reset idle timer.
-    // ------------------------------------
 
     clearTimeout(idleTimer);
 
@@ -500,6 +778,14 @@ loader.load(
       oko.getObjectByName("BODY_1");
 
 
+    leftEar =
+      oko.getObjectByName("left_ear");
+
+
+    rightEar =
+      oko.getObjectByName("right_ear");
+
+
     // ------------------------------------
     // DEBUG
     // ------------------------------------
@@ -526,6 +812,16 @@ loader.load(
     console.log(
       "Body:",
       body
+    );
+
+    console.log(
+      "Left Ear:",
+      leftEar
+    );
+
+    console.log(
+      "Right Ear:",
+      rightEar
     );
 
 
@@ -563,6 +859,28 @@ loader.load(
 
       bodyBaseRotation.copy(
         body.rotation
+      );
+
+    }
+
+
+    // ------------------------------------
+    // SAVE EAR ROTATIONS
+    // ------------------------------------
+
+    if (leftEar) {
+
+      leftEarBaseRotation.copy(
+        leftEar.rotation
+      );
+
+    }
+
+
+    if (rightEar) {
+
+      rightEarBaseRotation.copy(
+        rightEar.rotation
       );
 
     }
@@ -636,7 +954,7 @@ loader.load(
 
 
   // --------------------------------------
-  // LOADING PROGRESS
+  // LOADING
   // --------------------------------------
 
   (progress) => {
@@ -721,10 +1039,6 @@ function animate() {
 
   if (head) {
 
-    // ------------------------------------
-    // Head follows eye.
-    // ------------------------------------
-
     const headTargetY =
       eyeCurrentX * 1.4;
 
@@ -738,7 +1052,7 @@ function animate() {
 
 
     // ------------------------------------
-    // Smooth head follow.
+    // Normal head follow.
     // ------------------------------------
 
     headCurrentY +=
@@ -763,7 +1077,7 @@ function animate() {
 
 
     // ------------------------------------
-    // Smooth idle head.
+    // Idle head.
     // ------------------------------------
 
     headIdleCurrentX +=
@@ -788,7 +1102,7 @@ function animate() {
 
 
     // ------------------------------------
-    // Apply head rotation.
+    // Apply head.
     // ------------------------------------
 
     head.rotation.x =
@@ -816,10 +1130,6 @@ function animate() {
   // ======================================
 
   if (body) {
-
-    // ------------------------------------
-    // Smooth body idle movement.
-    // ------------------------------------
 
     bodyIdleCurrentX +=
       (
@@ -859,7 +1169,7 @@ function animate() {
 
 
     // ------------------------------------
-    // Apply body rotation.
+    // Apply body.
     // ------------------------------------
 
     body.rotation.x =
@@ -878,6 +1188,103 @@ function animate() {
       bodyBaseRotation.z +
       bodyFollowZ +
       bodyIdleCurrentZ;
+
+  }
+
+
+  // ======================================
+  // EARS
+  // ======================================
+
+  if (leftEar && rightEar) {
+
+
+    // ------------------------------------
+    // Smooth left ear.
+    // ------------------------------------
+
+    leftEarCurrentX +=
+      (
+        leftEarTargetX -
+        leftEarCurrentX
+      ) * 0.035;
+
+
+    leftEarCurrentY +=
+      (
+        leftEarTargetY -
+        leftEarCurrentY
+      ) * 0.035;
+
+
+    leftEarCurrentZ +=
+      (
+        leftEarTargetZ -
+        leftEarCurrentZ
+      ) * 0.035;
+
+
+    // ------------------------------------
+    // Smooth right ear.
+    // ------------------------------------
+
+    rightEarCurrentX +=
+      (
+        rightEarTargetX -
+        rightEarCurrentX
+      ) * 0.035;
+
+
+    rightEarCurrentY +=
+      (
+        rightEarTargetY -
+        rightEarCurrentY
+      ) * 0.035;
+
+
+    rightEarCurrentZ +=
+      (
+        rightEarTargetZ -
+        rightEarCurrentZ
+      ) * 0.035;
+
+
+    // ------------------------------------
+    // Apply left ear.
+    // ------------------------------------
+
+    leftEar.rotation.x =
+      leftEarBaseRotation.x +
+      leftEarCurrentX;
+
+
+    leftEar.rotation.y =
+      leftEarBaseRotation.y +
+      leftEarCurrentY;
+
+
+    leftEar.rotation.z =
+      leftEarBaseRotation.z +
+      leftEarCurrentZ;
+
+
+    // ------------------------------------
+    // Apply right ear.
+    // ------------------------------------
+
+    rightEar.rotation.x =
+      rightEarBaseRotation.x +
+      rightEarCurrentX;
+
+
+    rightEar.rotation.y =
+      rightEarBaseRotation.y +
+      rightEarCurrentY;
+
+
+    rightEar.rotation.z =
+      rightEarBaseRotation.z +
+      rightEarCurrentZ;
 
   }
 
