@@ -123,21 +123,10 @@ const eyeRangeY = 0.12;
 
 const eyeOffsetY = 0.05;
 
-
-// Original eye position.
-
 const eyeBasePosition = new THREE.Vector3();
-
-
-// Current eye movement.
 
 let eyeCurrentX = 0;
 let eyeCurrentY = 0;
-
-
-// ========================================
-// EYE TARGET
-// ========================================
 
 let eyeTargetX = 0;
 let eyeTargetY = 0;
@@ -147,30 +136,14 @@ let eyeTargetY = 0;
 // IDLE SETTINGS
 // ========================================
 
-// How long the mouse must be still
-// before Oko starts looking around.
-
 const idleDelay = 2500;
-
-
-// How far idle looking can wander.
 
 const idleRangeX = 0.10;
 const idleRangeY = 0.07;
 
-
-// Whether Oko is currently idle.
-
 let isIdle = false;
 
-
-// Timer used to enter idle.
-
 let idleTimer = null;
-
-
-// Timer used to choose the next idle look.
-
 let idleLookTimer = null;
 
 
@@ -186,7 +159,88 @@ let headCurrentZ = 0;
 
 
 // ========================================
-// ENTER IDLE
+// HEAD IDLE SETTINGS
+// ========================================
+
+// Maximum amount of independent idle head movement.
+
+const headIdleRangeX = 0.025;
+const headIdleRangeY = 0.035;
+const headIdleRangeZ = 0.045;
+
+
+// Current idle head offset.
+
+let headIdleTargetX = 0;
+let headIdleTargetY = 0;
+let headIdleTargetZ = 0;
+
+let headIdleCurrentX = 0;
+let headIdleCurrentY = 0;
+let headIdleCurrentZ = 0;
+
+
+// Timer for the next little head movement.
+
+let headIdleTimer = null;
+
+
+// ========================================
+// CHOOSE HEAD IDLE MOVEMENT
+// ========================================
+
+function chooseHeadIdleMovement() {
+
+  if (!isIdle) {
+    return;
+  }
+
+
+  // Random tiny movement.
+
+  headIdleTargetX =
+    THREE.MathUtils.randFloat(
+      -headIdleRangeX,
+      headIdleRangeX
+    );
+
+
+  headIdleTargetY =
+    THREE.MathUtils.randFloat(
+      -headIdleRangeY,
+      headIdleRangeY
+    );
+
+
+  headIdleTargetZ =
+    THREE.MathUtils.randFloat(
+      -headIdleRangeZ,
+      headIdleRangeZ
+    );
+
+
+  // Wait before the next movement.
+
+  const delay =
+    THREE.MathUtils.randFloat(
+      2500,
+      5000
+    );
+
+
+  clearTimeout(headIdleTimer);
+
+
+  headIdleTimer = setTimeout(
+    chooseHeadIdleMovement,
+    delay
+  );
+
+}
+
+
+// ========================================
+// START IDLE
 // ========================================
 
 function startIdle() {
@@ -199,11 +253,13 @@ function startIdle() {
 
   chooseIdleLook();
 
+  chooseHeadIdleMovement();
+
 }
 
 
 // ========================================
-// CHOOSE IDLE LOOK
+// CHOOSE IDLE EYE LOOK
 // ========================================
 
 function chooseIdleLook() {
@@ -212,8 +268,6 @@ function chooseIdleLook() {
     return;
   }
 
-
-  // Random position for Oko to look at.
 
   eyeTargetX =
     THREE.MathUtils.randFloat(
@@ -228,9 +282,6 @@ function chooseIdleLook() {
       idleRangeY
     );
 
-
-  // Wait somewhere between 1 and 2.5 seconds
-  // before looking somewhere else.
 
   const delay =
     THREE.MathUtils.randFloat(
@@ -264,6 +315,14 @@ function exitIdle() {
 
 
   clearTimeout(idleLookTimer);
+  clearTimeout(headIdleTimer);
+
+
+  // Return idle head movement to neutral.
+
+  headIdleTargetX = 0;
+  headIdleTargetY = 0;
+  headIdleTargetZ = 0;
 
 }
 
@@ -277,14 +336,12 @@ window.addEventListener(
   (event) => {
 
 
-    // ------------------------------------
-    // Mouse movement immediately wakes Oko.
-    // ------------------------------------
+    // Mouse movement wakes Oko.
 
     exitIdle();
 
 
-    // Reset the idle timer.
+    // Reset idle timer.
 
     clearTimeout(idleTimer);
 
@@ -341,15 +398,9 @@ loader.load(
     scene.add(oko);
 
 
-    // ====================================
-    // DEBUG
-    // ====================================
-
     console.log("================================");
     console.log("OKO LOADED");
     console.log("================================");
-
-    console.log("------ OBJECTS / BONES ------");
 
 
     oko.traverse((object) => {
@@ -362,28 +413,17 @@ loader.load(
     });
 
 
-    console.log("-----------------------------");
-
-
-    // ====================================
-    // GET EYEBALL BONE
-    // ====================================
+    // ------------------------------------
+    // GET BONES
+    // ------------------------------------
 
     eyeballBone =
       oko.getObjectByName("Eyeball");
 
 
-    // ====================================
-    // GET EYEBALL MESH
-    // ====================================
-
     eyeballMesh =
       oko.getObjectByName("EYEBALL");
 
-
-    // ====================================
-    // GET HEAD
-    // ====================================
 
     head =
       oko.getObjectByName("HEAD");
@@ -405,9 +445,9 @@ loader.load(
     );
 
 
-    // ====================================
-    // SAVE ORIGINAL EYE POSITION
-    // ====================================
+    // ------------------------------------
+    // SAVE EYE POSITION
+    // ------------------------------------
 
     if (eyeballBone) {
 
@@ -418,9 +458,9 @@ loader.load(
     }
 
 
-    // ====================================
-    // SAVE ORIGINAL HEAD ROTATION
-    // ====================================
+    // ------------------------------------
+    // SAVE HEAD ROTATION
+    // ------------------------------------
 
     if (head) {
 
@@ -431,9 +471,9 @@ loader.load(
     }
 
 
-    // ====================================
+    // ------------------------------------
     // CENTRE OKO
-    // ====================================
+    // ------------------------------------
 
     const box =
       new THREE.Box3().setFromObject(oko);
@@ -451,24 +491,12 @@ loader.load(
       );
 
 
-    console.log(
-      "Oko size:",
-      size
-    );
-
-
-    console.log(
-      "Oko center:",
-      center
-    );
-
-
     oko.position.sub(center);
 
 
-    // ====================================
-    // CAMERA FRAMING
-    // ====================================
+    // ------------------------------------
+    // CAMERA
+    // ------------------------------------
 
     const maxDimension =
       Math.max(
@@ -507,21 +535,12 @@ loader.load(
       0
     );
 
-
-    console.log(
-      "Camera distance:",
-      cameraDistance
-    );
-
-
-    console.log("================================");
-
   },
 
 
-  // ====================================
-  // LOADING PROGRESS
-  // ====================================
+  // --------------------------------------
+  // LOADING
+  // --------------------------------------
 
   (progress) => {
 
@@ -541,9 +560,9 @@ loader.load(
   },
 
 
-  // ====================================
+  // --------------------------------------
   // ERROR
-  // ====================================
+  // --------------------------------------
 
   (error) => {
 
@@ -567,15 +586,10 @@ function animate() {
 
 
   // ======================================
-  // EYE MOVEMENT
+  // EYE
   // ======================================
 
   if (eyeballBone) {
-
-
-    // ------------------------------------
-    // Smoothly approach target.
-    // ------------------------------------
 
     eyeCurrentX +=
       (
@@ -591,10 +605,6 @@ function animate() {
       ) * 0.08;
 
 
-    // ------------------------------------
-    // Apply eye position.
-    // ------------------------------------
-
     eyeballBone.position.x =
       eyeBasePosition.x +
       eyeCurrentX;
@@ -609,14 +619,14 @@ function animate() {
 
 
   // ======================================
-  // HEAD MOVEMENT
+  // HEAD
   // ======================================
 
   if (head) {
 
 
     // ------------------------------------
-    // Head follows eye.
+    // HEAD FOLLOWS EYE
     // ------------------------------------
 
     const headTargetY =
@@ -632,7 +642,7 @@ function animate() {
 
 
     // ------------------------------------
-    // Smooth head movement.
+    // NORMAL HEAD FOLLOW
     // ------------------------------------
 
     headCurrentY +=
@@ -657,22 +667,50 @@ function animate() {
 
 
     // ------------------------------------
-    // Apply head rotation.
+    // IDLE HEAD
     // ------------------------------------
 
-    head.rotation.y =
-      headBaseRotation.y +
-      headCurrentY;
+    headIdleCurrentX +=
+      (
+        headIdleTargetX -
+        headIdleCurrentX
+      ) * 0.015;
 
+
+    headIdleCurrentY +=
+      (
+        headIdleTargetY -
+        headIdleCurrentY
+      ) * 0.015;
+
+
+    headIdleCurrentZ +=
+      (
+        headIdleTargetZ -
+        headIdleCurrentZ
+      ) * 0.015;
+
+
+    // ------------------------------------
+    // COMBINE HEAD MOVEMENT
+    // ------------------------------------
 
     head.rotation.x =
       headBaseRotation.x +
-      headCurrentX;
+      headCurrentX +
+      headIdleCurrentX;
+
+
+    head.rotation.y =
+      headBaseRotation.y +
+      headCurrentY +
+      headIdleCurrentY;
 
 
     head.rotation.z =
       headBaseRotation.z +
-      headCurrentZ;
+      headCurrentZ +
+      headIdleCurrentZ;
 
   }
 
