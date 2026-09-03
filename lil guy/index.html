@@ -40,18 +40,18 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 
-// ----------------------------------------
+// ========================================
 // SCENE
-// ----------------------------------------
+// ========================================
 
 const scene = new THREE.Scene();
 
 scene.background = new THREE.Color(0x1B1C1C);
 
 
-// ----------------------------------------
+// ========================================
 // CAMERA
-// ----------------------------------------
+// ========================================
 
 const camera = new THREE.PerspectiveCamera(
   45,
@@ -61,9 +61,9 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 
-// ----------------------------------------
+// ========================================
 // RENDERER
-// ----------------------------------------
+// ========================================
 
 const renderer = new THREE.WebGLRenderer({
   antialias: true
@@ -81,9 +81,9 @@ renderer.setSize(
 document.body.appendChild(renderer.domElement);
 
 
-// ----------------------------------------
+// ========================================
 // LIGHTING
-// ----------------------------------------
+// ========================================
 
 const ambientLight = new THREE.AmbientLight(
   0xffffff,
@@ -103,9 +103,74 @@ directionalLight.position.set(3, 5, 5);
 scene.add(directionalLight);
 
 
-// ----------------------------------------
-// LOAD OKO
-// ----------------------------------------
+// ========================================
+// OKO VARIABLES
+// ========================================
+
+let oko = null;
+
+let eyeballBone = null;
+let eyeballMesh = null;
+
+
+// ========================================
+// EYE POSITION
+// ========================================
+
+// How far the eyeball can move.
+
+const eyeRangeX = 0.08;
+const eyeRangeY = 0.06;
+
+
+// Starting position of the bone.
+
+const eyeBasePosition = new THREE.Vector3();
+
+
+// Current and target movement.
+
+let eyeTargetX = 0;
+let eyeTargetY = 0;
+
+let eyeCurrentX = 0;
+let eyeCurrentY = 0;
+
+
+// ========================================
+// MOUSE
+// ========================================
+
+window.addEventListener("mousemove", (event) => {
+
+  const normalizedX =
+    (event.clientX - window.innerWidth / 2) /
+    (window.innerWidth / 2);
+
+  const normalizedY =
+    (event.clientY - window.innerHeight / 2) /
+    (window.innerHeight / 2);
+
+
+  // Horizontal mouse movement
+  // controls horizontal eye movement.
+
+  eyeTargetX =
+    normalizedX * eyeRangeX;
+
+
+  // Vertical mouse movement
+  // controls vertical eye movement.
+
+  eyeTargetY =
+    normalizedY * eyeRangeY;
+
+});
+
+
+// ========================================
+// LOAD GLB
+// ========================================
 
 const loader = new GLTFLoader();
 
@@ -115,65 +180,88 @@ loader.load(
 
   (gltf) => {
 
-    const oko = gltf.scene;
+    oko = gltf.scene;
 
     scene.add(oko);
 
 
-    // ----------------------------------------
-    // DEBUG: LIST BONES
-    // ----------------------------------------
+    // ====================================
+    // DEBUG
+    // ====================================
 
     console.log("================================");
     console.log("OKO LOADED");
     console.log("================================");
 
-    console.log("------ BONES ------");
+    console.log("------ OBJECTS / BONES ------");
+
 
     oko.traverse((object) => {
 
-      if (object.isBone) {
-        console.log("BONE:", object.name);
-      }
+      console.log(
+        object.type,
+        object.name
+      );
 
     });
 
-    console.log("-------------------");
+
+    console.log("-----------------------------");
 
 
-    // ----------------------------------------
-    // FIND EYEBALL / HEAD / BODY
-    // ----------------------------------------
+    // ====================================
+    // GET EYEBALL BONE
+    // ====================================
 
-    const eyeball =
+    eyeballBone =
+      oko.getObjectByName("Eyeball");
+
+
+    // ====================================
+    // GET ACTUAL EYEBALL MESH
+    // ====================================
+
+    eyeballMesh =
       oko.getObjectByName("EYEBALL");
 
-    console.log("EYEBALL MESH:", eyeball);
-console.log("EYEBALL WORLD POSITION:", eyeball.getWorldPosition(new THREE.Vector3()));
 
-    const head =
-      oko.getObjectByName("HEAD");
+    console.log(
+      "Eyeball BONE:",
+      eyeballBone
+    );
 
-    const body =
-      oko.getObjectByName("BODY_1");
-
-
-    console.log("Eyeball:", eyeball);
-    console.log("Head:", head);
-    console.log("Body:", body);
+    console.log(
+      "Eyeball MESH:",
+      eyeballMesh
+    );
 
 
-    // ----------------------------------------
+    // ====================================
+    // SAVE ORIGINAL POSITION
+    // ====================================
+
+    if (eyeballBone) {
+
+      eyeBasePosition.copy(
+        eyeballBone.position
+      );
+
+    }
+
+
+    // ====================================
     // CENTRE OKO
-    // ----------------------------------------
+    // ====================================
 
     const box =
       new THREE.Box3().setFromObject(oko);
+
 
     const center =
       box.getCenter(
         new THREE.Vector3()
       );
+
 
     const size =
       box.getSize(
@@ -181,16 +269,23 @@ console.log("EYEBALL WORLD POSITION:", eyeball.getWorldPosition(new THREE.Vector
       );
 
 
-    console.log("Oko size:", size);
-    console.log("Oko center:", center);
+    console.log(
+      "Oko size:",
+      size
+    );
+
+    console.log(
+      "Oko center:",
+      center
+    );
 
 
     oko.position.sub(center);
 
 
-    // ----------------------------------------
+    // ====================================
     // CAMERA FRAMING
-    // ----------------------------------------
+    // ====================================
 
     const maxDimension =
       Math.max(
@@ -240,9 +335,9 @@ console.log("EYEBALL WORLD POSITION:", eyeball.getWorldPosition(new THREE.Vector
   },
 
 
-  // ----------------------------------------
+  // ====================================
   // LOADING PROGRESS
-  // ----------------------------------------
+  // ====================================
 
   (progress) => {
 
@@ -250,6 +345,7 @@ console.log("EYEBALL WORLD POSITION:", eyeball.getWorldPosition(new THREE.Vector
 
       const percent =
         (progress.loaded / progress.total) * 100;
+
 
       console.log(
         "Loading Oko:",
@@ -261,9 +357,9 @@ console.log("EYEBALL WORLD POSITION:", eyeball.getWorldPosition(new THREE.Vector
   },
 
 
-  // ----------------------------------------
+  // ====================================
   // ERROR
-  // ----------------------------------------
+  // ====================================
 
   (error) => {
 
@@ -277,13 +373,50 @@ console.log("EYEBALL WORLD POSITION:", eyeball.getWorldPosition(new THREE.Vector
 );
 
 
-// ----------------------------------------
-// RENDER LOOP
-// ----------------------------------------
+// ========================================
+// ANIMATION LOOP
+// ========================================
 
 function animate() {
 
   requestAnimationFrame(animate);
+
+
+  if (eyeballBone) {
+
+    // ------------------------------------
+    // SMOOTH MOVEMENT
+    // ------------------------------------
+
+    eyeCurrentX +=
+      (
+        eyeTargetX -
+        eyeCurrentX
+      ) * 0.08;
+
+
+    eyeCurrentY +=
+      (
+        eyeTargetY -
+        eyeCurrentY
+      ) * 0.08;
+
+
+    // ------------------------------------
+    // MOVE EYEBALL
+    // ------------------------------------
+
+    eyeballBone.position.x =
+      eyeBasePosition.x +
+      eyeCurrentX;
+
+
+    eyeballBone.position.y =
+      eyeBasePosition.y +
+      eyeCurrentY;
+
+  }
+
 
   renderer.render(
     scene,
@@ -292,12 +425,17 @@ function animate() {
 
 }
 
+
+// ========================================
+// START
+// ========================================
+
 animate();
 
 
-// ----------------------------------------
+// ========================================
 // RESIZE
-// ----------------------------------------
+// ========================================
 
 window.addEventListener(
   "resize",
@@ -306,6 +444,7 @@ window.addEventListener(
     camera.aspect =
       window.innerWidth /
       window.innerHeight;
+
 
     camera.updateProjectionMatrix();
 
