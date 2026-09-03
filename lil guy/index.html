@@ -190,20 +190,6 @@ let bodyCurrentZ = 0;
 
 
 // ========================================
-// BREATHING
-// ========================================
-
-// How subtle the breathing is.
-
-const breathingAmount = 0.012;
-
-
-// How quickly Oko breathes.
-
-const breathingSpeed = 1.4;
-
-
-// ========================================
 // BODY IDLE WEIGHT SHIFT
 // ========================================
 
@@ -875,19 +861,6 @@ function animate() {
   // ======================================
 
   if (body) {
-
-    // ------------------------------------
-    // BREATHING
-    // ------------------------------------
-
-    const time =
-      performance.now() * 0.001;
-
-
-    const breathing =
-      Math.sin(
-        time * breathingSpeed
-      ) * breathingAmount;
 
 
     // ------------------------------------
