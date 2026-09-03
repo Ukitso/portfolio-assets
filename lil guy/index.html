@@ -112,6 +112,7 @@ let oko = null;
 let eyeballBone = null;
 let eyeballMesh = null;
 let head = null;
+let body = null;
 
 
 // ========================================
@@ -162,14 +163,9 @@ let headCurrentZ = 0;
 // HEAD IDLE SETTINGS
 // ========================================
 
-// Maximum amount of independent idle head movement.
-
 const headIdleRangeX = 0.025;
 const headIdleRangeY = 0.035;
 const headIdleRangeZ = 0.045;
-
-
-// Current idle head offset.
 
 let headIdleTargetX = 0;
 let headIdleTargetY = 0;
@@ -179,10 +175,101 @@ let headIdleCurrentX = 0;
 let headIdleCurrentY = 0;
 let headIdleCurrentZ = 0;
 
-
-// Timer for the next little head movement.
-
 let headIdleTimer = null;
+
+
+// ========================================
+// BODY SETTINGS
+// ========================================
+
+const bodyBaseRotation = new THREE.Euler();
+
+let bodyCurrentX = 0;
+let bodyCurrentY = 0;
+let bodyCurrentZ = 0;
+
+
+// ========================================
+// BREATHING
+// ========================================
+
+// How subtle the breathing is.
+
+const breathingAmount = 0.012;
+
+
+// How quickly Oko breathes.
+
+const breathingSpeed = 1.4;
+
+
+// ========================================
+// BODY IDLE WEIGHT SHIFT
+// ========================================
+
+const bodyIdleRangeX = 0.012;
+const bodyIdleRangeY = 0.018;
+const bodyIdleRangeZ = 0.020;
+
+let bodyIdleTargetX = 0;
+let bodyIdleTargetY = 0;
+let bodyIdleTargetZ = 0;
+
+let bodyIdleCurrentX = 0;
+let bodyIdleCurrentY = 0;
+let bodyIdleCurrentZ = 0;
+
+let bodyIdleTimer = null;
+
+
+// ========================================
+// CHOOSE BODY IDLE MOVEMENT
+// ========================================
+
+function chooseBodyIdleMovement() {
+
+  if (!isIdle) {
+    return;
+  }
+
+
+  bodyIdleTargetX =
+    THREE.MathUtils.randFloat(
+      -bodyIdleRangeX,
+      bodyIdleRangeX
+    );
+
+
+  bodyIdleTargetY =
+    THREE.MathUtils.randFloat(
+      -bodyIdleRangeY,
+      bodyIdleRangeY
+    );
+
+
+  bodyIdleTargetZ =
+    THREE.MathUtils.randFloat(
+      -bodyIdleRangeZ,
+      bodyIdleRangeZ
+    );
+
+
+  const delay =
+    THREE.MathUtils.randFloat(
+      3500,
+      7000
+    );
+
+
+  clearTimeout(bodyIdleTimer);
+
+
+  bodyIdleTimer = setTimeout(
+    chooseBodyIdleMovement,
+    delay
+  );
+
+}
 
 
 // ========================================
@@ -195,8 +282,6 @@ function chooseHeadIdleMovement() {
     return;
   }
 
-
-  // Random tiny movement.
 
   headIdleTargetX =
     THREE.MathUtils.randFloat(
@@ -218,8 +303,6 @@ function chooseHeadIdleMovement() {
       headIdleRangeZ
     );
 
-
-  // Wait before the next movement.
 
   const delay =
     THREE.MathUtils.randFloat(
@@ -252,8 +335,8 @@ function startIdle() {
   isIdle = true;
 
   chooseIdleLook();
-
   chooseHeadIdleMovement();
+  chooseBodyIdleMovement();
 
 }
 
@@ -316,13 +399,18 @@ function exitIdle() {
 
   clearTimeout(idleLookTimer);
   clearTimeout(headIdleTimer);
+  clearTimeout(bodyIdleTimer);
 
 
-  // Return idle head movement to neutral.
+  // Return idle movements to neutral.
 
   headIdleTargetX = 0;
   headIdleTargetY = 0;
   headIdleTargetZ = 0;
+
+  bodyIdleTargetX = 0;
+  bodyIdleTargetY = 0;
+  bodyIdleTargetZ = 0;
 
 }
 
@@ -334,7 +422,6 @@ function exitIdle() {
 window.addEventListener(
   "mousemove",
   (event) => {
-
 
     // Mouse movement wakes Oko.
 
@@ -398,21 +485,6 @@ loader.load(
     scene.add(oko);
 
 
-    console.log("================================");
-    console.log("OKO LOADED");
-    console.log("================================");
-
-
-    oko.traverse((object) => {
-
-      console.log(
-        object.type,
-        object.name
-      );
-
-    });
-
-
     // ------------------------------------
     // GET BONES
     // ------------------------------------
@@ -429,6 +501,14 @@ loader.load(
       oko.getObjectByName("HEAD");
 
 
+    body =
+      oko.getObjectByName("BODY_1");
+
+
+    console.log("================================");
+    console.log("OKO LOADED");
+    console.log("================================");
+
     console.log(
       "Eyeball BONE:",
       eyeballBone
@@ -444,9 +524,14 @@ loader.load(
       head
     );
 
+    console.log(
+      "Body:",
+      body
+    );
+
 
     // ------------------------------------
-    // SAVE EYE POSITION
+    // SAVE ORIGINAL EYE POSITION
     // ------------------------------------
 
     if (eyeballBone) {
@@ -459,13 +544,26 @@ loader.load(
 
 
     // ------------------------------------
-    // SAVE HEAD ROTATION
+    // SAVE ORIGINAL HEAD ROTATION
     // ------------------------------------
 
     if (head) {
 
       headBaseRotation.copy(
         head.rotation
+      );
+
+    }
+
+
+    // ------------------------------------
+    // SAVE ORIGINAL BODY ROTATION
+    // ------------------------------------
+
+    if (body) {
+
+      bodyBaseRotation.copy(
+        body.rotation
       );
 
     }
@@ -624,7 +722,6 @@ function animate() {
 
   if (head) {
 
-
     // ------------------------------------
     // HEAD FOLLOWS EYE
     // ------------------------------------
@@ -642,7 +739,7 @@ function animate() {
 
 
     // ------------------------------------
-    // NORMAL HEAD FOLLOW
+    // SMOOTH HEAD FOLLOW
     // ------------------------------------
 
     headCurrentY +=
@@ -692,7 +789,7 @@ function animate() {
 
 
     // ------------------------------------
-    // COMBINE HEAD MOVEMENT
+    // APPLY HEAD
     // ------------------------------------
 
     head.rotation.x =
@@ -711,6 +808,92 @@ function animate() {
       headBaseRotation.z +
       headCurrentZ +
       headIdleCurrentZ;
+
+  }
+
+
+  // ======================================
+  // BODY
+  // ======================================
+
+  if (body) {
+
+    // ------------------------------------
+    // BREATHING
+    // ------------------------------------
+
+    const time =
+      performance.now() * 0.001;
+
+
+    const breathing =
+      Math.sin(
+        time * breathingSpeed
+      ) * breathingAmount;
+
+
+    // ------------------------------------
+    // BODY IDLE WEIGHT SHIFT
+    // ------------------------------------
+
+    bodyIdleCurrentX +=
+      (
+        bodyIdleTargetX -
+        bodyIdleCurrentX
+      ) * 0.008;
+
+
+    bodyIdleCurrentY +=
+      (
+        bodyIdleTargetY -
+        bodyIdleCurrentY
+      ) * 0.008;
+
+
+    bodyIdleCurrentZ +=
+      (
+        bodyIdleTargetZ -
+        bodyIdleCurrentZ
+      ) * 0.008;
+
+
+    // ------------------------------------
+    // BODY FOLLOWS HEAD SLIGHTLY
+    // ------------------------------------
+
+    const bodyFollowY =
+      headCurrentY * 0.20;
+
+
+    const bodyFollowX =
+      headCurrentX * 0.15;
+
+
+    const bodyFollowZ =
+      headCurrentZ * 0.20;
+
+
+    // ------------------------------------
+    // APPLY BODY
+    // ------------------------------------
+
+    body.rotation.x =
+      bodyBaseRotation.x +
+      bodyFollowX +
+      bodyIdleCurrentX;
+
+
+    body.rotation.y =
+      bodyBaseRotation.y +
+      bodyFollowY +
+      bodyIdleCurrentY;
+
+
+    body.rotation.z =
+      bodyBaseRotation.z +
+      bodyFollowZ +
+      bodyIdleCurrentZ +
+      breathing;
 
   }
 
