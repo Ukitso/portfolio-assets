@@ -365,6 +365,62 @@ loader.load(
 // ANIMATION
 // ==================================================
 
+// --------------------------------------------------
+// EYEBALL TRACKING
+// --------------------------------------------------
+
+// Maximum distance the eyeball can move.
+// These are intentionally small because they are
+// bone-local positions.
+
+const eyeRangeX = 0.08;
+const eyeRangeY = 0.06;
+
+
+// Mouse target
+
+let eyeTargetX = 0;
+let eyeTargetY = 0;
+
+
+// Current smooth position
+
+let eyeCurrentX = 0;
+let eyeCurrentY = 0;
+
+
+// --------------------------------------------------
+// MOUSE
+// --------------------------------------------------
+
+window.addEventListener("mousemove", (event) => {
+
+  // Convert mouse position into -1 → +1
+
+  const normalizedX =
+    (event.clientX - window.innerWidth / 2) /
+    (window.innerWidth / 2);
+
+  const normalizedY =
+    (event.clientY - window.innerHeight / 2) /
+    (window.innerHeight / 2);
+
+
+  // Convert to eye movement
+
+  eyeTargetX =
+    normalizedX * eyeRangeX;
+
+  eyeTargetY =
+    normalizedY * eyeRangeY;
+
+});
+
+
+// ==================================================
+// ANIMATION LOOP
+// ==================================================
+
 function animate() {
 
   requestAnimationFrame(animate);
@@ -374,85 +430,49 @@ function animate() {
 
 
     // ==================================================
-    // 1. EYEBALL TRACKING
+    // 1. EYEBALL
     // ==================================================
+
+    // Smoothly approach the mouse position.
+
+    eyeCurrentX +=
+      (eyeTargetX - eyeCurrentX) * 0.08;
+
+    eyeCurrentY +=
+      (eyeTargetY - eyeCurrentY) * 0.08;
+
+
+    // Apply movement to the eyeball bone.
     //
-    // The eyeball is the ONLY thing directly
-    // responding to the mouse.
-    //
-    // These axes are inverted from the previous version.
-    //
+    // We preserve its original Blender position.
 
-    const eyeTargetY =
-      mouseX * 0.45;
+    eyeball.position.x =
+      eyeBasePosition.x + eyeCurrentX;
 
-    const eyeTargetX =
-      mouseY * 0.30;
-
-
-    // Smooth eye movement
-
-    const eyeSpeed = 0.12;
-
-
-    eyeball.rotation.y +=
-      (
-        eyeTargetY -
-        eyeball.rotation.y +
-        eyeBaseRotation.y
-      ) * eyeSpeed;
-
-
-    eyeball.rotation.x +=
-      (
-        eyeTargetX -
-        eyeball.rotation.x +
-        eyeBaseRotation.x
-      ) * eyeSpeed;
+    eyeball.position.y =
+      eyeBasePosition.y + eyeCurrentY;
 
 
     // ==================================================
-    // 2. WORK OUT HOW FAR THE EYE HAS MOVED
+    // 2. USE EYEBALL MOVEMENT TO DRIVE THE HEAD
     // ==================================================
-    //
-    // We use the eyeball's actual offset from its
-    // Blender rest position.
-    //
-    // The head therefore reacts to the eye rather
-    // than directly reacting to the mouse.
-    //
 
-    const eyeOffsetY =
-      eyeball.rotation.y -
-      eyeBaseRotation.y;
-
-    const eyeOffsetX =
-      eyeball.rotation.x -
-      eyeBaseRotation.x;
-
-
-    // ==================================================
-    // 3. HEAD FOLLOWS EYEBALL
-    // ==================================================
+    // The head doesn't know about the mouse.
     //
-    // Much smaller movement than the eye.
-    //
-    // It also has a slower response, giving it
-    // a slight "weight" behind the eye.
-    //
+    // It only reacts to how far the eyeball
+    // has moved.
 
     const headTargetY =
-      eyeOffsetY * 0.25;
+      eyeCurrentX * 1.8;
 
     const headTargetX =
-      eyeOffsetX * 0.20;
+      eyeCurrentY * 1.2;
 
     const headTargetZ =
-      eyeOffsetY * -0.12;
+      eyeCurrentX * -0.8;
 
 
-    const headSpeed = 0.055;
-
+    // Smooth head movement
 
     head.rotation.y +=
       (
@@ -461,7 +481,7 @@ function animate() {
           head.rotation.y -
           headBaseRotation.y
         )
-      ) * headSpeed;
+      ) * 0.045;
 
 
     head.rotation.x +=
@@ -471,7 +491,7 @@ function animate() {
           head.rotation.x -
           headBaseRotation.x
         )
-      ) * headSpeed;
+      ) * 0.045;
 
 
     head.rotation.z +=
@@ -481,50 +501,34 @@ function animate() {
           head.rotation.z -
           headBaseRotation.z
         )
-      ) * headSpeed;
+      ) * 0.045;
 
 
     // ==================================================
-    // 4. BODY FOLLOWS HEAD
+    // 3. BODY FOLLOWS HEAD
     // ==================================================
-    //
-    // Even more subtle.
-    //
-    // This creates the layered feeling:
-    //
-    //     mouse
-    //       ↓
-    //     eyeball
-    //       ↓
-    //      head
-    //       ↓
-    //      body
-    //
 
-    const currentHeadOffsetY =
+    const headOffsetY =
       head.rotation.y -
       headBaseRotation.y;
 
-    const currentHeadOffsetX =
+    const headOffsetX =
       head.rotation.x -
       headBaseRotation.x;
 
-    const currentHeadOffsetZ =
+    const headOffsetZ =
       head.rotation.z -
       headBaseRotation.z;
 
 
     const bodyTargetY =
-      currentHeadOffsetY * 0.22;
+      headOffsetY * 0.20;
 
     const bodyTargetX =
-      currentHeadOffsetX * 0.15;
+      headOffsetX * 0.15;
 
     const bodyTargetZ =
-      currentHeadOffsetZ * 0.30;
-
-
-    const bodySpeed = 0.025;
+      headOffsetZ * 0.25;
 
 
     body.rotation.y +=
@@ -534,7 +538,7 @@ function animate() {
           body.rotation.y -
           bodyBaseRotation.y
         )
-      ) * bodySpeed;
+      ) * 0.025;
 
 
     body.rotation.x +=
@@ -544,7 +548,7 @@ function animate() {
           body.rotation.x -
           bodyBaseRotation.x
         )
-      ) * bodySpeed;
+      ) * 0.025;
 
 
     body.rotation.z +=
@@ -554,7 +558,7 @@ function animate() {
           body.rotation.z -
           bodyBaseRotation.z
         )
-      ) * bodySpeed;
+      ) * 0.025;
 
   }
 
@@ -572,6 +576,28 @@ function animate() {
 
 animate();
 
+
+// ==================================================
+// RESIZE
+// ==================================================
+
+window.addEventListener(
+  "resize",
+  () => {
+
+    camera.aspect =
+      window.innerWidth /
+      window.innerHeight;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
+    );
+
+  }
+);
 
 // ==================================================
 // RESIZE
