@@ -121,6 +121,7 @@ let eyeballMesh = null;
 
 const eyeRangeX = 0.16;
 const eyeRangeY = 0.12;
+const eyeOffsetY = 0.05;
 
 
 // Starting position of the bone.
@@ -411,9 +412,10 @@ function animate() {
       eyeCurrentX;
 
 
-    eyeballBone.position.y =
-      eyeBasePosition.y +
-      eyeCurrentY;
+   eyeballBone.position.y =
+  eyeBasePosition.y +
+  eyeOffsetY +
+  eyeCurrentY;
 
   }
 
