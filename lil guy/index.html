@@ -112,7 +112,6 @@ container.appendChild(
 // LIGHTING
 // ============================================================
 
-// Ambient
 const ambientLight =
   new THREE.AmbientLight(
     0xffffff,
@@ -124,7 +123,6 @@ scene.add(
 );
 
 
-// Main light
 const directionalLight =
   new THREE.DirectionalLight(
     0xffffff,
@@ -142,7 +140,6 @@ scene.add(
 );
 
 
-// Small fill
 const fillLight =
   new THREE.DirectionalLight(
     0xffffff,
@@ -174,26 +171,43 @@ let eyeball = null;
 let eyeballBasePosition =
   new THREE.Vector3();
 
-
-// Eye movement amount
 let eyeMovementAmount = 0;
 
 
 // ============================================================
-// EAR BONES
+// BONES
 // ============================================================
 
 let leftEar = null;
 let rightEar = null;
 
+let leftArm = null;
+let rightArm = null;
 
-// Store original rotations
-let leftEarBaseRotation = null;
-let rightEarBaseRotation = null;
+let leftShoulder = null;
+let rightShoulder = null;
+
+let head = null;
 
 
 // ============================================================
-// LOAD
+// BASE ROTATIONS
+// ============================================================
+
+let leftEarBaseRotation = null;
+let rightEarBaseRotation = null;
+
+let leftArmBaseRotation = null;
+let rightArmBaseRotation = null;
+
+let leftShoulderBaseRotation = null;
+let rightShoulderBaseRotation = null;
+
+let headBaseRotation = null;
+
+
+// ============================================================
+// LOAD MODEL
 // ============================================================
 
 loader.load(
@@ -208,7 +222,7 @@ loader.load(
 
 
     // ========================================================
-    // OKO HIERARCHY
+    // HIERARCHY
     // ========================================================
 
     console.log(
@@ -231,10 +245,11 @@ loader.load(
 
 
     // ========================================================
-    // FIND EYEBALL + EARS
+    // FIND OBJECTS + BONES
     // ========================================================
 
     oko.traverse(function(object) {
+
 
       // ------------------------------------------------------
       // EYEBALL
@@ -251,8 +266,7 @@ loader.load(
         );
 
         console.log(
-          "EYEBALL FOUND:",
-          eyeball.name
+          "EYEBALL FOUND"
         );
 
       }
@@ -273,8 +287,7 @@ loader.load(
           object.rotation.clone();
 
         console.log(
-          "LEFT EAR FOUND:",
-          leftEar.name
+          "LEFT EAR FOUND"
         );
 
       }
@@ -295,8 +308,104 @@ loader.load(
           object.rotation.clone();
 
         console.log(
-          "RIGHT EAR FOUND:",
-          rightEar.name
+          "RIGHT EAR FOUND"
+        );
+
+      }
+
+
+      // ------------------------------------------------------
+      // LEFT ARM
+      // ------------------------------------------------------
+
+      if (
+        object.isBone &&
+        object.name === "left_arm"
+      ) {
+
+        leftArm = object;
+
+        leftArmBaseRotation =
+          object.rotation.clone();
+
+        console.log(
+          "LEFT ARM FOUND"
+        );
+
+      }
+
+
+      // ------------------------------------------------------
+      // RIGHT ARM
+      // ------------------------------------------------------
+
+      if (
+        object.isBone &&
+        object.name === "right_arm"
+      ) {
+
+        rightArm = object;
+
+        rightArmBaseRotation =
+          object.rotation.clone();
+
+        console.log(
+          "RIGHT ARM FOUND"
+        );
+
+      }
+
+
+      // ------------------------------------------------------
+      // LEFT SHOULDER
+      // ------------------------------------------------------
+
+      if (
+        object.isBone &&
+        object.name === "left_shoulder"
+      ) {
+
+        leftShoulder = object;
+
+        leftShoulderBaseRotation =
+          object.rotation.clone();
+
+      }
+
+
+      // ------------------------------------------------------
+      // RIGHT SHOULDER
+      // ------------------------------------------------------
+
+      if (
+        object.isBone &&
+        object.name === "right_shoulder"
+      ) {
+
+        rightShoulder = object;
+
+        rightShoulderBaseRotation =
+          object.rotation.clone();
+
+      }
+
+
+      // ------------------------------------------------------
+      // HEAD
+      // ------------------------------------------------------
+
+      if (
+        object.isBone &&
+        object.name === "HEAD"
+      ) {
+
+        head = object;
+
+        headBaseRotation =
+          object.rotation.clone();
+
+        console.log(
+          "HEAD FOUND"
         );
 
       }
@@ -326,7 +435,6 @@ loader.load(
       center
     );
 
-
     scene.add(
       oko
     );
@@ -344,14 +452,8 @@ loader.load(
       ) * 0.045;
 
 
-    console.log(
-      "Eye movement amount:",
-      eyeMovementAmount
-    );
-
-
     // ========================================================
-    // CAMERA FRAMING
+    // CAMERA
     // ========================================================
 
     const maxSize =
@@ -440,7 +542,6 @@ function resetIdle() {
 
   idle = false;
 
-
   idleTimer = setTimeout(
     function() {
 
@@ -456,7 +557,7 @@ function resetIdle() {
 
 
 // ============================================================
-// IDLE EYE MOVEMENT
+// IDLE
 // ============================================================
 
 function chooseIdleTarget() {
@@ -545,7 +646,7 @@ function animate() {
 
 
   // ==========================================================
-  // EYE SMOOTHING
+  // EYE
   // ==========================================================
 
   currentX +=
@@ -561,10 +662,6 @@ function animate() {
       currentY
     ) * 0.08;
 
-
-  // ==========================================================
-  // EYEBALL
-  // ==========================================================
 
   if (
     eyeball &&
@@ -588,7 +685,7 @@ function animate() {
 
 
   // ==========================================================
-  // LEFT EAR
+  // EARS
   // ==========================================================
 
   if (
@@ -612,10 +709,6 @@ function animate() {
   }
 
 
-  // ==========================================================
-  // RIGHT EAR
-  // ==========================================================
-
   if (
     rightEar &&
     rightEarBaseRotation
@@ -633,6 +726,142 @@ function animate() {
       + Math.sin(
         time * 0.85 + 1.2
       ) * 0.15;
+
+  }
+
+
+  // ==========================================================
+  // ARMS
+  // ==========================================================
+
+  if (
+    leftArm &&
+    leftArmBaseRotation
+  ) {
+
+    // Side-to-side movement
+    leftArm.rotation.z =
+      leftArmBaseRotation.z
+      + Math.sin(
+        time * 0.8
+      ) * 0.07;
+
+
+    // Forward/back movement
+    leftArm.rotation.x =
+      leftArmBaseRotation.x
+      + Math.sin(
+        time * 0.65 + 0.7
+      ) * 0.045;
+
+
+    // Slight 3D twist
+    leftArm.rotation.y =
+      leftArmBaseRotation.y
+      + Math.sin(
+        time * 0.55
+      ) * 0.035;
+
+  }
+
+
+  if (
+    rightArm &&
+    rightArmBaseRotation
+  ) {
+
+    // Opposite side-to-side movement
+    rightArm.rotation.z =
+      rightArmBaseRotation.z
+      - Math.sin(
+        time * 0.8
+      ) * 0.07;
+
+
+    // Slightly different phase
+    rightArm.rotation.x =
+      rightArmBaseRotation.x
+      - Math.sin(
+        time * 0.65 + 0.7
+      ) * 0.045;
+
+
+    // 3D twist
+    rightArm.rotation.y =
+      rightArmBaseRotation.y
+      - Math.sin(
+        time * 0.55
+      ) * 0.035;
+
+  }
+
+
+  // ==========================================================
+  // SHOULDERS
+  // ==========================================================
+
+  // Very restrained shoulder movement.
+  // Most of the animation comes from the arms.
+
+  if (
+    leftShoulder &&
+    leftShoulderBaseRotation
+  ) {
+
+    leftShoulder.rotation.z =
+      leftShoulderBaseRotation.z
+      + Math.sin(
+        time * 0.8
+      ) * 0.012;
+
+  }
+
+
+  if (
+    rightShoulder &&
+    rightShoulderBaseRotation
+  ) {
+
+    rightShoulder.rotation.z =
+      rightShoulderBaseRotation.z
+      - Math.sin(
+        time * 0.8
+      ) * 0.012;
+
+  }
+
+
+  // ==========================================================
+  // HEAD
+  // ==========================================================
+
+  if (
+    head &&
+    headBaseRotation
+  ) {
+
+    // Turn toward the direction of the mouse.
+    //
+    // Very small for the first test because we need
+    // to establish which local axes correspond to
+    // natural head movement on this rig.
+
+    head.rotation.y =
+      headBaseRotation.y
+      + currentX * 0.18;
+
+
+    head.rotation.x =
+      headBaseRotation.x
+      - currentY * 0.10;
+
+
+    // Tiny natural head sway
+    head.rotation.z =
+      headBaseRotation.z
+      + Math.sin(
+        time * 0.45
+      ) * 0.008;
 
   }
 
