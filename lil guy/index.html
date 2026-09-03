@@ -560,13 +560,71 @@ loader.load(
     // SAVE ORIGINAL BODY ROTATION
     // ------------------------------------
 
-    if (body) {
+   if (body) {
 
-      bodyBaseRotation.copy(
-        body.rotation
-      );
+  // ------------------------------------
+  // BODY IDLE WEIGHT SHIFT
+  // ------------------------------------
 
-    }
+  bodyIdleCurrentX +=
+    (
+      bodyIdleTargetX -
+      bodyIdleCurrentX
+    ) * 0.008;
+
+
+  bodyIdleCurrentY +=
+    (
+      bodyIdleTargetY -
+      bodyIdleCurrentY
+    ) * 0.008;
+
+
+  bodyIdleCurrentZ +=
+    (
+      bodyIdleTargetZ -
+      bodyIdleCurrentZ
+    ) * 0.008;
+
+
+  // ------------------------------------
+  // BODY FOLLOWS HEAD SLIGHTLY
+  // ------------------------------------
+
+  const bodyFollowY =
+    headCurrentY * 0.20;
+
+
+  const bodyFollowX =
+    headCurrentX * 0.15;
+
+
+  const bodyFollowZ =
+    headCurrentZ * 0.20;
+
+
+  // ------------------------------------
+  // APPLY BODY
+  // ------------------------------------
+
+  body.rotation.x =
+    bodyBaseRotation.x +
+    bodyFollowX +
+    bodyIdleCurrentX;
+
+
+  body.rotation.y =
+    bodyBaseRotation.y +
+    bodyFollowY +
+    bodyIdleCurrentY;
+
+
+  body.rotation.z =
+    bodyBaseRotation.z +
+    bodyFollowZ +
+    bodyIdleCurrentZ;
+
+}
 
 
     // ------------------------------------
