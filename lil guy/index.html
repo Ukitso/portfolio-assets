@@ -111,7 +111,7 @@ scene.add(directionalLight);
 
 
 // ==================================================
-// OKO VARIABLES
+// OKO
 // ==================================================
 
 let oko = null;
@@ -122,21 +122,42 @@ let body = null;
 
 
 // ==================================================
+// ORIGINAL BONE ROTATIONS
+// ==================================================
+//
+// We keep the rotations Oko has in Blender.
+// Our animation is added on top of these.
+//
+
+const eyeBaseRotation =
+  new THREE.Euler();
+
+const headBaseRotation =
+  new THREE.Euler();
+
+const bodyBaseRotation =
+  new THREE.Euler();
+
+
+// ==================================================
 // MOUSE
 // ==================================================
 
 let mouseX = 0;
 let mouseY = 0;
 
-window.addEventListener("mousemove", (event) => {
+window.addEventListener(
+  "mousemove",
+  (event) => {
 
-  mouseX =
-    (event.clientX / window.innerWidth) * 2 - 1;
+    mouseX =
+      (event.clientX / window.innerWidth) * 2 - 1;
 
-  mouseY =
-    (event.clientY / window.innerHeight) * 2 - 1;
+    mouseY =
+      (event.clientY / window.innerHeight) * 2 - 1;
 
-});
+  }
+);
 
 
 // ==================================================
@@ -184,7 +205,7 @@ loader.load(
 
 
     // ==================================================
-    // GET IMPORTANT BONES
+    // GET BONES
     // ==================================================
 
     eyeball =
@@ -200,6 +221,23 @@ loader.load(
     console.log("Eyeball:", eyeball);
     console.log("Head:", head);
     console.log("Body:", body);
+
+
+    // ==================================================
+    // STORE ORIGINAL ROTATIONS
+    // ==================================================
+
+    eyeBaseRotation.copy(
+      eyeball.rotation
+    );
+
+    headBaseRotation.copy(
+      head.rotation
+    );
+
+    bodyBaseRotation.copy(
+      body.rotation
+    );
 
 
     // ==================================================
@@ -232,7 +270,7 @@ loader.load(
 
 
     // ==================================================
-    // CAMERA DISTANCE
+    // CAMERA
     // ==================================================
 
     const maxDimension =
@@ -336,115 +374,187 @@ function animate() {
 
 
     // ==================================================
-    // EYEBALL
+    // 1. EYEBALL TRACKING
     // ==================================================
-
-    // The eyeball does most of the following.
     //
-    // Increase these values if you want the eye
-    // to follow the mouse more dramatically.
+    // The eyeball is the ONLY thing directly
+    // responding to the mouse.
+    //
+    // These axes are inverted from the previous version.
+    //
 
     const eyeTargetY =
-      mouseX * 0.45;
+      -mouseX * 0.45;
 
     const eyeTargetX =
-      mouseY * -0.30;
+      mouseY * 0.30;
 
 
     // Smooth eye movement
 
+    const eyeSpeed = 0.12;
+
+
     eyeball.rotation.y +=
       (
         eyeTargetY -
-        eyeball.rotation.y
-      ) * 0.12;
+        eyeball.rotation.y +
+        eyeBaseRotation.y
+      ) * eyeSpeed;
+
 
     eyeball.rotation.x +=
       (
         eyeTargetX -
-        eyeball.rotation.x
-      ) * 0.12;
+        eyeball.rotation.x +
+        eyeBaseRotation.x
+      ) * eyeSpeed;
 
 
     // ==================================================
-    // HEAD
+    // 2. WORK OUT HOW FAR THE EYE HAS MOVED
     // ==================================================
+    //
+    // We use the eyeball's actual offset from its
+    // Blender rest position.
+    //
+    // The head therefore reacts to the eye rather
+    // than directly reacting to the mouse.
+    //
 
-    // The head follows the eye,
-    // but much more subtly.
+    const eyeOffsetY =
+      eyeball.rotation.y -
+      eyeBaseRotation.y;
+
+    const eyeOffsetX =
+      eyeball.rotation.x -
+      eyeBaseRotation.x;
+
+
+    // ==================================================
+    // 3. HEAD FOLLOWS EYEBALL
+    // ==================================================
+    //
+    // Much smaller movement than the eye.
+    //
+    // It also has a slower response, giving it
+    // a slight "weight" behind the eye.
+    //
 
     const headTargetY =
-      eyeTargetY * 0.22;
+      eyeOffsetY * 0.25;
 
     const headTargetX =
-      eyeTargetX * 0.18;
+      eyeOffsetX * 0.20;
 
     const headTargetZ =
-      eyeTargetY * -0.12;
+      eyeOffsetY * -0.12;
+
+
+    const headSpeed = 0.055;
 
 
     head.rotation.y +=
       (
         headTargetY -
-        head.rotation.y
-      ) * 0.06;
+        (
+          head.rotation.y -
+          headBaseRotation.y
+        )
+      ) * headSpeed;
+
 
     head.rotation.x +=
       (
         headTargetX -
-        head.rotation.x
-      ) * 0.06;
+        (
+          head.rotation.x -
+          headBaseRotation.x
+        )
+      ) * headSpeed;
+
 
     head.rotation.z +=
       (
         headTargetZ -
-        head.rotation.z
-      ) * 0.06;
+        (
+          head.rotation.z -
+          headBaseRotation.z
+        )
+      ) * headSpeed;
 
 
     // ==================================================
-    // BODY
+    // 4. BODY FOLLOWS HEAD
     // ==================================================
+    //
+    // Even more subtle.
+    //
+    // This creates the layered feeling:
+    //
+    //     mouse
+    //       ↓
+    //     eyeball
+    //       ↓
+    //      head
+    //       ↓
+    //      body
+    //
 
-    // The body follows the head even more subtly.
-    //
-    // This creates a layered movement:
-    //
-    // Mouse
-    //   ↓
-    // Eyeball
-    //   ↓
-    // Head
-    //   ↓
-    // Body
+    const currentHeadOffsetY =
+      head.rotation.y -
+      headBaseRotation.y;
+
+    const currentHeadOffsetX =
+      head.rotation.x -
+      headBaseRotation.x;
+
+    const currentHeadOffsetZ =
+      head.rotation.z -
+      headBaseRotation.z;
+
 
     const bodyTargetY =
-      headTargetY * 0.25;
+      currentHeadOffsetY * 0.22;
 
     const bodyTargetX =
-      headTargetX * 0.20;
+      currentHeadOffsetX * 0.15;
 
     const bodyTargetZ =
-      headTargetZ * 0.35;
+      currentHeadOffsetZ * 0.30;
+
+
+    const bodySpeed = 0.025;
 
 
     body.rotation.y +=
       (
         bodyTargetY -
-        body.rotation.y
-      ) * 0.035;
+        (
+          body.rotation.y -
+          bodyBaseRotation.y
+        )
+      ) * bodySpeed;
+
 
     body.rotation.x +=
       (
         bodyTargetX -
-        body.rotation.x
-      ) * 0.035;
+        (
+          body.rotation.x -
+          bodyBaseRotation.x
+        )
+      ) * bodySpeed;
+
 
     body.rotation.z +=
       (
         bodyTargetZ -
-        body.rotation.z
-      ) * 0.035;
+        (
+          body.rotation.z -
+          bodyBaseRotation.z
+        )
+      ) * bodySpeed;
 
   }
 
