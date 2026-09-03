@@ -111,31 +111,50 @@ let oko = null;
 
 let eyeballBone = null;
 let eyeballMesh = null;
+let head = null;
 
 
 // ========================================
-// EYE POSITION
+// EYE SETTINGS
 // ========================================
 
-// How far the eyeball can move.
+// How far the eye can move.
 
 const eyeRangeX = 0.16;
 const eyeRangeY = 0.12;
+
+
+// Small neutral offset.
+// Moves the entire eye movement range upward.
+
 const eyeOffsetY = 0.05;
 
 
-// Starting position of the bone.
+// Original position of the eyeball bone.
 
 const eyeBasePosition = new THREE.Vector3();
 
 
-// Current and target movement.
+// Current and target eye movement.
 
 let eyeTargetX = 0;
 let eyeTargetY = 0;
 
 let eyeCurrentX = 0;
 let eyeCurrentY = 0;
+
+
+// ========================================
+// HEAD SETTINGS
+// ========================================
+
+// Subtle head movement following the eye.
+
+const headBaseRotation = new THREE.Euler();
+
+let headCurrentX = 0;
+let headCurrentY = 0;
+let headCurrentZ = 0;
 
 
 // ========================================
@@ -153,15 +172,19 @@ window.addEventListener("mousemove", (event) => {
     (window.innerHeight / 2);
 
 
-  // Horizontal mouse movement
-  // controls horizontal eye movement.
+  // --------------------------------------
+  // EYE HORIZONTAL
+  // --------------------------------------
 
   eyeTargetX =
     normalizedX * eyeRangeX;
 
 
-  // Vertical mouse movement
-  // controls vertical eye movement.
+  // --------------------------------------
+  // EYE VERTICAL
+  // --------------------------------------
+  // Negative because screen Y is inverted
+  // compared with the 3D coordinate system.
 
   eyeTargetY =
     -normalizedY * eyeRangeY;
@@ -196,7 +219,6 @@ loader.load(
 
     console.log("------ OBJECTS / BONES ------");
 
-
     oko.traverse((object) => {
 
       console.log(
@@ -205,7 +227,6 @@ loader.load(
       );
 
     });
-
 
     console.log("-----------------------------");
 
@@ -219,11 +240,19 @@ loader.load(
 
 
     // ====================================
-    // GET ACTUAL EYEBALL MESH
+    // GET EYEBALL MESH
     // ====================================
 
     eyeballMesh =
       oko.getObjectByName("EYEBALL");
+
+
+    // ====================================
+    // GET HEAD
+    // ====================================
+
+    head =
+      oko.getObjectByName("HEAD");
 
 
     console.log(
@@ -236,15 +265,29 @@ loader.load(
       eyeballMesh
     );
 
+    console.log(
+      "Head:",
+      head
+    );
+
 
     // ====================================
-    // SAVE ORIGINAL POSITION
+    // SAVE ORIGINAL TRANSFORMS
     // ====================================
 
     if (eyeballBone) {
 
       eyeBasePosition.copy(
         eyeballBone.position
+      );
+
+    }
+
+
+    if (head) {
+
+      headBaseRotation.copy(
+        head.rotation
       );
 
     }
@@ -383,11 +426,13 @@ function animate() {
   requestAnimationFrame(animate);
 
 
+  // ======================================
+  // EYE MOVEMENT
+  // ======================================
+
   if (eyeballBone) {
 
-    // ------------------------------------
-    // SMOOTH MOVEMENT
-    // ------------------------------------
+    // Smoothly approach target.
 
     eyeCurrentX +=
       (
@@ -403,22 +448,94 @@ function animate() {
       ) * 0.08;
 
 
-    // ------------------------------------
-    // MOVE EYEBALL
-    // ------------------------------------
+    // Apply eye position.
 
     eyeballBone.position.x =
       eyeBasePosition.x +
       eyeCurrentX;
 
 
-   eyeballBone.position.y =
-  eyeBasePosition.y +
-  eyeOffsetY +
-  eyeCurrentY;
+    eyeballBone.position.y =
+      eyeBasePosition.y +
+      eyeOffsetY +
+      eyeCurrentY;
 
   }
 
+
+  // ======================================
+  // HEAD MOVEMENT
+  // ======================================
+
+  if (head) {
+
+    // ------------------------------------
+    // HEAD TARGET
+    // ------------------------------------
+    // The head follows the eye movement,
+    // but at a much smaller scale.
+
+    const headTargetY =
+      eyeCurrentX * 1.4;
+
+
+    const headTargetX =
+      eyeCurrentY * 1.0;
+
+
+    const headTargetZ =
+      eyeCurrentX * -0.5;
+
+
+    // ------------------------------------
+    // SMOOTH HEAD MOVEMENT
+    // ------------------------------------
+
+    headCurrentY +=
+      (
+        headTargetY -
+        headCurrentY
+      ) * 0.035;
+
+
+    headCurrentX +=
+      (
+        headTargetX -
+        headCurrentX
+      ) * 0.035;
+
+
+    headCurrentZ +=
+      (
+        headTargetZ -
+        headCurrentZ
+      ) * 0.035;
+
+
+    // ------------------------------------
+    // APPLY HEAD ROTATION
+    // ------------------------------------
+
+    head.rotation.y =
+      headBaseRotation.y +
+      headCurrentY;
+
+
+    head.rotation.x =
+      headBaseRotation.x +
+      headCurrentX;
+
+
+    head.rotation.z =
+      headBaseRotation.z +
+      headCurrentZ;
+
+  }
+
+
+  // ======================================
+  // RENDER
+  // ======================================
 
   renderer.render(
     scene,
