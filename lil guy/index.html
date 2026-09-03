@@ -111,6 +111,35 @@ scene.add(directionalLight);
 
 
 // ==================================================
+// OKO VARIABLES
+// ==================================================
+
+let oko = null;
+
+let eyeball = null;
+let head = null;
+let body = null;
+
+
+// ==================================================
+// MOUSE
+// ==================================================
+
+let mouseX = 0;
+let mouseY = 0;
+
+window.addEventListener("mousemove", (event) => {
+
+  mouseX =
+    (event.clientX / window.innerWidth) * 2 - 1;
+
+  mouseY =
+    (event.clientY / window.innerHeight) * 2 - 1;
+
+});
+
+
+// ==================================================
 // LOAD OKO
 // ==================================================
 
@@ -122,9 +151,10 @@ loader.load(
 
   (gltf) => {
 
-    const oko = gltf.scene;
+    oko = gltf.scene;
 
     scene.add(oko);
+
 
     console.log("================================");
     console.log("OKO LOADED");
@@ -154,7 +184,26 @@ loader.load(
 
 
     // ==================================================
-    // CALCULATE MODEL BOUNDS
+    // GET IMPORTANT BONES
+    // ==================================================
+
+    eyeball =
+      oko.getObjectByName("Eyeball");
+
+    head =
+      oko.getObjectByName("HEAD");
+
+    body =
+      oko.getObjectByName("BODY_1");
+
+
+    console.log("Eyeball:", eyeball);
+    console.log("Head:", head);
+    console.log("Body:", body);
+
+
+    // ==================================================
+    // MODEL BOUNDS
     // ==================================================
 
     const box =
@@ -171,15 +220,8 @@ loader.load(
       );
 
 
-    console.log(
-      "Oko size:",
-      size
-    );
-
-    console.log(
-      "Oko center:",
-      center
-    );
+    console.log("Oko size:", size);
+    console.log("Oko center:", center);
 
 
     // ==================================================
@@ -190,7 +232,7 @@ loader.load(
 
 
     // ==================================================
-    // CALCULATE CAMERA DISTANCE
+    // CAMERA DISTANCE
     // ==================================================
 
     const maxDimension =
@@ -213,9 +255,6 @@ loader.load(
       );
 
 
-    // Pull the camera back slightly
-    // so Oko has some breathing room.
-
     const cameraDistance =
       fitHeightDistance * 1.5;
 
@@ -225,7 +264,6 @@ loader.load(
       0,
       cameraDistance
     );
-
 
     camera.lookAt(
       0,
@@ -240,15 +278,13 @@ loader.load(
     );
 
 
-    console.log(
-      "================================"
-    );
+    console.log("================================");
 
   },
 
 
   // ==================================================
-  // LOADING PROGRESS
+  // LOADING
   // ==================================================
 
   (progress) => {
@@ -288,6 +324,146 @@ loader.load(
 
 
 // ==================================================
+// ANIMATION
+// ==================================================
+
+function animate() {
+
+  requestAnimationFrame(animate);
+
+
+  if (eyeball && head && body) {
+
+
+    // ==================================================
+    // EYEBALL
+    // ==================================================
+
+    // The eyeball does most of the following.
+    //
+    // Increase these values if you want the eye
+    // to follow the mouse more dramatically.
+
+    const eyeTargetY =
+      mouseX * 0.45;
+
+    const eyeTargetX =
+      mouseY * -0.30;
+
+
+    // Smooth eye movement
+
+    eyeball.rotation.y +=
+      (
+        eyeTargetY -
+        eyeball.rotation.y
+      ) * 0.12;
+
+    eyeball.rotation.x +=
+      (
+        eyeTargetX -
+        eyeball.rotation.x
+      ) * 0.12;
+
+
+    // ==================================================
+    // HEAD
+    // ==================================================
+
+    // The head follows the eye,
+    // but much more subtly.
+
+    const headTargetY =
+      eyeTargetY * 0.22;
+
+    const headTargetX =
+      eyeTargetX * 0.18;
+
+    const headTargetZ =
+      eyeTargetY * -0.12;
+
+
+    head.rotation.y +=
+      (
+        headTargetY -
+        head.rotation.y
+      ) * 0.06;
+
+    head.rotation.x +=
+      (
+        headTargetX -
+        head.rotation.x
+      ) * 0.06;
+
+    head.rotation.z +=
+      (
+        headTargetZ -
+        head.rotation.z
+      ) * 0.06;
+
+
+    // ==================================================
+    // BODY
+    // ==================================================
+
+    // The body follows the head even more subtly.
+    //
+    // This creates a layered movement:
+    //
+    // Mouse
+    //   ↓
+    // Eyeball
+    //   ↓
+    // Head
+    //   ↓
+    // Body
+
+    const bodyTargetY =
+      headTargetY * 0.25;
+
+    const bodyTargetX =
+      headTargetX * 0.20;
+
+    const bodyTargetZ =
+      headTargetZ * 0.35;
+
+
+    body.rotation.y +=
+      (
+        bodyTargetY -
+        body.rotation.y
+      ) * 0.035;
+
+    body.rotation.x +=
+      (
+        bodyTargetX -
+        body.rotation.x
+      ) * 0.035;
+
+    body.rotation.z +=
+      (
+        bodyTargetZ -
+        body.rotation.z
+      ) * 0.035;
+
+  }
+
+
+  // ==================================================
+  // RENDER
+  // ==================================================
+
+  renderer.render(
+    scene,
+    camera
+  );
+
+}
+
+animate();
+
+
+// ==================================================
 // RESIZE
 // ==================================================
 
@@ -308,26 +484,6 @@ window.addEventListener(
 
   }
 );
-
-
-// ==================================================
-// ANIMATION LOOP
-// ==================================================
-
-function animate() {
-
-  requestAnimationFrame(
-    animate
-  );
-
-  renderer.render(
-    scene,
-    camera
-  );
-
-}
-
-animate();
 
 </script>
 
